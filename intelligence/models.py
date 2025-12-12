@@ -28,14 +28,14 @@ class Target(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    last_name = models.CharField(max_length=50, blank=True)
-    first_name = models.CharField(max_length=50, blank=True)
+    name = models.CharField(max_length=100)
     nickname = models.CharField(max_length=50)
     rank = models.CharField(max_length=10, choices=RANK_CHOICES, default='C')
     
-    birth_year = models.IntegerField(null=True, blank=True)
-    birth_month = models.IntegerField(null=True, blank=True)
-    birth_day = models.IntegerField(null=True, blank=True)
+    aliases = models.CharField(max_length=200, blank=True)
+    birthdate = models.DateField(null=True, blank=True)
+    height = models.FloatField(null=True, blank=True)
+    weight = models.FloatField(null=True, blank=True)
     
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, default='Female')
     blood_type = models.CharField(max_length=10, choices=BLOOD_CHOICES, default='Unknown')
@@ -44,7 +44,7 @@ class Target(models.Model):
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
     intel_depth = models.FloatField(default=0.0)
     last_contact = models.DateTimeField(null=True, blank=True)
-    memo = models.TextField(blank=True)
+    description = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
