@@ -48,11 +48,13 @@
                     <!-- Info -->
                     <div class="flex-1 space-y-4 w-full">
                         <div>
-                            <h3 class="text-3xl font-bold text-white mb-1">ELARA VANCE</h3>
+                            <h3 class="text-3xl font-bold text-white mb-1">{% if active_target %}{{
+                                active_target.nickname }}{% else %}未選択{% endif %}</h3>
                             <div class="flex items-center gap-3">
                                 <span
                                     class="px-2 py-0.5 rounded bg-primary/20 text-primary text-xs font-mono border border-primary/20">RANK:
-                                    SILVER</span>
+                                    {% if active_target %}{{ active_target.get_rank_display }}{% else %}N/A{% endif
+                                    %}</span>
                                 <span
                                     class="px-2 py-0.5 rounded bg-orange-500/20 text-orange-400 text-xs font-mono border border-orange-500/20">SSR
                                     Rarity</span>
@@ -61,23 +63,26 @@
 
                         <div class="grid grid-cols-2 gap-4">
                             <div class="bg-black/40 p-3 rounded border border-white/5">
-                                <p class="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Intel Completion</p>
+                                <p class="text-[10px] text-gray-500 uppercase tracking-wider mb-1">諜報収集率</p>
                                 <div class="flex items-end gap-2">
-                                    <span class="text-2xl font-mono font-bold text-primary">45%</span>
+                                    <span class="text-2xl font-mono font-bold text-primary">{% if active_target %}{{
+                                        active_target.intel_depth|default:"0" }}{% else %}0{% endif %}%</span>
                                     <div class="h-1.5 flex-1 bg-gray-800 rounded-full mb-2">
-                                        <div class="h-full bg-primary rounded-full" style="width: 45%"></div>
+                                        <div class="h-full bg-primary rounded-full"
+                                            style="width: {% if active_target %}{{ active_target.intel_depth|default:"
+                                            0" }}{% else %}0{% endif %}%"></div>
                                     </div>
                                 </div>
                             </div>
                             <div class="bg-black/40 p-3 rounded border border-white/5">
-                                <p class="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Last Contact</p>
+                                <p class="text-[10px] text-gray-500 uppercase tracking-wider mb-1">最終接触</p>
                                 <p class="text-lg font-mono text-white">2h 14m</p>
                             </div>
                         </div>
 
                         <button
                             class="w-full py-3 bg-gradient-to-r from-primary to-emerald-600 text-black font-bold font-mono rounded-lg hover:from-primary/90 hover:to-emerald-500/90 transition-all uppercase tracking-wide flex items-center justify-center gap-2 group-hover:shadow-[0_0_20px_rgba(16,185,129,0.3)]">
-                            <span>Execute Interaction</span>
+                            <span>接触開始</span>
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                             </svg>
@@ -89,8 +94,8 @@
             <!-- Latest Intel -->
             <div class="bg-surface/50 border border-white/10 rounded-xl p-6 flex-1 min-h-[300px]">
                 <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-sm font-mono text-gray-400 tracking-widest uppercase">Latest Intel</h2>
-                    <button class="text-xs text-primary hover:text-primary/80">View All</button>
+                    <h2 class="text-sm font-mono text-gray-400 tracking-widest uppercase">最新諜報ログ</h2>
+                    <button class="text-xs text-primary hover:text-primary/80">全て見る</button>
                 </div>
 
                 <div class="space-y-4 font-mono text-sm">
@@ -98,18 +103,17 @@
                         class="flex gap-4 p-3 rounded hover:bg-white/5 border-l-2 border-primary bg-primary/5 transition-colors">
                         <span class="text-gray-500 w-16 text-right">10:45 AM</span>
                         <div>
-                            <span class="text-primary font-bold">SIGNAL INTERCEPT</span>
+                            <span class="text-primary font-bold">信号傍受</span>
                             <span class="text-gray-400">@SECTOR 4</span>
-                            <p class="text-xs text-gray-500 mt-1">Confirmed visual on Subject entering 'The Neon Lotus'.
-                            </p>
+                            <p class="text-xs text-gray-500 mt-1">対象が「ネオンロータス」に入場するのを視覚的に確認。</p>
                         </div>
                     </div>
                     <div class="flex gap-4 p-3 rounded hover:bg-white/5 border-l-2 border-red-500/50 transition-colors">
                         <span class="text-gray-500 w-16 text-right">09:30 AM</span>
                         <div>
-                            <span class="text-red-400 font-bold">MISS: SURVEILLANCE LOST</span>
+                            <span class="text-red-400 font-bold">監視ロスト</span>
                             <span class="text-gray-400">@MARKET</span>
-                            <p class="text-xs text-gray-500 mt-1">Target entered crowding, signal jammed.</p>
+                            <p class="text-xs text-gray-500 mt-1">対象が群衆に入り、信号が妨害されました。</p>
                         </div>
                     </div>
                 </div>
@@ -122,7 +126,7 @@
                 class="bg-surface/50 border border-white/10 rounded-xl p-0 relative overflow-hidden flex-1 h-full min-h-[400px]">
                 <div class="absolute inset-0 p-6 flex flex-col z-10 pointer-events-none">
                     <div class="flex items-center justify-between">
-                        <h2 class="text-sm font-mono text-gray-400 tracking-widest uppercase">Tactical Map</h2>
+                        <h2 class="text-sm font-mono text-gray-400 tracking-widest uppercase">戦術マップ</h2>
                         <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-width="2"
                                 d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z">
@@ -146,7 +150,7 @@
                                 <div class="w-3 h-3 bg-primary rounded-full shadow-[0_0_10px_#10b981]"></div>
                                 <div
                                     class="absolute top-4 left-0 bg-primary/20 text-primary text-[10px] px-2 py-0.5 rounded border border-primary/30 whitespace-nowrap">
-                                    ELARA VANCE</div>
+                                    {% if active_target %}{{ active_target.nickname }}{% else %}未選択{% endif %}</div>
                             </div>
                         </div>
 
