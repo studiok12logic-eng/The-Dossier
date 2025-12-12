@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto h-full flex flex-col gap-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-mono font-bold text-white flex items-center gap-2">
+            <span class="w-2 h-8 bg-primary block"></span>
+            Add New Target
+        </h1>
+        <div class="flex items-center gap-4">
+            <a href="{% url 'target_list' %}"
+                class="text-sm font-mono text-gray-500 hover:text-white transition-colors">CANCEL</a>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-surface/50 border border-white/10 rounded-xl p-8 shadow-2xl relative overflow-hidden">
+        <div class="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+            <svg class="w-96 h-96 text-primary -mr-24 -mt-24" fill="currentColor" viewBox="0 0 100 100">
+                <rect x="0" y="0" width="100" height="100" />
+            </svg>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" class="space-y-6 relative z-10">
+            {% csrf_token %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Basic Info -->
+                <div class="space-y-4">
+                    <h3
+                        class="text-sm font-mono text-primary tracking-widest uppercase border-b border-primary/20 pb-2 mb-4">
+                        Identity Protocol</h3>
+
+                    <div>
+                        <label class="block text-xs font-mono text-gray-400 mb-1">Full Name</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ form.name.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-mono text-gray-400 mb-1">Nickname / Codename</label>
+                        {{ form.nickname }}
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-mono text-gray-400 mb-1">Rank / Classification</label>
+                        {{ form.rank }}
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-mono text-gray-400 mb-1">Aliases</label>
+                        {{ form.aliases }}
+                    </div>
+                </div>
+
+                <!-- Biological Data -->
+                <div class="space-y-4">
+                    <h3
+                        class="text-sm font-mono text-primary tracking-widest uppercase border-b border-primary/20 pb-2 mb-4">
+                        Bio-Metrics</h3>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-mono text-gray-400 mb-1">Gender</label>
+                            {{ form.gender }}
+                        </div>
+                        <div>
+                            <label class="block text-xs font-mono text-gray-400 mb-1">Blood Type</label>
+                            {{ form.blood_type }}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-mono text-gray-400 mb-1">Birthdate</label>
+                        {{ form.birthdate }}
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-mono text-gray-400 mb-1">Height (cm)</label>
+                            {{ form.height }}
+                        </div>
+                        <div>
+                            <label class="block text-xs font-mono text-gray-400 mb-1">Weight (kg)</label>
+                            {{ form.weight }}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-mono text-gray-400 mb-1">Origin / Affiliation</label>
+                        {{ form.origin }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Info -->
+            <div class="space-y-4 mt-8">
+                <h3
+                    class="text-sm font-mono text-primary tracking-widest uppercase border-b border-primary/20 pb-2 mb-4">
+                    Dossier Details</h3>
+
+                <div>
+                    <label class="block text-xs font-mono text-gray-400 mb-1">Description / Notes</label>
+                    {{ form.description }}
+                </div>
+
+                <div>
+                    <label class="block text-xs font-mono text-gray-400 mb-1">Profile Image</label>
+                    {{ form.avatar }}
+                </div>
+            </div>
+
+            <div class="pt-6 border-t border-white/10 flex justify-end">
+                <button type="submit"
+                    class="px-8 py-3 bg-primary text-black font-bold font-mono rounded hover:bg-primary/90 transition-all flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    INITIALIZE TARGET
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
