@@ -1,5 +1,5 @@
 from django import forms
-from .models import Target
+from .models import Target, TargetGroup, CustomAnniversary
 import datetime
 
 class TargetForm(forms.ModelForm):
@@ -17,14 +17,20 @@ class TargetForm(forms.ModelForm):
     # Zodiac (Read-only or Hidden, calculated by JS)
     zodiac_sign = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary', 'readonly': 'readonly'}))
 
+    # Groups (M2M) - Rendered as checkbox or multi-select. Using SelectMultiple for now with custom styling class.
+    groups = forms.ModelMultipleChoiceField(
+        queryset=TargetGroup.objects.all(),
+        required=False,
+        widget=forms.SelectMultiple(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary h-32'})
+    )
+
     class Meta:
         model = Target
         fields = ['nickname', 'last_name', 'first_name', 'last_name_kana', 'first_name_kana', 
-                  'aliases', 'origin', 'gender', 'blood_type', 'description', 'avatar', 'zodiac_sign']
+                  'birthplace', 'gender', 'blood_type', 'description', 'avatar', 'zodiac_sign', 'groups']
         widgets = {
             'nickname': forms.TextInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary', 'required': 'required'}),
-            'aliases': forms.TextInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary'}),
-            'origin': forms.TextInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary'}),
+            'birthplace': forms.TextInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary'}),
             'gender': forms.Select(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary'}),
             'blood_type': forms.Select(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary'}),
             'description': forms.Textarea(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary', 'rows': 4}),
@@ -46,4 +52,23 @@ class TargetForm(forms.ModelForm):
         
         if commit:
             instance.save()
+            self.save_m2m() # Save groups
         return instance
+
+class TargetGroupForm(forms.ModelForm):
+    class Meta:
+        model = TargetGroup
+        fields = ['name', 'description']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'w-full bg-surface border border-white/10 rounded px-4 py-2 text-white focus:border-primary', 'placeholder': 'グループ名'}),
+            'description': forms.Textarea(attrs={'class': 'w-full bg-surface border border-white/10 rounded px-4 py-2 text-white focus:border-primary', 'rows': 2, 'placeholder': '説明'}),
+        }
+
+class CustomAnniversaryForm(forms.ModelForm):
+    class Meta:
+        model = CustomAnniversary
+        fields = ['label', 'date']
+        widgets = {
+            'label': forms.TextInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:border-primary', 'placeholder': '記念日名称'}),
+            'date': forms.DateInput(attrs={'type': 'date', 'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:border-primary'}),
+        }

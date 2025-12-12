@@ -2,12 +2,21 @@
 {% load static %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto h-full flex flex-col gap-6">
+<!-- Loading Screen -->
+<div id="loader"
+    class="fixed inset-0 bg-[#080a09] z-50 flex items-center justify-center transition-opacity duration-500">
+    <div class="flex flex-col items-center gap-4">
+        <img src="{% static 'src/loader.svg' %}" alt="Loading..." class="w-16 h-16">
+        <span class="text-primary font-mono text-sm tracking-widest animate-pulse">SYSTEM INITIALIZING...</span>
+    </div>
+</div>
+
+<div class="max-w-4xl mx-auto h-full flex flex-col gap-6 opacity-0 transition-opacity duration-500" id="main-content">
     <!-- Header -->
     <div class="flex items-center justify-between">
         <h1 class="text-2xl font-mono font-bold text-white flex items-center gap-2">
             <span class="w-2 h-8 bg-primary block"></span>
-            新規ターゲット登録
+            {% if is_edit %}ターゲット情報更新{% else %}新規ターゲット登録{% endif %}
         </h1>
         <div class="flex items-center gap-4">
             <a href="{% url 'target_list' %}"
@@ -23,7 +32,8 @@
             </svg>
         </div>
 
-        <form method="post" enctype="multipart/form-data" class="space-y-8 relative z-10 font-bold" autocomplete="off">
+        <form method="post" enctype="multipart/form-data" class="space-y-8 relative z-10 font-bold" autocomplete="off"
+            id="target-form">
             {% csrf_token %}
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -63,11 +73,6 @@
                             {{ form.first_name_kana }}
                         </div>
                     </div>
-
-                    <div>
-                        <label class="block text-xs font-mono text-gray-400 mb-1">エイリアス / 別名</label>
-                        {{ form.aliases }}
-                    </div>
                 </div>
 
                 <!-- Personal Data -->
@@ -75,17 +80,6 @@
                     <h3
                         class="text-sm font-mono text-primary tracking-widest uppercase border-b border-primary/20 pb-2 mb-4">
                         生体情報 (Bio-Metrics)</h3>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-mono text-gray-400 mb-1">性別</label>
-                            {{ form.gender }}
-                        </div>
-                        <div>
-                            <label class="block text-xs font-mono text-gray-400 mb-1">血液型</label>
-                            {{ form.blood_type }}
-                        </div>
-                    </div>
 
                     <!-- Birthdate & Zodiac Logic -->
                     <div class="space-y-2">
@@ -144,21 +138,77 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Helper Text -->
-                        <div id="zodiac_hint" class="text-xs text-primary/80 font-mono h-4"></div>
-
-                        <!-- Zodiac Hidden Input (Auto-filled) -->
-                        <div class="hidden">
-                            {{ form.zodiac_sign }}
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-mono text-gray-400 mb-1">血液型 & 星座</label>
+                            <div class="flex gap-2">
+                                {{ form.blood_type }}
+                                <div class="relative flex-1">
+                                    {{ form.zodiac_sign }}
+                                    <div class="absolute top-0 right-0 h-full flex items-center pr-2 pointer-events-none text-xs text-primary/50"
+                                        id="zodiac_display"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-mono text-gray-400 mb-1">性別</label>
+                            {{ form.gender }}
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-mono text-gray-400 mb-1">所属 / 出身</label>
-                        {{ form.origin }}
+                        <label class="block text-xs font-mono text-gray-400 mb-1">出身地</label>
+                        {{ form.birthplace }}
                     </div>
+
+                    <!-- Custom Anniversaries -->
+                    <div>
+                        <label class="block text-xs font-mono text-gray-400 mb-1">カスタム記念日</label>
+                        {{ anniversaries.management_form }}
+                        <div id="anniversaries_container" class="space-y-2">
+                            {% for form in anniversaries %}
+                            <div class="anniversary-row flex gap-2 items-center">
+                                {{ form.id }}
+                                <div class="flex-1">{{ form.label }}</div>
+                                <div class="w-40">{{ form.date }}</div>
+                                {% if form.instance.pk %}
+                                <div class="text-xs text-red-500">
+                                    削除: {{ form.DELETE }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <button type="button" id="add_anniversary"
+                            class="mt-2 text-xs text-primary hover:text-white flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            記念日を追加
+                        </button>
+                    </div>
+
                 </div>
+            </div>
+
+            <!-- Groups Section -->
+            <div class="mt-8">
+                <div class="flex items-center justify-between mb-2">
+                    <h3
+                        class="text-sm font-mono text-primary tracking-widest uppercase border-b border-primary/20 pb-2 flex-1">
+                        所属グループ (Affiliations)</h3>
+                    <button type="button" onclick="document.getElementById('group_modal').classList.remove('hidden')"
+                        class="text-xs text-primary hover:text-white flex items-center gap-1 ml-4">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        新規グループ作成
+                    </button>
+                </div>
+                {{ form.groups }}
+                <p class="text-xs text-gray-500 mt-1">Ctrl (Cmd) キーを押しながらクリックで複数選択できます。</p>
             </div>
 
             <!-- Detailed Info -->
@@ -184,99 +234,218 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                     </svg>
-                    登録を実行 (EXECUTE)
+                    {% if is_edit %}更新 (UPDATE){% else %}登録 (EXECUTE){% endif %}
                 </button>
             </div>
         </form>
     </div>
 </div>
 
+<!-- Group Modal -->
+<div id="group_modal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center">
+    <div class="bg-surface border border-primary/50 rounded-xl p-6 w-96 shadow-2xl">
+        <h3 class="text-lg font-mono text-white mb-4">新規グループ作成</h3>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-xs text-gray-400 mb-1">グループ名</label>
+                {{ group_form.name }}
+            </div>
+            <div>
+                <label class="block text-xs text-gray-400 mb-1">説明</label>
+                {{ group_form.description }}
+            </div>
+            <div class="flex justify-end gap-2 pt-4">
+                <button type="button" onclick="document.getElementById('group_modal').classList.add('hidden')"
+                    class="px-4 py-2 text-xs text-gray-400 hover:text-white">キャンセル</button>
+                <button type="button" id="create_group_btn"
+                    class="px-4 py-2 bg-primary text-black text-xs font-bold rounded hover:bg-primary/90">作成</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden Template for Anniversary Row -->
+<div id="empty_form" class="hidden">
+    <div class="anniversary-row flex gap-2 items-center mt-2">
+        <div class="flex-1">{{ anniversaries.empty_form.label }}</div>
+        <div class="w-40">{{ anniversaries.empty_form.date }}</div>
+    </div>
+</div>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // Loader
+        const loader = document.getElementById('loader');
+        const content = document.getElementById('main-content');
+
+        // Simulate slight delay/check valid load
+        setTimeout(() => {
+            loader.classList.add('opacity-0');
+            loader.style.pointerEvents = 'none';
+            content.classList.remove('opacity-0');
+        }, 800);
+
+        // --- Birthdate Logic (Same as before but refined) ---
         const yearSelect = document.getElementById('birth_year_select');
         const monthSelect = document.getElementById('birth_month_select');
         const daySelect = document.getElementById('birth_day_select');
-        const zodiacHint = document.getElementById('zodiac_hint');
         const zodiacInput = document.querySelector('input[name="zodiac_sign"]');
 
-        // Eto Array (Rat to Boar)
+        // Eto Array
         const eto = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
 
-        // Populate Years (1900 - Current)
+        // Populate Years
         const currentYear = new Date().getFullYear();
+        // Pre-select logic if editing (can parse from hidden input or context if avail, 
+        // but simpler to just populate and let user re-select for now if values missing)
+        // Actually Django form handles initial binding for standard fields, but we split them.
+        // Ideally we should pass initial values for year/month/day if editing.
+        // For now, populate options first.
+
         for (let y = currentYear; y >= 1900; y--) {
             const option = document.createElement('option');
             const age = currentYear - y;
-            // Calculate Eto: (Year - 4) % 12
             const etoIndex = (y - 4) % 12;
             const etoName = eto[etoIndex];
-
             option.value = y;
             option.text = `${y}年 (${age}歳・${etoName})`;
             yearSelect.appendChild(option);
         }
 
-        // Populate Days based on Month/Year
+        // Populate Days & Zodiac
         function updateDays() {
             const y = parseInt(yearSelect.value);
             const m = parseInt(monthSelect.value);
             const currentDay = parseInt(daySelect.value);
 
+            // Save current selection
+            const prevVal = daySelect.value;
+
             daySelect.innerHTML = '<option value="">日</option>';
             if (!m) return;
-
-            // Days in month calculation
             const daysInMonth = new Date(y || 2000, m, 0).getDate();
-
             for (let d = 1; d <= daysInMonth; d++) {
                 const option = document.createElement('option');
                 option.value = d;
                 option.text = d + '日';
-                if (d === currentDay) option.selected = true;
+                if (d == prevVal) option.selected = true;
                 daySelect.appendChild(option);
             }
             updateZodiac();
         }
 
-        // Calculate Zodiac (Constellation)
         function updateZodiac() {
             const m = parseInt(monthSelect.value);
             const d = parseInt(daySelect.value);
+            if (!m || !d) { zodiacInput.value = ''; return; }
 
-            if (!m || !d) {
-                zodiacHint.textContent = '';
-                zodiacInput.value = '';
-                return;
-            }
-
-            // Zodiac logic
             let sign = '';
-            let range = '';
+            if ((m == 3 && d >= 21) || (m == 4 && d <= 19)) sign = '牡羊座';
+            else if ((m == 4 && d >= 20) || (m == 5 && d <= 20)) sign = '牡牛座';
+            else if ((m == 5 && d >= 21) || (m == 6 && d <= 21)) sign = '双子座';
+            else if ((m == 6 && d >= 22) || (m == 7 && d <= 22)) sign = '蟹座';
+            else if ((m == 7 && d >= 23) || (m == 8 && d <= 22)) sign = '獅子座';
+            else if ((m == 8 && d >= 23) || (m == 9 && d <= 22)) sign = '乙女座';
+            else if ((m == 9 && d >= 23) || (m == 10 && d <= 23)) sign = '天秤座';
+            else if ((m == 10 && d >= 24) || (m == 11 && d <= 22)) sign = '蠍座';
+            else if ((m == 11 && d >= 23) || (m == 12 && d <= 21)) sign = '射手座';
+            else if ((m == 12 && d >= 22) || (m == 1 && d <= 19)) sign = '山羊座';
+            else if ((m == 1 && d >= 20) || (m == 2 && d <= 18)) sign = '水瓶座';
+            else sign = '魚座';
 
-            if ((m == 3 && d >= 21) || (m == 4 && d <= 19)) { sign = '牡羊座'; range = '3/21～4/19'; }
-            else if ((m == 4 && d >= 20) || (m == 5 && d <= 20)) { sign = '牡牛座'; range = '4/20～5/20'; }
-            else if ((m == 5 && d >= 21) || (m == 6 && d <= 21)) { sign = '双子座'; range = '5/21～6/21'; }
-            else if ((m == 6 && d >= 22) || (m == 7 && d <= 22)) { sign = '蟹座'; range = '6/22～7/22'; }
-            else if ((m == 7 && d >= 23) || (m == 8 && d <= 22)) { sign = '獅子座'; range = '7/23～8/22'; }
-            else if ((m == 8 && d >= 23) || (m == 9 && d <= 22)) { sign = '乙女座'; range = '8/23～9/22'; }
-            else if ((m == 9 && d >= 23) || (m == 10 && d <= 23)) { sign = '天秤座'; range = '9/23～10/23'; }
-            else if ((m == 10 && d >= 24) || (m == 11 && d <= 22)) { sign = '蠍座'; range = '10/24～11/22'; }
-            else if ((m == 11 && d >= 23) || (m == 12 && d <= 21)) { sign = '射手座'; range = '11/23～12/21'; }
-            else if ((m == 12 && d >= 22) || (m == 1 && d <= 19)) { sign = '山羊座'; range = '12/22～1/19'; }
-            else if ((m == 1 && d >= 20) || (m == 2 && d <= 18)) { sign = '水瓶座'; range = '1/20～2/18'; }
-            else { sign = '魚座'; range = '2/19～3/20'; }
-
-            // Update UI and hidden input
-            zodiacHint.textContent = `星座: ${sign} (${range})`;
             zodiacInput.value = sign;
-
-            // If user manually inputted zodiac, we could sync back, but requirement says "Update constelation when birthday entered" and "If zodiac entered, show hint". 
-            // Since input is read-only or hidden (auto-calc), this works.
         }
 
         yearSelect.addEventListener('change', updateDays);
         monthSelect.addEventListener('change', updateDays);
         daySelect.addEventListener('change', updateZodiac);
+
+        // --- Pre-fill Date Logic for Edit Mode ---
+        // If instance exists, we might need to parse birthdate if it's not None.
+        // However, since we use `birth_year` etc. as fields in form, Django might fill them if we set initial in GET.
+        // The current Form implementation extracts from cleaned_data on save, but doesn't decompose on init.
+        // We should probably rely on the user re-entering detailed date if editing, OR improved Form __init__.
+        // For this prototype, I'll rely on Django filling the `birth_year` input value if it matches the field name. 
+        // And I need to sync the Select with that value.
+
+        // Attempt to sync Selects with the Inputs (which might have values from backend)
+        // But wait, I rendered them AS Select widgets in the HTML manually...
+        // Actually in the Template I used `select` tags with IDs, but the `form.birth_year` renders an INPUT or SELECT?
+        // In forms.py I used `NumberInput`. So `{{ form.birth_year }}` renders `<input type="number">`.
+        // In my HTML I manually wrote `<select id="birth_year_select" name="birth_year">`.
+        // This naming collision `name="birth_year"` is good, it submits correctly.
+        // But to show existing value, I need to know the value.
+        // I will read the `value` attribute if Django rendered it, but I replaced Django's rendering with manual HTML.
+        // So I need to inject the value.
+        // A quick hack: Get the value from the form object in template.
+
+        const initialYear = "{{ form.birth_year.value|default:'' }}";
+        const initialMonth = "{{ form.birth_month.value|default:'' }}";
+        const initialDay = "{{ form.birth_day.value|default:'' }}";
+
+        if (initialYear) yearSelect.value = initialYear;
+        if (initialMonth) monthSelect.value = initialMonth;
+        // Trigger update days to populate day select
+        updateDays();
+        if (initialDay) daySelect.value = initialDay;
+        updateZodiac();
+
+
+        // --- Anniversary FormSet ---
+        const addAnniversaryBtn = document.getElementById('add_anniversary');
+        const anniversariesContainer = document.getElementById('anniversaries_container');
+        const totalForms = document.getElementById('id_customanniversary_set-TOTAL_FORMS');
+
+        addAnniversaryBtn.addEventListener('click', function () {
+            const formIdx = totalForms.value;
+            const emptyFormHtml = document.getElementById('empty_form').innerHTML;
+            const newFormHtml = emptyFormHtml.replace(/__prefix__/g, formIdx);
+
+            const div = document.createElement('div');
+            div.innerHTML = newFormHtml;
+            anniversariesContainer.appendChild(div.firstElementChild);
+
+            totalForms.value = parseInt(formIdx) + 1;
+        });
+
+        // --- Group Creation (AJAX) ---
+        const createGroupBtn = document.getElementById('create_group_btn');
+        createGroupBtn.addEventListener('click', function () {
+            const nameInput = document.getElementById('id_name'); // From group_form
+            const descInput = document.getElementById('id_description');
+            const name = nameInput.value;
+            const desc = descInput.value;
+
+            if (!name) return alert('グループ名を入力してください');
+
+            fetch('{% url "api_group_create" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({ name: name, description: desc })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Add to select list
+                        const select = document.getElementById('id_groups');
+                        const option = document.createElement('option');
+                        option.value = data.id;
+                        option.text = data.name;
+                        option.selected = true; // Auto-select new group
+                        select.appendChild(option);
+
+                        // Clear and close modal
+                        nameInput.value = '';
+                        descInput.value = '';
+                        document.getElementById('group_modal').classList.add('hidden');
+                    } else {
+                        alert('エラー: ' + data.error);
+                    }
+                });
+        });
     });
 </script>
 {% endblock %}

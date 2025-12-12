@@ -15,13 +15,21 @@ class Quest(models.Model):
     def __str__(self):
         return self.text
 
+class TargetGroup(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
 class Target(models.Model):
     RANK_CHOICES = [] # Removed
     GENDER_CHOICES = [
-        ('Male', 'Male'), ('Female', 'Female'), ('Other', 'Other'),
+        ('Male', '男性'), ('Female', '女性'), ('Other', 'その他'), ('Unknown', '不明'),
     ]
     BLOOD_CHOICES = [
-        ('A', 'A'), ('B', 'B'), ('O', 'O'), ('AB', 'AB'), ('Unknown', 'Unknown'),
+        ('A', 'A型'), ('B', 'B型'), ('O', 'O型'), ('AB', 'AB型'), ('Unknown', '不明'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -32,17 +40,18 @@ class Target(models.Model):
     nickname = models.CharField(max_length=50)
     # rank removed
     
-    aliases = models.CharField(max_length=200, blank=True)
+    reference_code = models.CharField(max_length=20, blank=True) # Future use?
+    
     birthdate = models.DateField(null=True, blank=True)
     zodiac_sign = models.CharField(max_length=20, blank=True)
-    height = models.FloatField(null=True, blank=True)
-    weight = models.FloatField(null=True, blank=True)
     
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, default='Female')
     blood_type = models.CharField(max_length=10, choices=BLOOD_CHOICES, default='Unknown')
-    origin = models.CharField(max_length=100, blank=True)
+    
+    birthplace = models.CharField(max_length=100, blank=True)
     
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
+    groups = models.ManyToManyField(TargetGroup, blank=True, related_name='targets')
     intel_depth = models.FloatField(default=0.0)
     last_contact = models.DateTimeField(null=True, blank=True)
     description = models.TextField(blank=True)
