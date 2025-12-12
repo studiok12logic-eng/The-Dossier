@@ -34,9 +34,13 @@
                     <div class="relative w-40 h-40 shrink-0">
                         <div
                             class="w-full h-full rounded-lg overflow-hidden border-2 border-primary/30 relative avatar-noise">
-                            <!-- Placeholder or uploaded image if available -->
-                            <img src="https://ui-avatars.com/api/?name=Elara+Vance&background=10b981&color=fff"
-                                alt="Target" class="w-full h-full object-cover">
+                            {% if active_target and active_target.avatar %}
+                            <img src="{{ active_target.avatar.url }}" alt="Target" class="w-full h-full object-cover">
+                            {% else %}
+                            <div
+                                class="w-full h-full bg-gray-700 flex items-center justify-center text-gray-400 text-xs">
+                                No Image</div>
+                            {% endif %}
                             <div class="absolute inset-0 bg-primary/10 mix-blend-overlay"></div>
                         </div>
                         <div
@@ -48,16 +52,23 @@
                     <!-- Info -->
                     <div class="flex-1 space-y-4 w-full">
                         <div>
-                            <h3 class="text-3xl font-bold text-white mb-1">{% if active_target %}{{
-                                active_target.nickname }}{% else %}未選択{% endif %}</h3>
+                            <h3 class="text-3xl font-bold text-white mb-1">
+                                {% if active_target %}
+                                {{ active_target.nickname }}
+                                {% else %}
+                                未選択
+                                {% endif %}
+                            </h3>
                             <div class="flex items-center gap-3">
                                 <span
-                                    class="px-2 py-0.5 rounded bg-primary/20 text-primary text-xs font-mono border border-primary/20">RANK:
-                                    {% if active_target %}{{ active_target.get_rank_display }}{% else %}N/A{% endif
-                                    %}</span>
+                                    class="px-2 py-0.5 rounded bg-primary/20 text-primary text-xs font-mono border border-primary/20">
+                                    RANK: {% if active_target %}{{ active_target.get_rank_display }}{% else %}N/A{%
+                                    endif %}
+                                </span>
                                 <span
-                                    class="px-2 py-0.5 rounded bg-orange-500/20 text-orange-400 text-xs font-mono border border-orange-500/20">SSR
-                                    Rarity</span>
+                                    class="px-2 py-0.5 rounded bg-orange-500/20 text-orange-400 text-xs font-mono border border-orange-500/20">
+                                    SSR Rarity
+                                </span>
                             </div>
                         </div>
 
@@ -65,12 +76,14 @@
                             <div class="bg-black/40 p-3 rounded border border-white/5">
                                 <p class="text-[10px] text-gray-500 uppercase tracking-wider mb-1">諜報収集率</p>
                                 <div class="flex items-end gap-2">
-                                    <span class="text-2xl font-mono font-bold text-primary">{% if active_target %}{{
-                                        active_target.intel_depth|default:"0" }}{% else %}0{% endif %}%</span>
+                                    <span class="text-2xl font-mono font-bold text-primary">
+                                        {% if active_target %}{{ active_target.intel_depth|default:"0" }}{% else %}0{%
+                                        endif %}%
+                                    </span>
                                     <div class="h-1.5 flex-1 bg-gray-800 rounded-full mb-2">
                                         <div class="h-full bg-primary rounded-full"
-                                            style="width: {% if active_target %}{{ active_target.intel_depth|default:"
-                                            0" }}{% else %}0{% endif %}%"></div>
+                                            style="width: {% if active_target %}{{ active_target.intel_depth|default:'0' }}{% else %}0{% endif %}%">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -99,23 +112,21 @@
                 </div>
 
                 <div class="space-y-4 font-mono text-sm">
+                    {% for item in timeline %}
                     <div
-                        class="flex gap-4 p-3 rounded hover:bg-white/5 border-l-2 border-primary bg-primary/5 transition-colors">
-                        <span class="text-gray-500 w-16 text-right">10:45 AM</span>
+                        class="flex gap-4 p-3 rounded hover:bg-white/5 border-l-2 {% if item.sentiment == 'Alert' or item.sentiment == 'Negative' %}border-red-500/50{% else %}border-primary{% endif %} bg-primary/5 transition-colors">
+                        <span class="text-gray-500 w-24 text-right flex-shrink-0">{{ item.date|date:"H:i" }}</span>
                         <div>
-                            <span class="text-primary font-bold">信号傍受</span>
-                            <span class="text-gray-400">@SECTOR 4</span>
-                            <p class="text-xs text-gray-500 mt-1">対象が「ネオンロータス」に入場するのを視覚的に確認。</p>
+                            <span
+                                class="{% if item.sentiment == 'Alert' or item.sentiment == 'Negative' %}text-red-400{% else %}text-primary{% endif %} font-bold">{{
+                                item.get_type_display }}</span>
+                            <span class="text-gray-400">@{{ item.target.origin }}</span>
+                            <p class="text-xs text-gray-500 mt-1">{{ item.content }}</p>
                         </div>
                     </div>
-                    <div class="flex gap-4 p-3 rounded hover:bg-white/5 border-l-2 border-red-500/50 transition-colors">
-                        <span class="text-gray-500 w-16 text-right">09:30 AM</span>
-                        <div>
-                            <span class="text-red-400 font-bold">監視ロスト</span>
-                            <span class="text-gray-400">@MARKET</span>
-                            <p class="text-xs text-gray-500 mt-1">対象が群衆に入り、信号が妨害されました。</p>
-                        </div>
-                    </div>
+                    {% empty %}
+                    <div class="text-center text-gray-500 py-4">データがありません</div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
@@ -150,7 +161,8 @@
                                 <div class="w-3 h-3 bg-primary rounded-full shadow-[0_0_10px_#10b981]"></div>
                                 <div
                                     class="absolute top-4 left-0 bg-primary/20 text-primary text-[10px] px-2 py-0.5 rounded border border-primary/30 whitespace-nowrap">
-                                    {% if active_target %}{{ active_target.nickname }}{% else %}未選択{% endif %}</div>
+                                    {% if active_target %}{{ active_target.nickname }}{% else %}未選択{% endif %}
+                                </div>
                             </div>
                         </div>
 
@@ -171,7 +183,7 @@
                             </div>
                         </div>
 
-                        <!-- Connecting Lines (SVG overlay could be better but using simple div lines for mock) -->
+                        <!-- Connecting Lines -->
                         <svg class="absolute inset-0 w-full h-full pointer-events-none">
                             <line x1="20%" y1="30%" x2="80%" y2="40%" stroke="#10b981" stroke-width="1"
                                 stroke-opacity="0.3" />
