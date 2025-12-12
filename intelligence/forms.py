@@ -1,21 +1,49 @@
 from django import forms
 from .models import Target
+import datetime
 
 class TargetForm(forms.ModelForm):
+    # Split name fields
+    last_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary', 'placeholder': '姓'}))
+    first_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary', 'placeholder': '名'}))
+    last_name_kana = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary', 'placeholder': 'せい'}))
+    first_name_kana = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary', 'placeholder': 'めい'}))
+    
+    # Birthdate split fields
+    birth_year = forms.IntegerField(required=False, widget=forms.NumberInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary', 'placeholder': '年'}))
+    birth_month = forms.IntegerField(required=False, widget=forms.NumberInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary', 'placeholder': '月', 'min': 1, 'max': 12}))
+    birth_day = forms.IntegerField(required=False, widget=forms.NumberInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary', 'placeholder': '日', 'min': 1, 'max': 31}))
+    
+    # Zodiac (Read-only or Hidden, calculated by JS)
+    zodiac_sign = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary', 'readonly': 'readonly'}))
+
     class Meta:
         model = Target
-        fields = ['name', 'nickname', 'rank', 'aliases', 'origin', 'gender', 'blood_type', 'birthdate', 'height', 'weight', 'description', 'avatar']
+        fields = ['nickname', 'last_name', 'first_name', 'last_name_kana', 'first_name_kana', 
+                  'aliases', 'origin', 'gender', 'blood_type', 'description', 'avatar', 'zodiac_sign']
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary'}),
-            'nickname': forms.TextInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary'}),
-            'rank': forms.Select(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary'}),
+            'nickname': forms.TextInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary', 'required': 'required'}),
             'aliases': forms.TextInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary'}),
             'origin': forms.TextInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary'}),
             'gender': forms.Select(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary'}),
             'blood_type': forms.Select(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary'}),
-            'birthdate': forms.DateInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary', 'type': 'date'}),
-            'height': forms.NumberInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary'}),
-            'weight': forms.NumberInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary'}),
             'description': forms.Textarea(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary', 'rows': 4}),
             'avatar': forms.FileInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-black hover:file:bg-primary/80'}),
         }
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        # Combine birth fields
+        year = self.cleaned_data.get('birth_year')
+        month = self.cleaned_data.get('birth_month')
+        day = self.cleaned_data.get('birth_day')
+        
+        if year and month and day:
+            try:
+                instance.birthdate = datetime.date(year, month, day)
+            except ValueError:
+                pass # Invalid date
+        
+        if commit:
+            instance.save()
+        return instance

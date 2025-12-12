@@ -16,10 +16,7 @@ class Quest(models.Model):
         return self.text
 
 class Target(models.Model):
-    RANK_CHOICES = [
-        ('S', 'S'), ('A', 'A'), ('B', 'B'), ('C', 'C'),
-        ('Taboo', 'Taboo'), ('System', 'System'),
-    ]
+    RANK_CHOICES = [] # Removed
     GENDER_CHOICES = [
         ('Male', 'Male'), ('Female', 'Female'), ('Other', 'Other'),
     ]
@@ -28,12 +25,16 @@ class Target(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=50, blank=True)
+    first_name = models.CharField(max_length=50, blank=True)
+    last_name_kana = models.CharField(max_length=50, blank=True)
+    first_name_kana = models.CharField(max_length=50, blank=True)
     nickname = models.CharField(max_length=50)
-    rank = models.CharField(max_length=10, choices=RANK_CHOICES, default='C')
+    # rank removed
     
     aliases = models.CharField(max_length=200, blank=True)
     birthdate = models.DateField(null=True, blank=True)
+    zodiac_sign = models.CharField(max_length=20, blank=True)
     height = models.FloatField(null=True, blank=True)
     weight = models.FloatField(null=True, blank=True)
     

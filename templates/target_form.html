@@ -7,11 +7,11 @@
     <div class="flex items-center justify-between">
         <h1 class="text-2xl font-mono font-bold text-white flex items-center gap-2">
             <span class="w-2 h-8 bg-primary block"></span>
-            Add New Target
+            新規ターゲット登録
         </h1>
         <div class="flex items-center gap-4">
             <a href="{% url 'target_list' %}"
-                class="text-sm font-mono text-gray-500 hover:text-white transition-colors">CANCEL</a>
+                class="text-sm font-mono text-gray-500 hover:text-white transition-colors">キャンセル</a>
         </div>
     </div>
 
@@ -23,107 +23,260 @@
             </svg>
         </div>
 
-        <form method="post" enctype="multipart/form-data" class="space-y-6 relative z-10">
+        <form method="post" enctype="multipart/form-data" class="space-y-8 relative z-10 font-bold" autocomplete="off">
             {% csrf_token %}
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <!-- Basic Info -->
-                <div class="space-y-4">
+                <div class="space-y-6">
                     <h3
                         class="text-sm font-mono text-primary tracking-widest uppercase border-b border-primary/20 pb-2 mb-4">
-                        Identity Protocol</h3>
+                        基本情報 (Identity)</h3>
 
+                    <!-- Nickname (Required) -->
                     <div>
-                        <label class="block text-xs font-mono text-gray-400 mb-1">Full Name</label>
-                        {{ form.name }}
-                        {% if form.name.errors %}
-                        <p class="text-red-500 text-xs mt-1">{{ form.name.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-mono text-gray-400 mb-1">Nickname / Codename</label>
+                        <label class="block text-xs font-mono text-primary mb-1">ニックネーム / コードネーム <span
+                                class="text-red-500">*</span></label>
                         {{ form.nickname }}
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-mono text-gray-400 mb-1">Rank / Classification</label>
-                        {{ form.rank }}
+                    <!-- Name (Split) -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-mono text-gray-400 mb-1">姓</label>
+                            {{ form.last_name }}
+                        </div>
+                        <div>
+                            <label class="block text-xs font-mono text-gray-400 mb-1">名</label>
+                            {{ form.first_name }}
+                        </div>
+                    </div>
+
+                    <!-- Kana (Split) -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-mono text-gray-400 mb-1">せい</label>
+                            {{ form.last_name_kana }}
+                        </div>
+                        <div>
+                            <label class="block text-xs font-mono text-gray-400 mb-1">めい</label>
+                            {{ form.first_name_kana }}
+                        </div>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-mono text-gray-400 mb-1">Aliases</label>
+                        <label class="block text-xs font-mono text-gray-400 mb-1">エイリアス / 別名</label>
                         {{ form.aliases }}
                     </div>
                 </div>
 
-                <!-- Biological Data -->
-                <div class="space-y-4">
+                <!-- Personal Data -->
+                <div class="space-y-6">
                     <h3
                         class="text-sm font-mono text-primary tracking-widest uppercase border-b border-primary/20 pb-2 mb-4">
-                        Bio-Metrics</h3>
+                        生体情報 (Bio-Metrics)</h3>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-mono text-gray-400 mb-1">Gender</label>
+                            <label class="block text-xs font-mono text-gray-400 mb-1">性別</label>
                             {{ form.gender }}
                         </div>
                         <div>
-                            <label class="block text-xs font-mono text-gray-400 mb-1">Blood Type</label>
+                            <label class="block text-xs font-mono text-gray-400 mb-1">血液型</label>
                             {{ form.blood_type }}
                         </div>
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-mono text-gray-400 mb-1">Birthdate</label>
-                        {{ form.birthdate }}
+                    <!-- Birthdate & Zodiac Logic -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-mono text-gray-400 mb-1">生年月日</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <!-- Year with Age/Eto logic -->
+                            <div class="relative">
+                                <select id="birth_year_select" name="birth_year"
+                                    class="w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary appearance-none">
+                                    <option value="">年</option>
+                                    <!-- JS populates this -->
+                                </select>
+                                <div
+                                    class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 20 20">
+                                        <path
+                                            d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <!-- Month -->
+                            <div class="relative">
+                                <select id="birth_month_select" name="birth_month"
+                                    class="w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary appearance-none">
+                                    <option value="">月</option>
+                                    {% for i in "123456789012"|make_list %}
+                                    <option value="{{ forloop.counter }}">{{ forloop.counter }}月</option>
+                                    {% endfor %}
+                                </select>
+                                <div
+                                    class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 20 20">
+                                        <path
+                                            d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <!-- Day -->
+                            <div class="relative">
+                                <select id="birth_day_select" name="birth_day"
+                                    class="w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary appearance-none">
+                                    <option value="">日</option>
+                                    <!-- JS populates -->
+                                </select>
+                                <div
+                                    class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 20 20">
+                                        <path
+                                            d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Helper Text -->
+                        <div id="zodiac_hint" class="text-xs text-primary/80 font-mono h-4"></div>
+
+                        <!-- Zodiac Hidden Input (Auto-filled) -->
+                        <div class="hidden">
+                            {{ form.zodiac_sign }}
+                        </div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-mono text-gray-400 mb-1">Height (cm)</label>
-                            {{ form.height }}
-                        </div>
-                        <div>
-                            <label class="block text-xs font-mono text-gray-400 mb-1">Weight (kg)</label>
-                            {{ form.weight }}
-                        </div>
-                    </div>
-
                     <div>
-                        <label class="block text-xs font-mono text-gray-400 mb-1">Origin / Affiliation</label>
+                        <label class="block text-xs font-mono text-gray-400 mb-1">所属 / 出身</label>
                         {{ form.origin }}
                     </div>
                 </div>
             </div>
 
             <!-- Detailed Info -->
-            <div class="space-y-4 mt-8">
+            <div class="space-y-6 mt-8">
                 <h3
                     class="text-sm font-mono text-primary tracking-widest uppercase border-b border-primary/20 pb-2 mb-4">
-                    Dossier Details</h3>
+                    詳細情報 (Analysis)</h3>
 
                 <div>
-                    <label class="block text-xs font-mono text-gray-400 mb-1">Description / Notes</label>
+                    <label class="block text-xs font-mono text-gray-400 mb-1">詳細 / メモ</label>
                     {{ form.description }}
                 </div>
 
                 <div>
-                    <label class="block text-xs font-mono text-gray-400 mb-1">Profile Image</label>
+                    <label class="block text-xs font-mono text-gray-400 mb-1">プロフィール画像</label>
                     {{ form.avatar }}
                 </div>
             </div>
 
             <div class="pt-6 border-t border-white/10 flex justify-end">
                 <button type="submit"
-                    class="px-8 py-3 bg-primary text-black font-bold font-mono rounded hover:bg-primary/90 transition-all flex items-center gap-2">
+                    class="px-8 py-3 bg-primary text-black font-bold font-mono rounded hover:bg-primary/90 transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                     </svg>
-                    INITIALIZE TARGET
+                    登録を実行 (EXECUTE)
                 </button>
             </div>
         </form>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const yearSelect = document.getElementById('birth_year_select');
+        const monthSelect = document.getElementById('birth_month_select');
+        const daySelect = document.getElementById('birth_day_select');
+        const zodiacHint = document.getElementById('zodiac_hint');
+        const zodiacInput = document.querySelector('input[name="zodiac_sign"]');
+
+        // Eto Array (Rat to Boar)
+        const eto = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+
+        // Populate Years (1900 - Current)
+        const currentYear = new Date().getFullYear();
+        for (let y = currentYear; y >= 1900; y--) {
+            const option = document.createElement('option');
+            const age = currentYear - y;
+            // Calculate Eto: (Year - 4) % 12
+            const etoIndex = (y - 4) % 12;
+            const etoName = eto[etoIndex];
+
+            option.value = y;
+            option.text = `${y}年 (${age}歳・${etoName})`;
+            yearSelect.appendChild(option);
+        }
+
+        // Populate Days based on Month/Year
+        function updateDays() {
+            const y = parseInt(yearSelect.value);
+            const m = parseInt(monthSelect.value);
+            const currentDay = parseInt(daySelect.value);
+
+            daySelect.innerHTML = '<option value="">日</option>';
+            if (!m) return;
+
+            // Days in month calculation
+            const daysInMonth = new Date(y || 2000, m, 0).getDate();
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const option = document.createElement('option');
+                option.value = d;
+                option.text = d + '日';
+                if (d === currentDay) option.selected = true;
+                daySelect.appendChild(option);
+            }
+            updateZodiac();
+        }
+
+        // Calculate Zodiac (Constellation)
+        function updateZodiac() {
+            const m = parseInt(monthSelect.value);
+            const d = parseInt(daySelect.value);
+
+            if (!m || !d) {
+                zodiacHint.textContent = '';
+                zodiacInput.value = '';
+                return;
+            }
+
+            // Zodiac logic
+            let sign = '';
+            let range = '';
+
+            if ((m == 3 && d >= 21) || (m == 4 && d <= 19)) { sign = '牡羊座'; range = '3/21～4/19'; }
+            else if ((m == 4 && d >= 20) || (m == 5 && d <= 20)) { sign = '牡牛座'; range = '4/20～5/20'; }
+            else if ((m == 5 && d >= 21) || (m == 6 && d <= 21)) { sign = '双子座'; range = '5/21～6/21'; }
+            else if ((m == 6 && d >= 22) || (m == 7 && d <= 22)) { sign = '蟹座'; range = '6/22～7/22'; }
+            else if ((m == 7 && d >= 23) || (m == 8 && d <= 22)) { sign = '獅子座'; range = '7/23～8/22'; }
+            else if ((m == 8 && d >= 23) || (m == 9 && d <= 22)) { sign = '乙女座'; range = '8/23～9/22'; }
+            else if ((m == 9 && d >= 23) || (m == 10 && d <= 23)) { sign = '天秤座'; range = '9/23～10/23'; }
+            else if ((m == 10 && d >= 24) || (m == 11 && d <= 22)) { sign = '蠍座'; range = '10/24～11/22'; }
+            else if ((m == 11 && d >= 23) || (m == 12 && d <= 21)) { sign = '射手座'; range = '11/23～12/21'; }
+            else if ((m == 12 && d >= 22) || (m == 1 && d <= 19)) { sign = '山羊座'; range = '12/22～1/19'; }
+            else if ((m == 1 && d >= 20) || (m == 2 && d <= 18)) { sign = '水瓶座'; range = '1/20～2/18'; }
+            else { sign = '魚座'; range = '2/19～3/20'; }
+
+            // Update UI and hidden input
+            zodiacHint.textContent = `星座: ${sign} (${range})`;
+            zodiacInput.value = sign;
+
+            // If user manually inputted zodiac, we could sync back, but requirement says "Update constelation when birthday entered" and "If zodiac entered, show hint". 
+            // Since input is read-only or hidden (auto-calc), this works.
+        }
+
+        yearSelect.addEventListener('change', updateDays);
+        monthSelect.addEventListener('change', updateDays);
+        daySelect.addEventListener('change', updateZodiac);
+    });
+</script>
 {% endblock %}
