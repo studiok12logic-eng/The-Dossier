@@ -343,7 +343,7 @@
 
             if (!name) return alert('グループ名を入力してください');
 
-            fetch('{% url "api_group_create" %}', {
+            fetch('{% url "group_add" %}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
