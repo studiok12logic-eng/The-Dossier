@@ -192,10 +192,33 @@
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-mono text-gray-400 mb-1">回答・反応</label>
+
+                    <!-- Question Details Box -->
+                    <div id="qDetails" class="hidden bg-surface/50 border border-white/10 rounded p-3 text-xs space-y-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-gray-400 font-mono">Rank:</span>
+                            <span id="qRank" class="text-primary font-bold"></span>
+                        </div>
+                        <div>
+                            <span class="block text-gray-400 font-mono mb-1">Intent:</span>
+                            <p id="qDesc" class="text-gray-300"></p>
+                        </div>
+                        <div>
+                            <span class="block text-gray-400 font-mono mb-1">Example:</span>
+                            <p id="qEx" class="text-gray-400 italic"></p>
+                        </div>
+                    </div>
+
+                    <!-- Choices Area -->
+                    <div id="qChoicesCheck" class="hidden">
+                        <label class="block text-xs font-mono text-gray-400 mb-1">選択肢 (複数可)</label>
+                        <div id="qChoicesContainer" class="flex flex-wrap gap-2"></div>
+                    </div>
+
+                    <label class="block text-xs font-mono text-gray-400 mb-1">回答・反応 (Optional)</label>
                     <textarea id="qAnswer"
-                        class="w-full h-32 bg-black/20 border border-white/10 rounded p-3 text-sm text-white focus:border-primary focus:outline-none"
-                        placeholder="回答を入力..."></textarea>
+                        class="w-full h-24 bg-black/20 border border-white/10 rounded p-3 text-sm text-white focus:border-primary focus:outline-none"
+                        placeholder="回答を入力 (選択肢の補足など)"></textarea>
                 </div>
             </div>
         </div>
@@ -243,7 +266,16 @@
 <script id="questionsData" type="application/json">
 [
     {% for q in questions %}
-    {"id": "{{ q.id }}", "category": "{{ q.category|default:'' }}", "text": "{{ q.title }}"}{% if not forloop.last %},{% endif %}
+    {
+        "id": "{{ q.id }}", 
+        "category": "{{ q.category|default:'' }}", 
+        "text": "{{ q.title }}",
+        "description": "{{ q.description|escapejs }}",
+        "example": "{{ q.example|escapejs }}",
+        "answer_type": "{{ q.answer_type }}",
+        "choices": "{{ q.choices|escapejs }}",
+        "rank": {% if q.rank %}"{{ q.rank.name }} ({{ q.rank.points }}pt)"{% else %}null{% endif %}
+    }{% if not forloop.last %},{% endif %}
     {% endfor %}
 ]
 </script>
@@ -367,24 +399,8 @@
         formEvent.classList.add('hidden');
     });
 
-    // --- Question Logic ---
-    qCategory.addEventListener('change', function () {
-        const cat = this.value;
-        qSelect.innerHTML = '<option value="">質問を選択...</option>';
-        if (!cat) {
-            qSelect.disabled = true;
-            return;
-        }
+    // --- Question Logic (Removed duplicate) ---
 
-        const filtered = questionsData.filter(q => q.category === cat);
-        filtered.forEach(q => {
-            const opt = document.createElement('option');
-            opt.value = q.text;
-            opt.textContent = q.text;
-            qSelect.appendChild(opt);
-        });
-        qSelect.disabled = false;
-    });
 
 
     // --- Add Target Modal ---
@@ -432,6 +448,87 @@
         }
     });
 
+    // Question Selection Logic
+    // Variables qCategory, qSelect etc are already defined at top of script
+    const qDetails = document.getElementById('qDetails');
+    const qRank = document.getElementById('qRank');
+    const qDesc = document.getElementById('qDesc');
+    const qEx = document.getElementById('qEx');
+    const qChoicesCheck = document.getElementById('qChoicesCheck');
+    const qChoicesContainer = document.getElementById('qChoicesContainer');
+    
+    // Track selected choices
+    let selectedChoices = new Set();
+    let currentQuestion = null;
+
+    qCategory.addEventListener('change', (e) => {
+        const cat = e.target.value;
+        qSelect.innerHTML = '<option value="">質問を選択してください</option>';
+        qSelect.disabled = !cat;
+        
+        // Reset details
+        qDetails.classList.add('hidden');
+        qChoicesCheck.classList.add('hidden');
+        selectedChoices.clear();
+        currentQuestion = null;
+
+        if (cat) {
+            const dateStr = document.getElementById('currentDateDisplay').textContent;
+            
+            questionsData.filter(q => q.category === cat).forEach(q => {
+                const opt = new Option(q.text, q.id);
+                qSelect.add(opt);
+            });
+        }
+    });
+
+    qSelect.addEventListener('change', (e) => {
+        const qId = e.target.value;
+        const q = questionsData.find(item => item.id === qId);
+        currentQuestion = q;
+        selectedChoices.clear();
+        
+        if (q) {
+            // Show Details
+            qRank.textContent = q.rank || '-';
+            qDesc.textContent = q.description || '-';
+            qEx.textContent = q.example || '-';
+            qDetails.classList.remove('hidden');
+
+            // Handle Choices
+            qChoicesContainer.innerHTML = '';
+            if (q.answer_type === 'SELECTION' && q.choices) {
+                qChoicesCheck.classList.remove('hidden');
+                const choices = q.choices.split(',').map(c => c.trim()).filter(c => c);
+                choices.forEach(c => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'choice-btn px-3 py-1 rounded-full border border-white/20 text-xs text-gray-300 hover:border-primary hover:text-primary transition bg-black/40';
+                    btn.textContent = c;
+                    btn.onclick = () => toggleChoice(btn, c);
+                    qChoicesContainer.appendChild(btn);
+                });
+            } else {
+                qChoicesCheck.classList.add('hidden');
+            }
+        } else {
+            qDetails.classList.add('hidden');
+            qChoicesCheck.classList.add('hidden');
+        }
+    });
+
+    function toggleChoice(btn, value) {
+        if (selectedChoices.has(value)) {
+            selectedChoices.delete(value);
+            btn.classList.remove('bg-primary/20', 'border-primary', 'text-primary');
+            btn.classList.add('bg-black/40', 'border-white/20', 'text-gray-300');
+        } else {
+            selectedChoices.add(value);
+            btn.classList.add('bg-primary/20', 'border-primary', 'text-primary');
+            btn.classList.remove('bg-black/40', 'border-white/20', 'text-gray-300');
+        }
+    }
+
     // --- Tag Interaction ---
     const tagBtns = document.querySelectorAll('.tag-btn');
     tagBtns.forEach(btn => {
@@ -443,59 +540,82 @@
         });
     });
 
-    // --- Save Logic ---
-    saveBtn.addEventListener('click', function () {
-        if (!currentTargetId) return;
+    // Save Logic Update
+    document.getElementById('saveLogBtn').addEventListener('click', () => {
+        if (!currentTargetId) {
+            alert('ターゲットを選択してください');
+            return;
+        }
 
-        const isEvent = !formEvent.classList.contains('hidden');
+        const activeTab = document.querySelector('button[id^="tab-"].text-primary').id;
         const payload = {
             target_id: currentTargetId,
-            date: document.getElementById('logDate').value,
-            contact_made: document.getElementById('contactFlag').checked,
-            type: isEvent ? 'EVENT' : 'ANSWER'
+            date: document.getElementById('logDate').value, // Assuming logDate is the correct ID for the date input
+            description: "",
+            event_type: "NOTE",
+            tags: [],
+            question_id: null
         };
 
-        if (isEvent) {
-            payload.content = document.getElementById('eventContent').value;
-            payload.content = document.getElementById('eventContent').value;
-            // Collect Tags
-            const selectedTags = Array.from(document.querySelectorAll('.tag-btn.border-primary')).map(el => el.dataset.id);
-            payload.tags = selectedTags;
+        if (activeTab === 'tabEvent') { // Changed from 'tab-timeline' to 'tabEvent' based on existing HTML
+            payload.description = document.getElementById('eventContent').value; // Changed from 'timelineDesc' to 'eventContent'
+            // Collect selected tags
+            document.querySelectorAll('.tag-btn.border-primary').forEach(btn => { // Adjusted selector for tags
+               payload.tags.push(btn.dataset.id); 
+            });
+            // Also include contact_made if it's an event
+            payload.contact_made = document.getElementById('contactFlag').checked;
+
+            if (!payload.description && !payload.contact_made && payload.tags.length === 0) {
+                alert("内容を入力するか接触フラグをONにするかタグを選択してください");
+                return;
+            }
+
+        } else { // This is the question tab
+            const qId = qSelect.value;
+            let ans = document.getElementById('qAnswer').value;
             
-            if (!payload.content && !payload.contact_made) {
-                alert("内容を入力するか接触フラグをONにしてください");
+            if (!qId) {
+                alert('質問を選択してください');
                 return;
             }
-        } else {
-            payload.category = qCategory.value;
-            payload.question_text = qSelect.value;
-            payload.answer = document.getElementById('qAnswer').value;
-            if (!payload.answer) {
-                alert("回答を入力してください");
-                return;
+            
+            // Prepend choices if any
+            if (currentQuestion && currentQuestion.answer_type === 'SELECTION' && selectedChoices.size > 0) {
+                const choicesStr = Array.from(selectedChoices).join(', ');
+                ans = `[選択: ${choicesStr}]\n${ans}`;
             }
+
+            if (!ans.trim() && selectedChoices.size === 0) {
+                 alert('回答を入力または選択してください');
+                 return;
+            }
+
+            payload.description = ans;
+            payload.event_type = 'QUESTION'; // Backend handles this logic? Or uses question_id to infer
+            payload.question_id = qId;
         }
 
         fetch('{% url "intelligence_log" %}', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value, // Using existing CSRF token selector
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify(payload)
         })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    alert("記録しました (Saved)");
-                    // Clear inputs
-                    document.getElementById('eventContent').value = '';
-                    document.getElementById('qAnswer').value = '';
-                    location.reload(); // Reload to update "Log Exists" status
-                } else {
-                    alert("Error: " + data.error);
-                }
-            });
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert("記録しました (Saved)");
+                // Clear inputs
+                document.getElementById('eventContent').value = '';
+                document.getElementById('qAnswer').value = '';
+                location.reload(); // Reload to update "Log Exists" status
+            } else {
+                alert("Error: " + data.error);
+            }
+        });
     });
 
 </script>
