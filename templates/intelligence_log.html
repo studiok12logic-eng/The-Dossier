@@ -95,17 +95,18 @@
         </div>
     </div>
 
-    <!-- Right Panel: Dossier Input -->
-    <div class="flex-1 bg-surface/30 border border-white/10 rounded-xl overflow-hidden flex flex-col relative">
+    <!-- Right Panel: Dossier Chat-style Input -->
+    <div class="flex-1 bg-surface/30 border border-white/10 rounded-xl overflow-hidden flex flex-col relative h-full">
         <!-- Overlay for No Selection -->
         <div id="noSelectionOverlay"
-            class="absolute inset-0 z-10 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center text-gray-500">
+            class="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center text-gray-500">
             <div class="text-4xl mb-4 opacity-50">⚡</div>
             <div class="font-mono text-sm">SELECT TARGET FROM LEFT PANEL</div>
         </div>
 
-        <!-- Header -->
-        <div class="p-4 border-b border-white/10 bg-black/20 flex justify-between items-center">
+        <!-- 1. HEADER: Target Info & Timeline Search -->
+        <div class="p-4 border-b border-white/10 bg-black/20 flex justify-between items-center shrink-0 z-10 shadow-md">
+            <!-- Target Info -->
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded bg-black border border-white/10 overflow-hidden" id="selectedAvatar">
                     <!-- JS populated -->
@@ -115,120 +116,118 @@
                     <div class="text-[10px] text-gray-500">DOSSIER ENTRY</div>
                 </div>
             </div>
-            <div class="flex items-center gap-4">
-                <div class="flex items-center gap-2">
-                    <input type="checkbox" id="contactFlag"
-                        class="rounded border-gray-600 text-primary bg-gray-900 w-4 h-4">
-                    <label for="contactFlag" class="text-xs text-gray-300 cursor-pointer">接触発生 (CONTACT)</label>
+
+            <!-- Search & Filters -->
+            <div class="flex items-center gap-2">
+                <div class="relative group">
+                    <input type="text" id="timelineSearch" placeholder="Search logs..." 
+                        class="bg-black/50 border border-white/10 rounded-full px-3 py-1 text-xs text-white focus:border-primary w-32 focus:w-48 transition-all">
+                    <i class="fas fa-search absolute right-3 top-1.5 text-gray-500 text-xs pointer-events-none"></i>
                 </div>
+                
+                <select id="timelineTypeFilter" class="bg-black/50 border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-primary">
+                    <option value="">ALL</option>
+                    <option value="EVENT">EVENT</option>
+                    <option value="QUESTION">QUESTION</option>
+                </select>
+
                 <input type="date" id="logDate" value="{{ today_date }}"
                     class="bg-black/50 border border-white/10 rounded px-2 py-1 text-xs text-white">
             </div>
         </div>
 
-        <!-- Tabs -->
-        <div class="flex border-b border-white/10">
-            <button class="flex-1 py-3 text-xs font-mono text-center border-b-2 border-primary text-white bg-white/5"
-                id="tabEvent">
-                出来事 (EVENT)
-            </button>
-            <button
-                class="flex-1 py-3 text-xs font-mono text-center border-b-2 border-transparent text-gray-500 hover:text-gray-300"
-                id="tabQuestion">
-                質問 (QUESTION)
-            </button>
+        <!-- 2. TIMELINE: Infinite Scroll Area -->
+        <div id="timelineContainer" class="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth bg-black/20">
+            <!-- Loading Indicator -->
+            <div id="timelineLoading" class="hidden text-center py-2 text-gray-500 text-xs">
+                <i class="fas fa-spinner fa-spin"></i> Loading history...
+            </div>
+            
+            <!-- Timeline items will be injected here -->
+            <div id="timelineContent" class="space-y-4 flex flex-col justify-end min-h-0"></div>
         </div>
 
-        <!-- Forms -->
-        <div class="flex-1 p-6 overflow-y-auto">
-            <!-- Event Form -->
-            <div id="formEvent" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-mono text-gray-400 mb-1">出来事・会話・観察内容</label>
-                    <textarea id="eventContent"
-                        class="w-full h-40 bg-black/20 border border-white/10 rounded p-3 text-sm text-white focus:border-primary focus:outline-none"
-                        placeholder="詳細を入力..."></textarea>
-                </div>
-                <div>
-                    <label class="block text-xs font-mono text-gray-400 mb-1">タグ (選択)</label>
-                    <div class="flex flex-wrap gap-2 mb-2" id="tagSelectionArea">
-                        {% for tag in tags %}
-                        <button type="button" 
-                            class="tag-btn px-3 py-1 rounded-full border border-white/20 text-xs text-gray-300 hover:border-primary hover:text-primary transition bg-black/40"
-                            data-id="{{ tag.id }}" data-name="{{ tag.name }}">
-                            {{ tag.name }}
-                        </button>
-                        {% endfor %}
-                    </div>
-                     <!-- Hidden text input for fallback or manual entry if needed later (currently unused for logic) -->
-                    <input type="text" id="eventTags"
-                        class="hidden w-full bg-black/20 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
-                        placeholder="タグを追加...">
-                </div>
+        <!-- 3. FOOTER: Input Area (Fixed) -->
+        <div class="bg-surface border-t border-white/10 shrink-0 z-20 shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
+            <!-- Tabs -->
+            <div class="flex border-b border-white/10 bg-black/20">
+                <button class="flex-1 py-2 text-xs font-mono text-center border-b-2 border-primary text-white bg-white/5 transition-colors"
+                    id="tabEvent">
+                    出来事 (EVENT)
+                </button>
+                <button
+                    class="flex-1 py-2 text-xs font-mono text-center border-b-2 border-transparent text-gray-500 hover:text-gray-300 transition-colors"
+                    id="tabQuestion">
+                    質問 (QUESTION)
+                </button>
             </div>
 
-            <!-- Question Form -->
-            <div id="formQuestion" class="space-y-4 hidden">
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-mono text-gray-400 mb-1">カテゴリ</label>
-                        <select id="qCategory"
-                            class="w-full bg-black/20 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-primary focus:outline-none">
-                            <option value="">カテゴリ選択</option>
-                            <!-- Unique Categories from Questions -->
-                            {% regroup questions by category as category_list %}
-                            {% for cat in category_list %}
-                            <option value="{{ cat.grouper }}">{{ cat.grouper }}</option>
+            <div class="flex">
+                <!-- Main Form Area -->
+                <div class="flex-1 p-4 max-h-[30vh] overflow-y-auto">
+                     <!-- Event Form -->
+                    <div id="formEvent" class="space-y-3">
+                        <textarea id="eventContent"
+                            class="w-full h-20 bg-black/20 border border-white/10 rounded p-3 text-sm text-white focus:border-primary focus:outline-none resize-none"
+                            placeholder="出来事・会話・観察内容..."></textarea>
+                        
+                        <!-- Mini Tags -->
+                        <div class="flex flex-wrap gap-1" id="tagSelectionArea">
+                            {% for tag in tags %}
+                            <button type="button" 
+                                class="tag-btn px-2 py-0.5 rounded-full border border-white/20 text-[10px] text-gray-400 hover:border-primary hover:text-primary transition bg-black/40"
+                                data-id="{{ tag.id }}" data-name="{{ tag.name }}">
+                                {{ tag.name }}
+                            </button>
                             {% endfor %}
-                        </select>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-xs font-mono text-gray-400 mb-1">質問項目</label>
-                        <select id="qSelect"
-                            class="w-full bg-black/20 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
-                            disabled>
-                            <option value="">カテゴリを選択してください</option>
-                        </select>
+
+                    <!-- Question Form -->
+                    <div id="formQuestion" class="space-y-3 hidden">
+                        <div class="flex gap-2">
+                             <select id="qCategory" class="flex-1 bg-black/20 border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-primary">
+                                <option value="">カテゴリ</option>
+                                {% regroup questions by category as category_list %}
+                                {% for cat in category_list %}
+                                <option value="{{ cat.grouper }}">{{ cat.grouper }}</option>
+                                {% endfor %}
+                            </select>
+                            <select id="qSelect" class="flex-[2] bg-black/20 border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-primary" disabled>
+                                <option value="">質問選択...</option>
+                            </select>
+                        </div>
+
+                         <!-- Details & Choices (Collapsed by default logic handled by JS) -->
+                        <div id="qDetails" class="hidden bg-black/20 border border-white/5 rounded p-2 text-[10px] text-gray-400 flex gap-4">
+                             <div>Rank: <span id="qRank" class="text-primary"></span></div>
+                             <div class="truncate flex-1">Intent: <span id="qDesc"></span></div>
+                        </div>
+                        
+                        <div id="qChoicesCheck" class="hidden">
+                             <div id="qChoicesContainer" class="flex flex-wrap gap-1"></div>
+                        </div>
+
+                        <textarea id="qAnswer"
+                            class="w-full h-16 bg-black/20 border border-white/10 rounded p-3 text-sm text-white focus:border-primary focus:outline-none resize-none"
+                            placeholder="回答・反応..."></textarea>
                     </div>
                 </div>
-                <div>
 
-                    <!-- Question Details Box -->
-                    <div id="qDetails" class="hidden bg-surface/50 border border-white/10 rounded p-3 text-xs space-y-2">
-                        <div class="flex items-center gap-2">
-                            <span class="text-gray-400 font-mono">Rank:</span>
-                            <span id="qRank" class="text-primary font-bold"></span>
-                        </div>
-                        <div>
-                            <span class="block text-gray-400 font-mono mb-1">Intent:</span>
-                            <p id="qDesc" class="text-gray-300"></p>
-                        </div>
-                        <div>
-                            <span class="block text-gray-400 font-mono mb-1">Example:</span>
-                            <p id="qEx" class="text-gray-400 italic"></p>
-                        </div>
+                <!-- Right Action Bar -->
+                <div class="w-32 border-l border-white/10 bg-black/20 p-3 flex flex-col justify-between items-center gap-2">
+                     <div class="flex flex-col items-center gap-1 cursor-pointer group" onclick="document.getElementById('contactFlag').click()">
+                        <input type="checkbox" id="contactFlag" class="rounded border-gray-600 text-primary bg-gray-900 w-4 h-4 cursor-pointer">
+                        <label class="text-[10px] text-gray-400 group-hover:text-white cursor-pointer text-center leading-tight">接触<br>発生</label>
                     </div>
 
-                    <!-- Choices Area -->
-                    <div id="qChoicesCheck" class="hidden">
-                        <label class="block text-xs font-mono text-gray-400 mb-1">選択肢 (複数可)</label>
-                        <div id="qChoicesContainer" class="flex flex-wrap gap-2"></div>
-                    </div>
-
-                    <label class="block text-xs font-mono text-gray-400 mb-1">回答・反応 (Optional)</label>
-                    <textarea id="qAnswer"
-                        class="w-full h-24 bg-black/20 border border-white/10 rounded p-3 text-sm text-white focus:border-primary focus:outline-none"
-                        placeholder="回答を入力 (選択肢の補足など)"></textarea>
+                    <button id="saveLogBtn"
+                        class="w-full py-2 bg-primary text-black font-bold font-mono text-xs rounded hover:bg-primary/90 transition shadow-[0_0_10px_rgba(34,197,94,0.3)] flex flex-col items-center justify-center">
+                        <i class="fas fa-paper-plane mb-1"></i>
+                        SAVE
+                    </button>
                 </div>
             </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="p-4 border-t border-white/10 bg-black/20 flex justify-end">
-            <button id="saveLogBtn"
-                class="px-6 py-2 bg-primary text-black font-bold font-mono text-sm rounded hover:bg-primary/90 transition shadow-[0_0_15px_rgba(34,197,94,0.3)]">
-                記録する (SAVE LOG)
-            </button>
         </div>
     </div>
 </div>
@@ -300,6 +299,19 @@
 
     // --- Target Selection ---
     
+    // --- Timeline State ---
+    const timelineContainer = document.getElementById('timelineContainer');
+    const timelineContent = document.getElementById('timelineContent');
+    const timelineLoading = document.getElementById('timelineLoading');
+    const timelineSearch = document.getElementById('timelineSearch');
+    const timelineTypeFilter = document.getElementById('timelineTypeFilter');
+    
+    let isFetching = false;
+    let hasMore = true;
+    let timelineCursorDate = null; // Track oldest date for pagination
+
+    // --- Target Selection ---
+    
     // Delegate listener on targetList
     targetList.addEventListener('click', function(e) {
         // Handle Minus Button
@@ -311,7 +323,7 @@
             
             if(confirm('このターゲットを本日のリストから除外しますか？')) {
                 toggleTargetState(id, date, 'hide', () => {
-                    location.reload(); // Reload to reflect changes logic
+                    location.reload(); 
                 });
             }
             return;
@@ -341,7 +353,156 @@
 
             // Restore overlay hidden state
             document.getElementById('noSelectionOverlay').classList.add('hidden');
+            
+            // Initial Timeline Fetch
+            resetTimeline();
+            fetchTimeline();
         }
+    });
+
+    // --- Timeline Functions ---
+    
+    function resetTimeline() {
+        timelineContent.innerHTML = '';
+        timelineCursorDate = null;
+        hasMore = true;
+    }
+
+    function fetchTimeline(append = false) {
+        if (!currentTargetId || isFetching || (!hasMore && append)) return;
+        
+        isFetching = true;
+        if (append) timelineLoading.classList.remove('hidden');
+
+        const params = new URLSearchParams({
+            target_id: currentTargetId,
+            limit: 20
+        });
+        
+        if (append && timelineCursorDate) {
+            params.append('before_date', timelineCursorDate);
+        }
+        
+        if (timelineSearch.value) params.append('search', timelineSearch.value);
+        if (timelineTypeFilter.value) params.append('type', timelineTypeFilter.value);
+
+        fetch(`{% url "timeline_list" %}?${params.toString()}`)
+            .then(res => res.json())
+            .then(data => {
+                isFetching = false;
+                timelineLoading.classList.add('hidden');
+                
+                if (data.success) {
+                    if (data.data.length < 20) hasMore = false;
+                    
+                    if (data.data.length > 0) {
+                        // Update cursor
+                        timelineCursorDate = data.data[data.data.length - 1].date; // Use oldest date
+                        
+                        renderTimelineItems(data.data, append);
+                    }
+                }
+            })
+            .catch(err => {
+                isFetching = false;
+                console.error(err);
+            });
+    }
+
+    function renderTimelineItems(items, append) {
+        // Items come in newest first.
+        // If append (scrolling up), we want to prepend them to the container reversely (keep oldest at very top).
+        // Actually API returns Newest First. 
+        // Logic:
+        // Initial Load (append=false): We want newest at bottom. So we reverse the API list (Old -> New) and append to container.
+        // Scroll Up (append=true): We want older items at the top. API gives Newest->Oldest of that page. 
+        // We should reverse them (Oldest -> Newest of that page) and PREPEND to container.
+        
+        const fragment = document.createDocumentFragment();
+        // Reverse to get Old -> New order for display
+        const orderedItems = [...items].reverse(); 
+        
+        orderedItems.forEach(item => {
+            const el = createTimelineElement(item);
+            fragment.appendChild(el);
+        });
+
+        if (append) {
+            // Prepend
+            const firstChild = timelineContent.firstElementChild;
+             // Maintain scroll position logic
+            const oldHeight = timelineContainer.scrollHeight;
+            timelineContent.insertBefore(fragment, firstChild);
+            
+            // Adjust scroll
+            const newHeight = timelineContainer.scrollHeight;
+            timelineContainer.scrollTop = newHeight - oldHeight;
+        } else {
+            timelineContent.appendChild(fragment);
+            // Scroll to bottom
+            timelineContainer.scrollTop = timelineContainer.scrollHeight;
+        }
+    }
+
+    function createTimelineElement(item) {
+        const div = document.createElement('div');
+        div.className = 'bg-white/5 border border-white/5 rounded p-3 text-sm';
+        
+        let header = `<div class="flex justify-between items-start mb-1">
+            <span class="font-mono text-[10px] text-gray-500">${item.date}</span>
+            <span class="text-[10px] px-1.5 rounded ${item.type === 'EVENT' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400'} border border-white/10">${item.type}</span>
+        </div>`;
+        
+        let content = '';
+        if (item.type === 'QUESTION') {
+            content = `
+                <div class="mb-1 text-primary font-bold text-xs">Q. ${item.question_title || 'Unknown Question'}</div>
+                <div class="text-gray-300 whitespace-pre-wrap">${escapeHtml(item.description)}</div>
+            `;
+        } else {
+             content = `<div class="text-gray-300 whitespace-pre-wrap">${escapeHtml(item.description)}</div>`;
+        }
+        
+        let footer = '';
+        if (item.tags && item.tags.length > 0) {
+            const tagsHtml = item.tags.map(t => `<span class="text-[10px] text-gray-500 mr-1">#${escapeHtml(t.name)}</span>`).join('');
+            footer = `<div class="mt-2 pt-2 border-t border-white/5">${tagsHtml}</div>`;
+        }
+        
+        div.innerHTML = header + content + footer;
+        return div;
+    }
+    
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Infinite Scroll
+    timelineContainer.addEventListener('scroll', () => {
+        if (timelineContainer.scrollTop === 0 && hasMore && !isFetching) {
+            fetchTimeline(true);
+        }
+    });
+    
+    // Search & Filter
+    let searchDebounce;
+    timelineSearch.addEventListener('input', () => {
+        clearTimeout(searchDebounce);
+        searchDebounce = setTimeout(() => {
+            resetTimeline();
+            fetchTimeline();
+        }, 500);
+    });
+    
+    timelineTypeFilter.addEventListener('change', () => {
+        resetTimeline();
+        fetchTimeline();
     });
 
     // Remove Unfilled
@@ -398,10 +559,6 @@
         formQuestion.classList.remove('hidden');
         formEvent.classList.add('hidden');
     });
-
-    // --- Question Logic (Removed duplicate) ---
-
-
 
     // --- Add Target Modal ---
     const searchModal = document.getElementById('searchModal');
@@ -473,9 +630,8 @@
         currentQuestion = null;
 
         if (cat) {
-            const dateStr = document.getElementById('currentDateDisplay').textContent;
-            
-            questionsData.filter(q => q.category === cat).forEach(q => {
+            // Re-filtering question list
+             questionsData.filter(q => q.category === cat).forEach(q => {
                 const opt = new Option(q.text, q.id);
                 qSelect.add(opt);
             });
@@ -503,7 +659,7 @@
                 choices.forEach(c => {
                     const btn = document.createElement('button');
                     btn.type = 'button';
-                    btn.className = 'choice-btn px-3 py-1 rounded-full border border-white/20 text-xs text-gray-300 hover:border-primary hover:text-primary transition bg-black/40';
+                    btn.className = 'choice-btn px-2 py-1 rounded-full border border-white/20 text-[10px] text-gray-300 hover:border-primary hover:text-primary transition bg-black/40';
                     btn.textContent = c;
                     btn.onclick = () => toggleChoice(btn, c);
                     qChoicesContainer.appendChild(btn);
@@ -550,17 +706,17 @@
         const activeTab = document.querySelector('button[id^="tab-"].text-primary').id;
         const payload = {
             target_id: currentTargetId,
-            date: document.getElementById('logDate').value, // Assuming logDate is the correct ID for the date input
+            date: document.getElementById('logDate').value, 
             description: "",
             event_type: "NOTE",
             tags: [],
             question_id: null
         };
 
-        if (activeTab === 'tabEvent') { // Changed from 'tab-timeline' to 'tabEvent' based on existing HTML
-            payload.description = document.getElementById('eventContent').value; // Changed from 'timelineDesc' to 'eventContent'
+        if (activeTab === 'tabEvent') { 
+            payload.description = document.getElementById('eventContent').value; 
             // Collect selected tags
-            document.querySelectorAll('.tag-btn.border-primary').forEach(btn => { // Adjusted selector for tags
+            document.querySelectorAll('#tagSelectionArea .tag-btn.border-primary').forEach(btn => { 
                payload.tags.push(btn.dataset.id); 
             });
             // Also include contact_made if it's an event
@@ -592,14 +748,14 @@
             }
 
             payload.description = ans;
-            payload.event_type = 'QUESTION'; // Backend handles this logic? Or uses question_id to infer
+            payload.event_type = 'QUESTION'; 
             payload.question_id = qId;
         }
 
         fetch('{% url "intelligence_log" %}', {
             method: 'POST',
             headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value, // Using existing CSRF token selector
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value, 
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(payload)
@@ -607,11 +763,14 @@
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                alert("記録しました (Saved)");
+                // Instead of reload, append to timeline
+                // But simplified: reset timeline to show new item at bottom
                 // Clear inputs
                 document.getElementById('eventContent').value = '';
                 document.getElementById('qAnswer').value = '';
-                location.reload(); // Reload to update "Log Exists" status
+                // Optional: visual feedback
+                resetTimeline();
+                fetchTimeline();
             } else {
                 alert("Error: " + data.error);
             }

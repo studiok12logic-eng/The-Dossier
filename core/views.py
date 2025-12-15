@@ -472,15 +472,69 @@ class CategoryCreateView(LoginRequiredMixin, View):
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
 
-class RankCreateView(LoginRequiredMixin, View):
-    def post(self, request, *args, **kwargs):
-        try:
-            data = json.loads(request.body)
-            name = data.get('name')
-            points = data.get('points', 0)
-            if not name: return JsonResponse({'success': False, 'error': 'Name required'})
+
+# --- TIMELINE API ---
+class TimelineListAPIView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        target_id = request.GET.get('target_id')
+        if not target_id:
+            return JsonResponse({'success': False, 'error': 'Target ID required'}, status=400)
             
-            rank = QuestionRank.objects.create(user=request.user, name=name, points=points)
-            return JsonResponse({'success': True, 'id': rank.id, 'name': rank.name})
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
+        try:
+            target = Target.objects.get(pk=target_id, user=request.user)
+        except Target.DoesNotExist:
+             return JsonResponse({'success': False, 'error': 'Target not found'}, status=404)
+
+        # Base Query
+        queryset = TimelineItem.objects.filter(target=target).select_related('question')
+        
+        # Filtering
+        import datetime
+        from django.db.models import Q
+        
+        # Type
+        event_type = request.GET.get('type') # 'EVENT' or 'QUESTION'
+        if event_type:
+            queryset = queryset.filter(event_type=event_type)
+
+        # Search Query
+        query = request.GET.get('search')
+        if query:
+            queryset = queryset.filter(
+                Q(description__icontains=query) | 
+                Q(question__title__icontains=query)
+            )
+
+        # Tags (list of IDs)
+        tags = request.GET.getlist('tags[]')
+        if tags:
+            queryset = queryset.filter(tags__id__in=tags).distinct()
+
+        # Pagination (Cursor) - simple date based for now
+        before_date = request.GET.get('before_date')
+        if before_date:
+            queryset = queryset.filter(date__lt=before_date)
+            
+        # Ordering: Newest first (for chat style bottom-up, usually we load newest first)
+        queryset = queryset.order_by('-date', '-created_at')
+
+        # Limit
+        limit = int(request.GET.get('limit', 20))
+        queryset = queryset[:limit]
+        
+        # Serialize
+        data = []
+        for item in queryset:
+            data.append({
+                'id': item.id,
+                'date': item.date.strftime('%Y-%m-%d'),
+                'type': item.event_type,
+                'description': item.description,
+                'question_title': item.question.title if item.question else None,
+                'question_category': item.question.category.name if item.question and item.question.category else None,
+                'contact_made': item.contact_made,
+                'tags': [{'id': t.id, 'name': t.name} for t in item.tags.all()],
+            })
+            
+        return JsonResponse({'success': True, 'data': data})
+

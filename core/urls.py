@@ -22,6 +22,9 @@ urlpatterns = [
     path('questions/<int:pk>/delete/', views.QuestionDeleteView.as_view(), name='question_delete'),
     path('api/questions/category/add/', views.CategoryCreateView.as_view(), name='category_add'),
     path('api/questions/rank/add/', views.RankCreateView.as_view(), name='rank_add'),
+    
+    # Timeline
+    path('api/timeline/', views.TimelineListAPIView.as_view(), name='timeline_list'),
 ]
 
 if settings.DEBUG:
