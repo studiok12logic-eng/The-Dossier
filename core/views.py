@@ -289,8 +289,12 @@ class IntelligenceLogView(LoginRequiredMixin, View):
             Q(is_shared=True) | Q(user=request.user)
         ).order_by('order', 'content')
         tags = Tag.objects.all()
+        
+        # All Targets for "Add Manual" search
+        all_targets = Target.objects.filter(user=request.user)
 
         context = {
+            'targets': target_list, # Correct context key for the main list
             'all_targets': all_targets,
             'questions': questions,
             'tags': tags,
