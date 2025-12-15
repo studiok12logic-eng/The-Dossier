@@ -454,14 +454,15 @@
         </div>`;
         
         let content = '';
-        if (item.type === 'QUESTION') {
-            content = `
-                <div class="mb-1 text-primary font-bold text-xs">Q. ${item.question_title || 'Unknown Question'}</div>
-                <div class="text-gray-300 whitespace-pre-wrap">${escapeHtml(item.description)}</div>
-            `;
-        } else {
-             content = `<div class="text-gray-300 whitespace-pre-wrap">${escapeHtml(item.description)}</div>`;
-        }
+        if (item.type === 'QUESTION') { // Question
+                content = `
+                    <div class="text-xs font-bold text-white mb-1">Q. ${item.question_title || 'Unknown Question'}</div>
+                    <div class="text-gray-400">${item.question_answer || ''}</div>
+                `;
+            } else {
+                // Event / Note
+                content = `<div class="text-gray-300 text-sm whitespace-pre-wrap">${item.description || '-'}</div>`;
+            }
         
         let footer = '';
         if (item.tags && item.tags.length > 0) {
