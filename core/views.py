@@ -400,3 +400,87 @@ class TargetStateToggleView(LoginRequiredMixin, View):
             
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
+
+# --- QUESTION MANAGEMENT ---
+from intelligence.models import Question, QuestionCategory, QuestionRank
+from intelligence.forms import QuestionForm, QuestionCategoryForm, QuestionRankForm
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.urls import reverse_lazy
+
+class QuestionListView(LoginRequiredMixin, ListView):
+    model = Question
+    template_name = 'question_list.html'
+    context_object_name = 'questions'
+
+    def get_queryset(self):
+        return Question.objects.filter(user=self.request.user).order_by('order', 'created_at')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['categories'] = QuestionCategory.objects.filter(user=self.request.user)
+        context['ranks'] = QuestionRank.objects.filter(user=self.request.user)
+        return context
+
+class QuestionCreateView(LoginRequiredMixin, CreateView):
+    model = Question
+    form_class = QuestionForm
+    template_name = 'question_form.html'
+    success_url = reverse_lazy('question_list')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        return super().form_valid(form)
+
+class QuestionUpdateView(LoginRequiredMixin, UpdateView):
+    model = Question
+    form_class = QuestionForm
+    template_name = 'question_form.html'
+    success_url = reverse_lazy('question_list')
+
+    def get_queryset(self):
+        return Question.objects.filter(user=self.request.user)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+class QuestionDeleteView(LoginRequiredMixin, DeleteView):
+    model = Question
+    success_url = reverse_lazy('question_list')
+    template_name = 'question_confirm_delete.html' # Logic will typically be modal or simple confirm
+    
+    def get_queryset(self):
+        return Question.objects.filter(user=self.request.user)
+
+# API Views for Dynamic Add
+class CategoryCreateView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+            name = data.get('name')
+            desc = data.get('description', '')
+            if not name: return JsonResponse({'success': False, 'error': 'Name required'})
+            
+            cat = QuestionCategory.objects.create(user=request.user, name=name, description=desc)
+            return JsonResponse({'success': True, 'id': cat.id, 'name': cat.name})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
+class RankCreateView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+            name = data.get('name')
+            points = data.get('points', 0)
+            if not name: return JsonResponse({'success': False, 'error': 'Name required'})
+            
+            rank = QuestionRank.objects.create(user=request.user, name=name, points=points)
+            return JsonResponse({'success': True, 'id': rank.id, 'name': rank.name})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})

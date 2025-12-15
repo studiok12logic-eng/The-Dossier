@@ -14,6 +14,14 @@ urlpatterns = [
     path('api/groups/<int:pk>/delete/', views.TargetGroupDeleteView.as_view(), name='group_delete'),
     path('api/target/state-toggle/', views.TargetStateToggleView.as_view(), name='target_state_toggle'),
     path('intelligence/log/', views.IntelligenceLogView.as_view(), name='intelligence_log'),
+    
+    # Question Management
+    path('questions/', views.QuestionListView.as_view(), name='question_list'),
+    path('questions/add/', views.QuestionCreateView.as_view(), name='question_add'),
+    path('questions/<int:pk>/edit/', views.QuestionUpdateView.as_view(), name='question_edit'),
+    path('questions/<int:pk>/delete/', views.QuestionDeleteView.as_view(), name='question_delete'),
+    path('api/questions/category/add/', views.CategoryCreateView.as_view(), name='category_add'),
+    path('api/questions/rank/add/', views.RankCreateView.as_view(), name='rank_add'),
 ]
 
 if settings.DEBUG:

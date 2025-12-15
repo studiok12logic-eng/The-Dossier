@@ -135,16 +135,46 @@ class TimelineItem(models.Model):
     def __str__(self):
         return f"{self.target} - {self.type} ({self.date.strftime('%Y-%m-%d')})"
 
-class Question(models.Model):
+class QuestionCategory(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    is_shared = models.BooleanField(default=False, verbose_name="共通質問")
-    content = models.TextField(verbose_name="質問内容")
-    order = models.IntegerField(default=0, verbose_name="表示順")
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        type_label = "Shared" if self.is_shared else "Individual"
-        return f"[{type_label}] {self.content}"
+        return self.name
+
+class QuestionRank(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    name = models.CharField(max_length=100)
+    points = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     def __str__(self):
-        return f"[{self.category}] {self.text}"
+        return f"{self.name} ({self.points}pt)"
+
+class Question(models.Model):
+    ANSWER_TYPES = [
+        ('SELECTION', '選択式'),
+        ('TEXT', '自由記述'),
+    ]
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    category = models.ForeignKey(QuestionCategory, on_delete=models.SET_NULL, null=True, blank=True)
+    rank = models.ForeignKey(QuestionRank, on_delete=models.SET_NULL, null=True, blank=True)
+    
+    title = models.CharField(max_length=200, verbose_name="質問名")
+    description = models.TextField(blank=True, verbose_name="説明（意図）")
+    example = models.TextField(blank=True, verbose_name="質問例")
+    
+    answer_type = models.CharField(max_length=20, choices=ANSWER_TYPES, default='TEXT', verbose_name="回答形式")
+    choices = models.TextField(blank=True, verbose_name="選択肢 (カンマ区切り)")
+    
+    is_shared = models.BooleanField(default=False, verbose_name="共通/個別") # True=Shared, False=Individual
+    order = models.IntegerField(default=0, verbose_name="表示順")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.title

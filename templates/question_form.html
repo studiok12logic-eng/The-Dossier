@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="h-full flex flex-col p-6 overflow-y-auto">
+    <div class="max-w-3xl mx-auto w-full">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl text-white font-mono tracking-wider">
+                {% if form.instance.pk %}EDIT QUESTION{% else %}NEW QUESTION{% endif %}
+            </h1>
+            <a href="{% url 'question_list' %}" class="text-gray-500 hover:text-white font-mono text-sm">Cancel</a>
+        </div>
+
+        <!-- Form -->
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Type & Scope -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-surface border border-white/10 p-4 rounded-xl">
+                    <label class="block text-xs font-mono text-gray-400 mb-2">公開範囲</label>
+                    <div class="flex items-center gap-2">
+                        {{ form.is_shared }}
+                        <span class="text-sm text-gray-300">共通質問 (Shared)</span>
+                    </div>
+                </div>
+                <div class="bg-surface border border-white/10 p-4 rounded-xl">
+                    <label class="block text-xs font-mono text-gray-400 mb-2">表示順</label>
+                    {{ form.order }}
+                </div>
+            </div>
+
+            <!-- Classification (Category & Rank) -->
+            <div class="bg-surface border border-white/10 p-6 rounded-xl space-y-4">
+                <h3 class="text-sm font-bold text-primary font-mono border-b border-white/5 pb-2">CLASSIFICATION</h3>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs font-mono text-gray-400">カテゴリー</label>
+                            <button type="button" id="addCategoryBtn" class="text-[10px] text-primary hover:underline">+ ADD NEW</button>
+                        </div>
+                        <div class="relative">
+                            {{ form.category }}
+                            <!-- Arrow icon could be here but standard select is fine -->
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs font-mono text-gray-400">ランク</label>
+                            <button type="button" id="addRankBtn" class="text-[10px] text-primary hover:underline">+ ADD NEW</button>
+                        </div>
+                        {{ form.rank }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="bg-surface border border-white/10 p-6 rounded-xl space-y-4">
+                <h3 class="text-sm font-bold text-primary font-mono border-b border-white/5 pb-2">CONTENT</h3>
+                
+                <div>
+                    <label class="block text-xs font-mono text-gray-400 mb-1">質問名 (Title)</label>
+                    {{ form.title }}
+                </div>
+                <div>
+                    <label class="block text-xs font-mono text-gray-400 mb-1">説明・意図 (Intent)</label>
+                    {{ form.description }}
+                </div>
+                <div>
+                    <label class="block text-xs font-mono text-gray-400 mb-1">質問例 (Example)</label>
+                    {{ form.example }}
+                </div>
+            </div>
+
+            <!-- Answer Settings -->
+            <div class="bg-surface border border-white/10 p-6 rounded-xl space-y-4">
+                <h3 class="text-sm font-bold text-primary font-mono border-b border-white/5 pb-2">ANSWER SETTINGS</h3>
+                
+                <div>
+                    <label class="block text-xs font-mono text-gray-400 mb-1">回答形式</label>
+                    {{ form.answer_type }}
+                </div>
+                <div id="choicesField" class="hidden">
+                    <label class="block text-xs font-mono text-gray-400 mb-1">選択肢 (カンマ区切り)</label>
+                    {{ form.choices }}
+                    <p class="text-[10px] text-gray-500 mt-1">例: A, B, C (タグのように選択可能になります)</p>
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <div class="pt-4 flex justify-end">
+                <button type="submit" 
+                    class="px-8 py-3 bg-primary text-black font-bold font-mono rounded hover:bg-primary/90 transition shadow-[0_0_20px_rgba(34,197,94,0.4)]">
+                    {% if form.instance.pk %}UPDATE QUESTION{% else %}REGISTER QUESTION{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modals for Category/Rank (Simple Prompts or Custom Modal) -->
+<!-- Using simple JS prompts for MVP speed as requested "Same as Group logic" but Group logic is complex modal. 
+     I will implement simple custom modals to match the style without full separate files -->
+
+<div id="catModal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center backdrop-blur-sm">
+    <div class="bg-surface border border-white/20 p-6 rounded-xl w-96">
+        <h3 class="text-white font-mono mb-4">NEW CATEGORY</h3>
+        <input id="newCatName" type="text" placeholder="Name" class="w-full bg-black/20 border border-white/10 rounded px-3 py-2 text-white mb-2">
+        <textarea id="newCatDesc" placeholder="Description" class="w-full bg-black/20 border border-white/10 rounded px-3 py-2 text-white mb-4"></textarea>
+        <div class="flex justify-end gap-2">
+            <button type="button" onclick="document.getElementById('catModal').classList.add('hidden')" class="px-3 py-1 text-gray-400 text-sm">Cancel</button>
+            <button type="button" id="saveCatBtn" class="px-3 py-1 bg-primary text-black text-sm rounded">Save</button>
+        </div>
+    </div>
+</div>
+
+<div id="rankModal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center backdrop-blur-sm">
+    <div class="bg-surface border border-white/20 p-6 rounded-xl w-96">
+        <h3 class="text-white font-mono mb-4">NEW RANK</h3>
+        <input id="newRankName" type="text" placeholder="Rank Name" class="w-full bg-black/20 border border-white/10 rounded px-3 py-2 text-white mb-2">
+        <input id="newRankPoints" type="number" placeholder="Points" class="w-full bg-black/20 border border-white/10 rounded px-3 py-2 text-white mb-4">
+        <div class="flex justify-end gap-2">
+            <button type="button" onclick="document.getElementById('rankModal').classList.add('hidden')" class="px-3 py-1 text-gray-400 text-sm">Cancel</button>
+            <button type="button" id="saveRankBtn" class="px-3 py-1 bg-primary text-black text-sm rounded">Save</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Toggle Choices Field
+    const typeSelect = document.querySelector('[name="answer_type"]');
+    const choicesField = document.getElementById('choicesField');
+    
+    function toggleChoices() {
+        if(typeSelect.value === 'SELECTION') choicesField.classList.remove('hidden');
+        else choicesField.classList.add('hidden');
+    }
+    typeSelect.addEventListener('change', toggleChoices);
+    toggleChoices(); // Init
+
+    // Styling Django Form Widgets via JS if needed (or assume classes added in ID)
+    document.querySelectorAll('input, select, textarea').forEach(el => {
+        if(!el.classList.contains('bg-black/20') && !el.classList.contains('bg-surface')) {
+            el.classList.add('bg-black/20', 'border', 'border-white/10', 'rounded', 'px-3', 'py-2', 'text-white', 'w-full');
+            if(el.tagName === 'SELECT') el.classList.add('appearance-none', 'cursor-pointer');
+        }
+    });
+
+    // API Handling for Category/Rank
+    document.getElementById('addCategoryBtn').addEventListener('click', () => document.getElementById('catModal').classList.remove('hidden'));
+    document.getElementById('addRankBtn').addEventListener('click', () => document.getElementById('rankModal').classList.remove('hidden'));
+
+    document.getElementById('saveCatBtn').addEventListener('click', () => {
+        const name = document.getElementById('newCatName').value;
+        const desc = document.getElementById('newCatDesc').value;
+        if(!name) return;
+
+        fetch('{% url "category_add" %}', {
+            method: 'POST',
+            body: JSON.stringify({name, description: desc}),
+            headers: {'X-CSRFToken': '{{ csrf_token }}'}
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                const opt = new Option(data.name, data.id, true, true);
+                document.querySelector('[name="category"]').appendChild(opt);
+                document.getElementById('catModal').classList.add('hidden');
+            }
+        });
+    });
+
+    document.getElementById('saveRankBtn').addEventListener('click', () => {
+        const name = document.getElementById('newRankName').value;
+        const pts = document.getElementById('newRankPoints').value;
+        if(!name) return;
+
+        fetch('{% url "rank_add" %}', {
+            method: 'POST',
+            body: JSON.stringify({name, points: pts}),
+            headers: {'X-CSRFToken': '{{ csrf_token }}'}
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                const opt = new Option(data.name, data.id, true, true);
+                document.querySelector('[name="rank"]').appendChild(opt);
+                document.getElementById('rankModal').classList.add('hidden');
+            }
+        });
+    });
+</script>
+{% endblock %}

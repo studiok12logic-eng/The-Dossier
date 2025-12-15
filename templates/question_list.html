@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="h-full flex flex-col p-6 space-y-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl text-white font-mono tracking-wider">QUESTION LIST</h1>
+            <p class="text-xs text-gray-400 font-mono mt-1">戦略的質問の管理・データベース</p>
+        </div>
+        <a href="{% url 'question_add' %}"
+            class="px-4 py-2 bg-primary text-black font-bold font-mono text-sm rounded hover:bg-primary/90 transition shadow-[0_0_15px_rgba(34,197,94,0.3)] flex items-center gap-2">
+            <span>+</span> ADD QUESTION
+        </a>
+    </div>
+
+    <!-- Question Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 overflow-y-auto pb-20">
+        {% for q in questions %}
+        <div class="bg-surface border border-white/10 rounded-xl p-5 hover:border-primary/50 transition relative group">
+            <!-- Rank Badge -->
+            {% if q.rank %}
+            <div class="absolute top-3 right-3 bg-white/5 border border-white/10 rounded px-2 py-1 text-[10px] text-gray-300 font-mono">
+                {{ q.rank.name }} <span class="text-primary">{{ q.rank.points }}pt</span>
+            </div>
+            {% endif %}
+
+            <!-- Category -->
+            <div class="mb-2">
+                <span class="text-xs font-mono text-primary bg-primary/10 px-2 py-0.5 rounded border border-primary/20">
+                    {{ q.category.name|default:"Uncategorized" }}
+                </span>
+            </div>
+
+            <!-- Title -->
+            <h3 class="text-lg text-white font-bold mb-2">{{ q.title }}</h3>
+
+            <!-- Description -->
+            {% if q.description %}
+            <p class="text-xs text-gray-400 mb-2 line-clamp-2" title="{{ q.description }}">{{ q.description }}</p>
+            {% endif %}
+
+            <!-- Details -->
+            <div class="space-y-1 mt-4 border-t border-white/5 pt-3">
+                <div class="flex justify-between text-xs">
+                    <span class="text-gray-500 font-mono">Type:</span>
+                    <span class="text-gray-300">{{ q.get_answer_type_display }}</span>
+                </div>
+                <div class="flex justify-between text-xs">
+                    <span class="text-gray-500 font-mono">Scope:</span>
+                    <span class="text-gray-300">{% if q.is_shared %}Shared{% else %}Individual{% endif %}</span>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="absolute bottom-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <a href="{% url 'question_edit' q.pk %}" class="p-1.5 bg-white/10 hover:bg-white/20 rounded text-white" title="Edit">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                </a>
+                <a href="{% url 'question_delete' q.pk %}" class="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded border border-red-500/30" title="Delete">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full text-center py-20">
+            <p class="text-gray-500 font-mono">No questions registered yet.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
