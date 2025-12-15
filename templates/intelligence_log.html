@@ -37,7 +37,7 @@
                     data-avatar="{% if item.obj.avatar %}{{ item.obj.avatar.url }}{% endif %}">
                     
                     <!-- Avatar -->
-                    <div class="w-[50px] h-[50px] min-w-[50px] min-h-[50px] max-w-[50px] max-h-[50px] rounded-full bg-black border border-white/10 overflow-hidden flex-shrink-0 relative">
+                    <div class="w-[50px] h-[50px] min-w-[50px] min-h-[50px] max-w-[50px] max-h-[50px] rounded-full bg-black border border-white/10 overflow-hidden flex-shrink-0 relative" style="width: 50px; height: 50px; min-width: 50px; min-height: 50px;">
                         {% if item.obj.avatar %}
                         <img src="{{ item.obj.avatar.url }}" class="w-full h-full object-cover">
                         {% else %}
@@ -150,10 +150,20 @@
                         placeholder="詳細を入力..."></textarea>
                 </div>
                 <div>
-                    <label class="block text-xs font-mono text-gray-400 mb-1">タグ (カンマ区切り)</label>
+                    <label class="block text-xs font-mono text-gray-400 mb-1">タグ (選択)</label>
+                    <div class="flex flex-wrap gap-2 mb-2" id="tagSelectionArea">
+                        {% for tag in tags %}
+                        <button type="button" 
+                            class="tag-btn px-3 py-1 rounded-full border border-white/20 text-xs text-gray-300 hover:border-primary hover:text-primary transition bg-black/40"
+                            data-id="{{ tag.id }}" data-name="{{ tag.name }}">
+                            {{ tag.name }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                     <!-- Hidden text input for fallback or manual entry if needed later (currently unused for logic) -->
                     <input type="text" id="eventTags"
-                        class="w-full bg-black/20 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
-                        placeholder="例: 趣味, 仕事, 警戒">
+                        class="hidden w-full bg-black/20 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
+                        placeholder="タグを追加...">
                 </div>
             </div>
 
@@ -422,6 +432,17 @@
         }
     });
 
+    // --- Tag Interaction ---
+    const tagBtns = document.querySelectorAll('.tag-btn');
+    tagBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            this.classList.toggle('border-primary');
+            this.classList.toggle('text-primary');
+            this.classList.toggle('bg-primary/10');
+            this.classList.toggle('border-white/20');
+        });
+    });
+
     // --- Save Logic ---
     saveBtn.addEventListener('click', function () {
         if (!currentTargetId) return;
@@ -436,7 +457,11 @@
 
         if (isEvent) {
             payload.content = document.getElementById('eventContent').value;
-            payload.tags = document.getElementById('eventTags').value;
+            payload.content = document.getElementById('eventContent').value;
+            // Collect Tags
+            const selectedTags = Array.from(document.querySelectorAll('.tag-btn.border-primary')).map(el => el.dataset.id);
+            payload.tags = selectedTags;
+            
             if (!payload.content && !payload.contact_made) {
                 alert("内容を入力するか接触フラグをONにしてください");
                 return;

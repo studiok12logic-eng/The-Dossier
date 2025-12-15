@@ -205,6 +205,25 @@ class IntelligenceLogView(LoginRequiredMixin, View):
         weekday = current_date.weekday() # 0=Mon
         weekday_map = ['is_mon', 'is_tue', 'is_wed', 'is_thu', 'is_fri', 'is_sat', 'is_sun']
         current_weekday_field = weekday_map[weekday]
+
+        # 1.5 Auto-Add Logic (From Target List LOG button)
+        target_id_param = request.GET.get('target_id')
+        if target_id_param:
+            try:
+                auto_target = Target.objects.get(pk=target_id_param, user=request.user)
+                # Ensure it's in today's list
+                state, _ = DailyTargetState.objects.get_or_create(
+                    target=auto_target, date=current_date,
+                    defaults={'is_manual_add': True, 'is_hidden': False}
+                )
+                if not state.is_manual_add and state.is_hidden: # If it was hidden, unhide it
+                     state.is_hidden = False
+                     state.save()
+                elif not state.is_manual_add: # Ensure it is marked as manual add if not already
+                     state.is_manual_add = True
+                     state.save()
+            except Target.DoesNotExist:
+                pass
         
         # 2. Base Targets (Group Schedule)
         base_targets = Target.objects.filter(
@@ -266,11 +285,14 @@ class IntelligenceLogView(LoginRequiredMixin, View):
         
         all_targets = Target.objects.filter(user=request.user)
 
+        from django.db.models import Count
+        top_tags = Tag.objects.annotate(count=Count('timelineitem')).order_by('-count')[:10]
+
         context = {
-            'todays_targets': target_list, # Fixed context key to match template
+            'todays_targets': target_list,
             'all_targets': all_targets,
             'questions': questions,
-            'tags': tags,
+            'tags': top_tags, # Updated to use top_tags
             'today_date': current_date.strftime('%Y-%m-%d'),
             'weekday_jp': ['月','火','水','木','金','土','日'][weekday]
         }
@@ -309,7 +331,13 @@ class IntelligenceLogView(LoginRequiredMixin, View):
             
             if entry_type == 'EVENT':
                 item.content = content
-                # Tags handling could be added here if model supports it (Many2Many needs save first)
+                item.save() # Save first to add m2m
+                
+                # Tags Handling
+                tag_ids = data.get('tags', [])
+                if tag_ids:
+                    item.tags.set(tag_ids)
+
                 if not content and not contact_made:
                      return JsonResponse({'success': False, 'error': 'Content or Contact is required'})
             elif entry_type == 'ANSWER':
