@@ -8,7 +8,8 @@ urlpatterns = [
     path('targets/', views.target_list, name='target_list'),
     path('targets/add/', views.TargetCreateView.as_view(), name='target_add'),
     path('targets/<uuid:pk>/edit/', views.TargetUpdateView.as_view(), name='target_edit'), # Edit route
-    path('api/groups/create/', views.TargetGroupCreateView.as_view(), name='api_group_create'), # Group API
+    path('targets/<uuid:pk>/delete/', views.TargetDeleteView.as_view(), name='target_delete'), # Delete route
+    path('api/groups/create/', views.TargetGroupCreateView.as_view(), name='group_add'), # Group API
 ]
 
 if settings.DEBUG:
