@@ -37,7 +37,7 @@
                     data-avatar="{% if item.obj.avatar %}{{ item.obj.avatar.url }}{% endif %}">
                     
                     <!-- Avatar -->
-                    <div class="w-[50px] h-[50px] rounded-full bg-black border border-white/10 overflow-hidden flex-shrink-0 relative">
+                    <div class="w-[50px] h-[50px] max-w-[50px] max-h-[50px] rounded-full bg-black border border-white/10 overflow-hidden flex-shrink-0 relative">
                         {% if item.obj.avatar %}
                         <img src="{{ item.obj.avatar.url }}" class="w-full h-full object-cover">
                         {% else %}

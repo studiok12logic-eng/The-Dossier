@@ -78,9 +78,9 @@
                     </div>
 
                     <!-- Avatar Delete Button -->
-                    <div class="flex justify-center md:justify-end gap-2 {% if not form.instance.avatar %}hidden{% endif %}" id="deleteAvatarBtnContainer">
+                    <div class="flex justify-center md:justify-end gap-2 {% if not form.instance.avatar %}hidden{% endif %}" id="deleteAvatarBtnContainer" style="position: relative; z-index: 30;">
                         <button type="button" id="deleteAvatarBtn"
-                            class="text-xs text-red-500 hover:text-red-400 border border-red-500/30 px-2 py-1 rounded bg-red-500/10">
+                            class="text-xs text-red-500 hover:text-red-400 border border-red-500/30 px-2 py-1 rounded bg-red-500/10 cursor-pointer">
                             画像削除
                         </button>
                     </div>
@@ -269,12 +269,10 @@
                         {{ form.date }}
                     </div>
                     <div class="pb-1">
-                        {% if form.instance.pk %}
                         <button type="button"
-                            class="delete-anniversary-btn w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition" title="削除">
+                            class="delete-anniversary-btn w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition {% if not form.instance.pk %}hidden{% endif %}" title="削除">
                             <i class="fas fa-times text-xs"></i>
                         </button>
-                        {% endif %}
                     </div>
                 </div>
                 {% endfor %}
@@ -323,9 +321,14 @@
 <div id="groupModal"
     class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
     <div class="bg-surface border border-white/20 rounded-xl p-6 w-full max-w-md shadow-2xl">
-        <h3 class="text-xl font-mono text-white mb-4 flex items-center gap-2">
-            <span class="w-1 h-6 bg-primary block"></span>
-            新規グループ作成
+        <h3 class="text-xl font-mono text-white mb-4 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <span class="w-1 h-6 bg-primary block"></span>
+                <span id="groupModalTitle">新規グループ作成</span>
+            </div>
+            <button type="button" id="deleteGroupFromModal" class="hidden text-red-500 hover:text-red-400 border border-red-500/30 bg-red-500/10 px-2 py-1 rounded text-xs">
+                <i class="fas fa-trash"></i> 削除
+            </button>
         </h3>
         <form id="groupCreateForm" class="space-y-4">
             <div>
@@ -630,7 +633,8 @@
     openGroupBtn.addEventListener('click', () => {
         currentEditingGroupId = null;
         groupForm.reset();
-        groupModal.querySelector('h3').innerHTML = '<span class="w-1 h-6 bg-primary block"></span>新規グループ作成';
+        document.getElementById('groupModalTitle').textContent = '新規グループ作成';
+        document.getElementById('deleteGroupFromModal').classList.add('hidden');
         groupModal.querySelector('button[type="submit"]').textContent = '作成';
         groupModal.classList.remove('hidden');
     });
@@ -668,7 +672,8 @@
             groupForm.querySelector('[name="is_sat"]').checked = btn.dataset.sat === 'true';
             groupForm.querySelector('[name="is_sun"]').checked = btn.dataset.sun === 'true';
 
-            groupModal.querySelector('h3').innerHTML = '<span class="w-1 h-6 bg-primary block"></span>グループ編集';
+            document.getElementById('groupModalTitle').textContent = 'グループ編集';
+            document.getElementById('deleteGroupFromModal').classList.remove('hidden');
             groupModal.querySelector('button[type="submit"]').textContent = '更新';
             groupModal.classList.remove('hidden');
         }
@@ -740,9 +745,26 @@
                     groupModal.classList.add('hidden');
                     groupForm.reset();
                 } else {
-                    alert('エラー: ' + data.error);
                 }
             });
+    });
+
+    // Modal Delete Button
+    document.getElementById('deleteGroupFromModal').addEventListener('click', function() {
+        if (currentEditingGroupId && confirm('本当にこのグループを削除しますか？\n(ターゲットとの関連も解除されます)')) {
+            fetch(`/api/groups/${currentEditingGroupId}/delete/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value }
+            }).then(resp => resp.json()).then(data => {
+                if(data.success) {
+                    const btn = document.querySelector(`.edit-group-btn[data-id="${currentEditingGroupId}"]`);
+                    if(btn) btn.closest('.group-item').remove();
+                    groupModal.classList.add('hidden');
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            });
+        }
     });
 
     // --- Anniversary FormSet ---
