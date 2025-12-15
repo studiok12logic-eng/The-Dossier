@@ -204,7 +204,8 @@
                              <div class="truncate flex-1">Intent: <span id="qDesc"></span></div>
                         </div>
                         
-                        <div id="qChoicesCheck" class="hidden">
+                        <div id="qChoicesCheck" class="opacity-50 pointer-events-none transition-opacity bg-black/20 border border-white/5 rounded p-2 min-h-[40px] flex flex-col justify-center">
+                             <div id="qCheckPlaceholder" class="text-[10px] text-gray-500 text-center">選択肢 (質問を選択)</div>
                              <div id="qChoicesContainer" class="flex flex-wrap gap-1"></div>
                         </div>
 
@@ -216,9 +217,9 @@
 
                 <!-- Right Action Bar -->
                 <div class="w-32 border-l border-white/10 bg-black/20 p-3 flex flex-col justify-between items-center gap-2">
-                     <div class="flex flex-col items-center gap-1 cursor-pointer group" onclick="document.getElementById('contactFlag').click()">
+                     <div class="flex flex-col items-center gap-1 cursor-pointer group">
                         <input type="checkbox" id="contactFlag" class="rounded border-gray-600 text-primary bg-gray-900 w-4 h-4 cursor-pointer">
-                        <label class="text-[10px] text-gray-400 group-hover:text-white cursor-pointer text-center leading-tight">接触<br>発生</label>
+                        <label for="contactFlag" class="text-[10px] text-gray-400 group-hover:text-white cursor-pointer text-center leading-tight">接触<br>発生</label>
                     </div>
 
                     <button id="saveLogBtn"
@@ -614,6 +615,7 @@
     const qEx = document.getElementById('qEx');
     const qChoicesCheck = document.getElementById('qChoicesCheck');
     const qChoicesContainer = document.getElementById('qChoicesContainer');
+    const qCheckPlaceholder = document.getElementById('qCheckPlaceholder');
     
     // Track selected choices
     let selectedChoices = new Set();
@@ -626,7 +628,11 @@
         
         // Reset details
         qDetails.classList.add('hidden');
-        qChoicesCheck.classList.add('hidden');
+        // Reset choices
+        qChoicesContainer.innerHTML = '';
+        qChoicesCheck.classList.add('opacity-50', 'pointer-events-none'); 
+        if(qCheckPlaceholder) qCheckPlaceholder.classList.remove('hidden');
+
         selectedChoices.clear();
         currentQuestion = null;
 
@@ -655,7 +661,10 @@
             // Handle Choices
             qChoicesContainer.innerHTML = '';
             if (q.answer_type === 'SELECTION' && q.choices) {
-                qChoicesCheck.classList.remove('hidden');
+                // Enable choices area
+                qChoicesCheck.classList.remove('opacity-50', 'pointer-events-none');
+                if(qCheckPlaceholder) qCheckPlaceholder.classList.add('hidden');
+
                 const choices = q.choices.split(',').map(c => c.trim()).filter(c => c);
                 choices.forEach(c => {
                     const btn = document.createElement('button');
@@ -666,11 +675,15 @@
                     qChoicesContainer.appendChild(btn);
                 });
             } else {
-                qChoicesCheck.classList.add('hidden');
+                 // Not a selection question
+                qChoicesCheck.classList.add('opacity-50', 'pointer-events-none');
+                if(qCheckPlaceholder) qCheckPlaceholder.classList.remove('hidden');
             }
         } else {
             qDetails.classList.add('hidden');
-            qChoicesCheck.classList.add('hidden');
+             qChoicesCheck.classList.add('opacity-50', 'pointer-events-none');
+            qChoicesContainer.innerHTML = '';
+            if(qCheckPlaceholder) qCheckPlaceholder.classList.remove('hidden');
         }
     });
 
@@ -707,7 +720,7 @@
             return;
         }
 
-        const activeTab = document.querySelector('button[id^="tab-"].text-primary').id;
+        const isEventTab = !formEvent.classList.contains('hidden');
         const payload = {
             target_id: currentTargetId,
             date: document.getElementById('logDate').value, 
@@ -717,7 +730,7 @@
             question_id: null
         };
 
-        if (activeTab === 'tabEvent') { 
+        if (isEventTab) { 
             payload.description = document.getElementById('eventContent').value; 
             // Collect selected tags
             document.querySelectorAll('#tagSelectionArea .tag-btn.border-primary').forEach(btn => { 
@@ -771,7 +784,7 @@
                 // Clear inputs
                 document.getElementById('eventContent').value = '';
                 document.getElementById('qAnswer').value = '';
-                if(activeTab === 'tabEvent') {
+                if(isEventTab) {
                     // Reset tags
                     document.querySelectorAll('.tag-btn').forEach(b => {
                          b.classList.remove('border-primary', 'text-primary', 'bg-primary/10');
