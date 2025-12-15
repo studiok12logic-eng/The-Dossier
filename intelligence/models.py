@@ -35,66 +35,90 @@ class TargetGroup(models.Model):
         return self.name
 
 class Target(models.Model):
-    RANK_CHOICES = [] # Removed
-    GENDER_CHOICES = [
-        ('Male', '男性'), ('Female', '女性'), ('Other', 'その他'), ('Unknown', '不明'),
-    ]
-    BLOOD_CHOICES = [
-        ('A', 'A型'), ('B', 'B型'), ('O', 'O型'), ('AB', 'AB型'), ('Unknown', '不明'),
-    ]
-
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, default=1)
-    last_name = models.CharField(max_length=50, blank=True)
-    first_name = models.CharField(max_length=50, blank=True)
-    last_name_kana = models.CharField(max_length=50, blank=True)
-    first_name_kana = models.CharField(max_length=50, blank=True)
-    nickname = models.CharField(max_length=50)
-    # rank removed
     
-    reference_code = models.CharField(max_length=20, blank=True) # Future use?
-    
-    birthdate = models.DateField(null=True, blank=True)
-    zodiac_sign = models.CharField(max_length=20, blank=True)
-    
-    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, default='Female')
-    blood_type = models.CharField(max_length=10, choices=BLOOD_CHOICES, default='Unknown')
-    
-    birthplace = models.CharField(max_length=100, blank=True)
+    # 1. Identity
+    nickname = models.CharField(max_length=100, verbose_name="ニックネーム")
+    first_name = models.CharField(max_length=100, blank=True, verbose_name="名")
+    last_name = models.CharField(max_length=100, blank=True, verbose_name="姓")
+    first_name_kana = models.CharField(max_length=100, blank=True, verbose_name="めい")
+    last_name_kana = models.CharField(max_length=100, blank=True, verbose_name="せい")
     
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
-    groups = models.ManyToManyField(TargetGroup, blank=True, related_name='targets')
-    intel_depth = models.FloatField(default=0.0)
-    last_contact = models.DateTimeField(null=True, blank=True)
-    description = models.TextField(blank=True)
+    
+    # 2. Bio-Metrics
+    birth_year = models.IntegerField(null=True, blank=True)
+    birth_month = models.IntegerField(null=True, blank=True)
+    birth_day = models.IntegerField(null=True, blank=True)
+    zodiac_sign = models.CharField(max_length=20, blank=True)
+    gender = models.CharField(max_length=20, blank=True, choices=[('Male', '男性'), ('Female', '女性'), ('Other', 'その他')])
+    blood_type = models.CharField(max_length=5, blank=True, choices=[('A', 'A'), ('B', 'B'), ('O', 'O'), ('AB', 'AB')])
+    birthplace = models.CharField(max_length=100, blank=True)
+    
+    # 3. Affiliation
+    groups = models.ManyToManyField(TargetGroup, blank=True)
+    role_rank = models.CharField(max_length=100, blank=True) # Kept for backward compat if needed, though removed from form
+    
+    # 5. Notes
+    description = models.TextField(blank=True) # Use description for general notes
+    
+    # Metadata
+    # status = models.CharField(...) # Removed rank concept for now
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.nickname
+        return f"{self.nickname} ({self.last_name} {self.first_name})"
+
+    @property
+    def age(self):
+        if self.birth_year:
+            import datetime
+            today = datetime.date.today()
+            return today.year - self.birth_year - ((today.month, today.day) < (self.birth_month or 1, self.birth_day or 1))
+        return None
+
+class DailyTargetState(models.Model):
+    target = models.ForeignKey(Target, on_delete=models.CASCADE)
+    date = models.DateField()
+    is_manual_add = models.BooleanField(default=False)
+    is_hidden = models.BooleanField(default=False)
+    
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['target', 'date'], name='unique_target_date_state')
+        ]
+        
+    def __str__(self):
+        return f"{self.target} on {self.date}: +{self.is_manual_add} / -{self.is_hidden}"
 
 class CustomAnniversary(models.Model):
-    target = models.ForeignKey(Target, on_delete=models.CASCADE, related_name='anniversaries')
+    target = models.ForeignKey(Target, on_delete=models.CASCADE)
     label = models.CharField(max_length=100)
     date = models.DateField()
-
+    
     def __str__(self):
-        return f"{self.target} - {self.label}"
+        return f"{self.label} ({self.date})"
 
 class TimelineItem(models.Model):
     TYPE_CHOICES = [
-        ('EVENT', 'Event'),
-        ('ANSWER', 'Answer'),
+        ('Contact', 'Contact'),
+        ('Quest', 'Quest'),
+        ('Note', 'Note'),
+        ('Event', 'Event'),      # New: Events/Happenings
+        ('Question', 'Question') # New: Questions asked/answered
     ]
     SENTIMENT_CHOICES = [
         ('Positive', 'Positive'),
         ('Neutral', 'Neutral'),
         ('Negative', 'Negative'),
-        ('Alert', 'Alert'),
     ]
-
-    target = models.ForeignKey(Target, on_delete=models.CASCADE, related_name='timeline')
-    type = models.CharField(max_length=10, choices=TYPE_CHOICES, default='EVENT')
-    date = models.DateTimeField()
+    
+    target = models.ForeignKey(Target, on_delete=models.CASCADE)
+    date = models.DateField()
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    title = models.CharField(max_length=200, blank=True)
     content = models.TextField(blank=True) # Blank allowed if just contact check?
     related_quest = models.ForeignKey(Quest, on_delete=models.SET_NULL, null=True, blank=True)
     tags = models.ManyToManyField(Tag, blank=True)

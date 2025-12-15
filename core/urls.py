@@ -12,6 +12,7 @@ urlpatterns = [
     path('api/groups/create/', views.TargetGroupCreateView.as_view(), name='group_add'), # Group API
     path('api/groups/<int:pk>/edit/', views.TargetGroupUpdateView.as_view(), name='group_edit'),
     path('api/groups/<int:pk>/delete/', views.TargetGroupDeleteView.as_view(), name='group_delete'),
+    path('api/target/state-toggle/', views.TargetStateToggleView.as_view(), name='target_state_toggle'),
     path('intelligence/log/', views.IntelligenceLogView.as_view(), name='intelligence_log'),
 ]
 

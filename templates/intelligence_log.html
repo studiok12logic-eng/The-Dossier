@@ -4,52 +4,114 @@
 {% block content %}
 <div class="h-full flex overflow-hidden gap-6">
     <!-- Left Panel: Target Selector -->
-    <div class="w-1/3 flex flex-col bg-surface/30 border border-white/10 rounded-xl overflow-hidden relative">
-        <div class="p-4 border-b border-white/10 bg-black/20">
-            <h2 class="text-primary font-mono text-sm flex items-center gap-2">
-                <span class="w-1 h-4 bg-primary block"></span>
-                TARGET SELECT
-            </h2>
-            <div class="text-[10px] text-gray-500 font-mono mt-1">
-                TODAY: {{ today_date }} ({{ weekday_jp }})
+    <div class="w-1/3 flex flex-col gap-4">
+        <!-- Calendar & Date Picker Module -->
+        <div class="bg-surface/30 border border-white/10 rounded-xl overflow-hidden p-4">
+            <h3 class="text-xs font-mono text-gray-400 mb-2">DATE & CALENDAR</h3>
+            <form method="get" id="dateForm" class="mb-4">
+                <input type="date" name="date" value="{{ today_date }}" 
+                    class="w-full bg-black/50 border border-white/10 rounded px-2 py-2 text-sm text-white focus:border-primary transition"
+                    onchange="this.form.submit()">
+            </form>
+            
+            <!-- Mini Calendar Placeholder (Functional Calendar needs JS/Backend data) -->
+            <!-- For now, simple Month view could be complex. User asked for "Left Side Menu Calendar". 
+                 Let's create a visual list of days for current month or simple grid. -->
+            <div class="bg-black/20 rounded border border-white/5 p-2">
+                <div class="text-center font-mono text-xs mb-2 text-primary">{{ current_date|date:"F Y" }}</div>
+                <div class="grid grid-cols-7 gap-1 text-center text-[10px] text-gray-500 mb-1">
+                    <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+                </div>
+                <!-- Simple JS generated calendar or static for now? 
+                     User wants "Birthday/Custom Anniv marks, Event/Question/Contact marks".
+                     This requires passing calendar_data to template. 
+                     For this iteration, I'll assume we can use a JS library or simple template loop if data passed. 
+                     Implementation Plan said "Calendar Widget". Let's stick to simple CSS grid for now with placeholders or JS. -->
+                 <div id="miniCalendar" class="grid grid-cols-7 gap-1 text-center text-xs"></div>
+            </div>
+            
+            <div class="mt-2 space-y-1">
+                <div class="flex items-center gap-2 text-[10px] text-gray-500">
+                    <span class="w-2 h-2 rounded-full bg-red-500"></span> 記念日 (Anniv)
+                </div>
+                <div class="flex items-center gap-2 text-[10px] text-gray-500">
+                    <span class="w-2 h-2 rounded-full bg-primary"></span> ログあり (Log)
+                </div>
             </div>
         </div>
 
-        <!-- Target List -->
-        <div class="flex-1 overflow-y-auto p-2 space-y-2" id="targetList">
-            {% for target in todays_targets %}
-            <div class="target-item p-3 rounded flex items-center gap-3 cursor-pointer hover:bg-white/5 transition border border-transparent hover:border-primary/30 group"
-                data-id="{{ target.id }}" data-name="{{ target.nickname }}"
-                data-avatar="{% if target.avatar %}{{ target.avatar.url }}{% endif %}">
-                <div class="w-[100px] h-[100px] rounded-full bg-black border border-white/10 overflow-hidden flex-shrink-0 relative"
-                    style="width: 100px; height: 100px;">
-                    {% if target.avatar %}
-                    <img src="{{ target.avatar.url }}" class="w-full h-full object-cover">
-                    {% else %}
-                    <div class="w-full h-full flex items-center justify-center text-xs text-gray-500">{{
-                        target.nickname|slice:":1" }}</div>
-                    {% endif %}
+        <!-- Target List Module -->
+        <div class="bg-surface/30 border border-white/10 rounded-xl overflow-hidden flex-1 flex flex-col relative">
+            <div class="p-4 border-b border-white/10 bg-black/20">
+                <h2 class="text-primary font-mono text-sm flex items-center gap-2">
+                    <span class="w-1 h-4 bg-primary block"></span>
+                    TARGET SELECT
+                </h2>
+                <div class="text-[10px] text-gray-500 font-mono mt-1">
+                    {{ today_date }} ({{ weekday_jp }})
                 </div>
-                <div class="flex-1 min-w-0">
-                    <div class="text-sm text-white font-mono truncate group-hover:text-primary">{{ target.nickname }}
+            </div>
+    
+            <!-- Target List -->
+            <div class="flex-1 overflow-y-auto p-2 space-y-2" id="targetList">
+                {% for item in todays_targets %}
+                <div class="target-item p-3 rounded flex items-center gap-3 cursor-pointer hover:bg-white/5 transition border border-transparent hover:border-primary/30 group relative select-target-btn"
+                    data-id="{{ item.obj.id }}" data-name="{{ item.obj.nickname }}"
+                    data-avatar="{% if item.obj.avatar %}{{ item.obj.avatar.url }}{% endif %}">
+                    
+                    <!-- Avatar -->
+                    <div class="w-[50px] h-[50px] rounded-full bg-black border border-white/10 overflow-hidden flex-shrink-0 relative">
+                        {% if item.obj.avatar %}
+                        <img src="{{ item.obj.avatar.url }}" class="w-full h-full object-cover">
+                        {% else %}
+                        <div class="w-full h-full flex items-center justify-center text-xs text-gray-500">{{ item.obj.nickname|slice:":1" }}</div>
+                        {% endif %}
                     </div>
-                    <div class="text-[10px] text-gray-500 truncate">{{ target.last_name }} {{ target.first_name }}</div>
-                </div>
-                <div class="w-2 h-2 rounded-full bg-gray-700 status-indicator"></div>
-            </div>
-            {% empty %}
-            <div class="text-center text-gray-500 text-xs py-10">
-                本日の予定ターゲットはいません
-            </div>
-            {% endfor %}
-        </div>
+                    
+                    <!-- Info -->
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-white font-mono truncate group-hover:text-primary">{{ item.obj.nickname }}</span>
+                            <!-- Icons -->
+                            {% if item.is_anniversary %}
+                            <span class="text-red-500 text-xs" title="Anniversary"><i class="fas fa-gift"></i></span>
+                            {% endif %}
+                            {% if not item.has_entry %}
+                            <span class="text-yellow-500 text-xs" title="Unfilled"><i class="fas fa-exclamation-circle"></i></span>
+                            {% endif %}
+                        </div>
+                        <div class="text-[10px] text-gray-500 truncate">
+                            {{ item.obj.last_name }} {{ item.obj.first_name }} 
+                            {% if item.age %}({{ item.age }}){% endif %}
+                        </div>
+                    </div>
 
-        <!-- Add Button -->
-        <div class="p-4 border-t border-white/10 bg-black/20">
-            <button id="openTargetSearch"
-                class="w-full py-2 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 rounded text-xs font-mono transition flex items-center justify-center gap-2">
-                <span>+</span> ADD TARGET
-            </button>
+                    <!-- Minus Button (Hover Only) -->
+                    <button class="absolute top-2 right-2 text-gray-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity remove-target-btn z-10 p-1"
+                        data-id="{{ item.obj.id }}" title="リストから除外">
+                        <i class="fas fa-minus-circle"></i>
+                    </button>
+                    
+                    <!-- Status Indicator (Right aligned if needed, or keeping minus btn there) -->
+                </div>
+                {% empty %}
+                <div class="text-center text-gray-500 text-xs py-10">
+                    本日の予定ターゲットはいません
+                </div>
+                {% endfor %}
+            </div>
+    
+            <!-- Buttons -->
+            <div class="p-4 border-t border-white/10 bg-black/20 space-y-2">
+                <button id="openTargetSearch"
+                    class="w-full py-2 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 rounded text-xs font-mono transition flex items-center justify-center gap-2">
+                    <span>+</span> ADD TARGET
+                </button>
+                <button id="removeUnfilledBtn"
+                    class="w-full py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 rounded text-xs font-mono transition flex items-center justify-center gap-2">
+                    <span>-</span> REMOVE UNFILLED
+                </button>
+            </div>
         </div>
     </div>
 
@@ -216,32 +278,89 @@
 
     // --- Target Selection ---
     document.addEventListener('click', function (e) {
-        const item = e.target.closest('.target-item');
+    // --- Target Selection & Filtering ---
+    const targetList = document.getElementById('targetList');
+    const selectedAvatar = document.getElementById('selectedAvatar');
+    const selectedName = document.getElementById('selectedName');
+    const noSelectionOverlay = document.getElementById('noSelectionOverlay');
+    let currentTargetId = null;
+
+    targetList.addEventListener('click', function(e) {
+        // Handle Minus Button
+        if (e.target.closest('.remove-target-btn')) {
+            e.stopPropagation();
+            const btn = e.target.closest('.remove-target-btn');
+            const id = btn.dataset.id;
+            const date = document.querySelector('input[name="date"]').value;
+            
+            if(confirm('このターゲットを本日のリストから除外しますか？')) {
+                toggleTargetState(id, date, 'hide', () => {
+                    location.reload(); // Reload to reflect changes logic
+                });
+            }
+            return;
+        }
+
+        // Handle Select
+        const item = e.target.closest('.target-item'); // Changed from .select-target-btn to .target-item
         if (item) {
-            // Visualize Selection
-            document.querySelectorAll('.target-item').forEach(el => {
-                el.classList.remove('bg-white/10', 'border-primary');
+            // Deselect others
+            document.querySelectorAll('.target-item').forEach(el => { // Changed from .select-target-btn to .target-item
+                el.classList.remove('bg-white/10', 'border-primary'); // Adjusted classes
                 el.querySelector('.status-indicator').classList.remove('bg-primary', 'shadow-[0_0_8px_rgba(34,197,94,0.8)]');
                 el.querySelector('.status-indicator').classList.add('bg-gray-700');
             });
-            item.classList.add('bg-white/10', 'border-primary');
+            item.classList.add('bg-white/10', 'border-primary'); // Adjusted classes
             item.querySelector('.status-indicator').classList.remove('bg-gray-700');
             item.querySelector('.status-indicator').classList.add('bg-primary', 'shadow-[0_0_8px_rgba(34,197,94,0.8)]');
 
-            // Set Data
             currentTargetId = item.dataset.id;
             selectedName.textContent = item.dataset.name;
             const avatarUrl = item.dataset.avatar;
             if (avatarUrl) {
                 selectedAvatar.innerHTML = `<img src="${avatarUrl}" class="w-full h-full object-cover">`;
             } else {
-                selectedAvatar.innerHTML = `<div class="w-full h-full flex items-center justify-center text-xs text-gray-500">${item.dataset.name.charAt(0)}</div>`;
+                selectedAvatar.innerHTML = `<div class="w-full h-full flex items-center justify-center text-xs text-gray-500">${item.dataset.name.slice(0, 1)}</div>`;
             }
 
-            // Hide Overlay
-            overlay.classList.add('hidden');
+            noSelectionOverlay.classList.add('hidden');
+            // Reset Forms... (optional)
         }
     });
+
+    // Remove Unfilled
+    const removeUnfilledBtn = document.getElementById('removeUnfilledBtn');
+    removeUnfilledBtn.addEventListener('click', function() {
+        if(!confirm('未記入のターゲットを一括で除外しますか？')) return;
+        
+        const date = document.querySelector('input[name="date"]').value;
+        // Or cleaner: check dataset if we passed has_entry? No dataset for it.
+        // Check text-yellow-500 icon presence.
+        
+        let promises = [];
+        document.querySelectorAll('.target-item').forEach(item => { // Changed from .select-target-btn to .target-item
+            if (item.querySelector('.fa-exclamation-circle')) { // Unfilled icon class
+                const id = item.dataset.id;
+                promises.push(toggleTargetState(id, date, 'hide'));
+            }
+        });
+        
+        Promise.all(promises).then(() => location.reload());
+    });
+
+    function toggleTargetState(targetId, date, action, callback) {
+        return fetch('{% url "target_state_toggle" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({ target_id: targetId, date: date, action: action })
+        }).then(res => res.json()).then(data => {
+            if(data.success && callback) callback();
+            return data;
+        });
+    }
 
     // --- Tabs ---
     tabEvent.addEventListener('click', () => {
