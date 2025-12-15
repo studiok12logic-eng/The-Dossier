@@ -216,6 +216,7 @@
                         <input type="checkbox" name="groups" value="{{ group.id }}" {% if group in
                             form.instance.groups.all %}checked{% endif %}
                             class="rounded border-gray-600 text-primary focus:ring-primary bg-gray-900 w-4 h-4">
+                        class="rounded border-gray-600 text-primary focus:ring-primary bg-gray-900 w-4 h-4">
                         <span class="text-sm text-gray-300">{{ group.name }}</span>
                     </label>
                     {% empty %}
