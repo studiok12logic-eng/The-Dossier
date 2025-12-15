@@ -444,7 +444,7 @@
                 if (emptyMsg) emptyMsg.remove();
 
                 const div = document.createElement('div');
-                div.className = "target-item p-3 rounded flex items-center gap-3 cursor-pointer hover:bg-white/5 transition border border-transparent hover:border-primary/30 group";
+                div.className = "target-item p-3 rounded flex items-center gap-3 cursor-pointer hover:bg-white/5 transition border border-transparent hover:border-primary/30 group relative select-target-btn";
                 div.dataset.id = id;
                 div.dataset.name = name;
                 div.dataset.avatar = avatar;
@@ -454,14 +454,24 @@
                 else avatarHtml = `<div class="w-full h-full flex items-center justify-center text-xs text-gray-500">${name.charAt(0)}</div>`;
 
                 div.innerHTML = `
-                    <div class="w-10 h-10 rounded bg-black border border-white/10 overflow-hidden flex-shrink-0 relative">${avatarHtml}</div>
+                    <div class="w-[50px] h-[50px] rounded-full bg-black border border-white/10 overflow-hidden flex-shrink-0 relative">${avatarHtml}</div>
                     <div class="flex-1 min-w-0">
-                        <div class="text-sm text-white font-mono truncate group-hover:text-primary">${name}</div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-white font-mono truncate group-hover:text-primary">${name}</span>
+                        </div>
                         <div class="text-[10px] text-gray-500 truncate">Added Manually</div>
                     </div>
-                    <div class="w-2 h-2 rounded-full bg-gray-700 status-indicator"></div>
+                    <!-- Status Indicator/Minus -->
+                     <button class="absolute top-2 right-2 text-gray-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity remove-target-btn z-10 p-1"
+                        data-id="${id}" title="リストから除外">
+                        <i class="fas fa-minus-circle"></i>
+                    </button>
                  `;
                 container.prepend(div);
+                
+                // Add State via AJAX
+                const date = document.querySelector('input[name="date"]').value;
+                toggleTargetState(id, date, 'add');
             }
             searchModal.classList.add('hidden');
         }
