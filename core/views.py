@@ -317,3 +317,46 @@ class IntelligenceLogView(LoginRequiredMixin, View):
             
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
+
+class TargetStateToggleView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        import datetime
+        from django.db import IntegrityError
+        
+        try:
+            data = json.loads(request.body)
+            target_id = data.get('target_id')
+            date_str = data.get('date')
+            action = data.get('action') # 'add' or 'hide'
+            
+            if not target_id or not action:
+                return JsonResponse({'success': False, 'error': 'Missing parameters'})
+                
+            target = get_object_or_404(Target, pk=target_id, user=request.user)
+            
+            if date_str:
+                try:
+                    date_obj = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+                except ValueError:
+                    date_obj = datetime.date.today()
+            else:
+                date_obj = datetime.date.today()
+                
+            # Get or Create State
+            state, created = DailyTargetState.objects.get_or_create(
+                target=target,
+                date=date_obj,
+                defaults={'is_manual_add': False, 'is_hidden': False}
+            )
+            
+            if action == 'add':
+                state.is_manual_add = True
+                state.is_hidden = False
+            elif action == 'hide':
+                state.is_hidden = True
+            
+            state.save()
+            return JsonResponse({'success': True})
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
