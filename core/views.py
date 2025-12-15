@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 
-from intelligence.models import Target, TimelineItem, CustomAnniversary, TargetGroup, Quest
+from intelligence.models import Target, TimelineItem, CustomAnniversary, TargetGroup, Quest, DailyTargetState
 from intelligence.forms import TargetForm, CustomAnniversaryForm, TargetGroupForm
 import json
 
