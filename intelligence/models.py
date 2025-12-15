@@ -12,12 +12,14 @@ class Quest(models.Model):
     text = models.CharField(max_length=200)
     category = models.CharField(max_length=50)
     difficulty = models.IntegerField(default=1)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return self.text
 
 class TargetGroup(models.Model):
-    name = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=100) # Removed unique=True for multi-tenancy
+    user = models.ForeignKey(User, on_delete=models.CASCADE, default=1)
     description = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

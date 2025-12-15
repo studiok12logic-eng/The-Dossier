@@ -1,13 +1,14 @@
-from django.shortcuts import render, redirect
-from django.views.generic import CreateView, UpdateView, View
+from django.shortcuts import render, redirect, get_object_or_404
+from django.views.generic import CreateView, UpdateView, View, DeleteView
 from django.urls import reverse_lazy
 from django.db import transaction
 from django.http import JsonResponse
 from django.forms import inlineformset_factory
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Q
 
-from intelligence.models import Target, TimelineItem, CustomAnniversary, TargetGroup
+from intelligence.models import Target, TimelineItem, CustomAnniversary, TargetGroup, Quest
 from intelligence.forms import TargetForm, CustomAnniversaryForm, TargetGroupForm
 import json
 
@@ -42,6 +43,11 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
     template_name = 'target_form.html'
     success_url = reverse_lazy('target_list')
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         if self.request.POST:
@@ -55,7 +61,7 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
         context = self.get_context_data()
         anniversaries = context['anniversaries']
         with transaction.atomic():
-            form.instance.user = self.request.user  # Assign current user
+            form.instance.user = self.request.user
             self.object = form.save()
             if anniversaries.is_valid():
                 anniversaries.instance = self.object
@@ -65,12 +71,16 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
 class TargetUpdateView(LoginRequiredMixin, UpdateView):
     model = Target
     form_class = TargetForm
-    template_name = 'target_form.html' # Reuse template
+    template_name = 'target_form.html'
     success_url = reverse_lazy('target_list')
 
     def get_queryset(self):
-        # Ensure user can only edit their own targets
         return Target.objects.filter(user=self.request.user)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -92,6 +102,15 @@ class TargetUpdateView(LoginRequiredMixin, UpdateView):
                 anniversaries.save()
         return super().form_valid(form)
 
+class TargetDeleteView(LoginRequiredMixin, DeleteView):
+    model = Target
+    success_url = reverse_lazy('target_list')
+    template_name = 'target_confirm_delete.html' # We might not use this if we do modal or direct post, but standard way needs template. 
+    # Actually user asked for button styling, usually implies confirmation.
+    
+    def get_queryset(self):
+        return Target.objects.filter(user=self.request.user)
+
 class TargetGroupCreateView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         try:
@@ -101,10 +120,12 @@ class TargetGroupCreateView(LoginRequiredMixin, View):
             if not name:
                 return JsonResponse({'success': False, 'error': 'Group name is required'})
             
-            group, created = TargetGroup.objects.get_or_create(name=name, defaults={'description': description})
-            
-            if not created:
-                return JsonResponse({'success': True, 'id': group.id, 'name': group.name})
+            # Check existing group for THIS user
+            group, created = TargetGroup.objects.get_or_create(
+                name=name, 
+                user=request.user, 
+                defaults={'description': description}
+            )
             
             return JsonResponse({'success': True, 'id': group.id, 'name': group.name})
         except Exception as e:

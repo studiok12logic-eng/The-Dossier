@@ -18,11 +18,20 @@ class TargetForm(forms.ModelForm):
     zodiac_sign = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary', 'readonly': 'readonly'}))
 
     # Groups (M2M) - Rendered as checkbox or multi-select. Using SelectMultiple for now with custom styling class.
+    # Groups (M2M) - Rendered as checkbox or multi-select. Using SelectMultiple for now with custom styling class.
     groups = forms.ModelMultipleChoiceField(
-        queryset=TargetGroup.objects.all(),
+        queryset=TargetGroup.objects.none(), # Populated in __init__
         required=False,
-        widget=forms.SelectMultiple(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary h-32'})
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'space-y-2'})
     )
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        if user:
+            self.fields['groups'].queryset = TargetGroup.objects.filter(user=user)
+        else:
+             self.fields['groups'].queryset = TargetGroup.objects.none()
 
     class Meta:
         model = Target
