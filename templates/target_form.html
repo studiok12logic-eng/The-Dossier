@@ -28,8 +28,8 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <!-- Avatar -->
                 <div class="md:col-span-1 flex flex-col gap-4">
-                    <label class="block text-xs font-mono text-gray-400 mb-1">プロフィール画像</label>
-                    <div class="aspect-square bg-black border-2 border-dashed border-white/20 rounded-lg flex items-center justify-center relative group overflow-hidden"
+                    <label class="block text-xs font-mono text-gray-400 mb-1">プロフィール画像 (300x300)</label>
+                    <div class="w-[300px] h-[300px] bg-black border-2 border-dashed border-white/20 rounded-lg flex items-center justify-center relative group overflow-hidden mx-auto md:mx-0"
                         id="avatarPreviewContainer">
                         {% if form.instance.avatar %}
                         <img src="{{ form.instance.avatar.url }}" id="avatarPreview" class="w-full h-full object-cover">
@@ -42,9 +42,24 @@
                         <input type="file" name="avatar" id="id_avatar" accept="image/*"
                             class="absolute inset-0 opacity-0 cursor-pointer z-10 w-full h-full">
                     </div>
-                    <div class="text-[10px] text-gray-500 text-center">
+
+                    <!-- Avatar Delete Button -->
+                    <div class="flex justify-center md:justify-start gap-2">
+                        <button type="button" id="deleteAvatarBtn"
+                            class="text-xs text-red-500 hover:text-red-400 border border-red-500/30 px-2 py-1 rounded bg-red-500/10">
+                            画像削除
+                        </button>
+                    </div>
+
+                    <div class="text-[10px] text-gray-500 text-center md:text-left">
                         クリックで選択 (自動で正方形にトリミング可能)
                     </div>
+
+                    {% if form.instance.avatar %}
+                    <div class="hidden">
+                        <input type="checkbox" name="avatar-clear" id="avatar-clear_id">
+                    </div>
+                    {% endif %}
                 </div>
 
                 <!-- Text Fields -->
@@ -92,14 +107,14 @@
                 <!-- Birthdate (Selects) -->
                 <div class="bg-black/20 p-4 rounded border border-white/5">
                     <label class="block text-xs font-mono text-gray-400 mb-2">生年月日</label>
-                    <div class="grid grid-cols-3 gap-2 mb-2">
-                        <!-- Year (Hidden Input + Select) -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
+                        <!-- Year -->
                         <div class="relative">
                             {{ form.birth_year.as_hidden }}
                             <select id="birth_year_select"
                                 class="w-full bg-surface border border-white/10 rounded px-2 py-2 text-white text-sm appearance-none focus:border-primary">
                                 <option value="">年</option>
-                                <!-- JS will populate 1900-Current -->
+                                <!-- JS Populated -->
                             </select>
                         </div>
                         <!-- Month -->
@@ -119,7 +134,6 @@
                             <select id="birth_day_select"
                                 class="w-full bg-surface border border-white/10 rounded px-2 py-2 text-white text-sm appearance-none focus:border-primary">
                                 <option value="">日</option>
-                                <!-- JS can populate or just static 1-31 -->
                                 {% for i in "x"|ljust:"31" %}
                                 <option value="{{ forloop.counter }}">{{ forloop.counter }}日</option>
                                 {% endfor %}
@@ -135,27 +149,29 @@
                 <!-- Zodiac -->
                 <div class="bg-black/20 p-4 rounded border border-white/5 relative">
                     <label class="block text-xs font-mono text-gray-400 mb-2">星座 (自動判定 / 手動変更可)</label>
-                    <div class="flex gap-2">
+                    <div class="flex gap-2 mb-1">
                         <div class="flex-1">
                             {{ form.zodiac_sign }}
                         </div>
                         <select id="zodiacParams"
-                            class="bg-surface border border-white/10 rounded px-2 text-white text-xs w-28">
+                            class="bg-surface border border-white/10 rounded px-2 text-white text-xs w-32">
                             <option value="">自動 (Auto)</option>
-                            <option value="Aries">♈ 牡羊座</option>
-                            <option value="Taurus">♉ 牡牛座</option>
-                            <option value="Gemini">♊ 双子座</option>
-                            <option value="Cancer">♋ 蟹座</option>
-                            <option value="Leo">♌ 獅子座</option>
-                            <option value="Virgo">♍ 乙女座</option>
-                            <option value="Libra">♎ 天秤座</option>
-                            <option value="Scorpio">♏ 蠍座</option>
-                            <option value="Sagittarius">♐ 射手座</option>
-                            <option value="Capricorn">♑ 山羊座</option>
-                            <option value="Aquarius">♒ 水瓶座</option>
-                            <option value="Pisces">♓ 魚座</option>
+                            <option value="牡羊座">♈ 牡羊座</option>
+                            <option value="牡牛座">♉ 牡牛座</option>
+                            <option value="双子座">♊ 双子座</option>
+                            <option value="蟹座">♋ 蟹座</option>
+                            <option value="獅子座">♌ 獅子座</option>
+                            <option value="乙女座">♍ 乙女座</option>
+                            <option value="天秤座">♎ 天秤座</option>
+                            <option value="蠍座">♏ 蠍座</option>
+                            <option value="射手座">♐ 射手座</option>
+                            <option value="山羊座">♑ 山羊座</option>
+                            <option value="水瓶座">♒ 水瓶座</option>
+                            <option value="魚座">♓ 魚座</option>
                         </select>
                     </div>
+                    <!-- Zodiac Date Range Display -->
+                    <div id="zodiacRangeDisplay" class="text-[10px] text-gray-500 text-right h-4"></div>
                 </div>
 
                 <!-- Gender & Blood -->
@@ -197,7 +213,8 @@
                     {% for group in form.groups.field.queryset %}
                     <label
                         class="flex items-center gap-2 p-2 rounded cursor-pointer hover:bg-white/5 transition border border-transparent hover:border-white/10 group-checkbox-item">
-                        <input type="checkbox" name="groups" value="{{ group.id }}" {% if group in form.instance.groups.all %}checked{% endif %}
+                        <input type="checkbox" name="groups" value="{{ group.id }}" {% if group in
+                            form.instance.groups.all %}checked{% endif %}
                             class="rounded border-gray-600 text-primary focus:ring-primary bg-gray-900 w-4 h-4">
                         <span class="text-sm text-gray-300">{{ group.name }}</span>
                     </label>
@@ -218,8 +235,13 @@
             <div id="anniversary-forms" class="space-y-4">
                 {% for form in anniversaries %}
                 <div class="anniversary-row flex gap-4 items-end bg-black/20 p-3 rounded border border-white/5">
-                    {{ form.id }} {# Hidden ID field for existing instances #}
-                    {{ form.target }} {# Hidden target field #}
+                    {{ form.id }}
+                    {{ form.target }}
+
+                    <div class="hidden">
+                        {{ form.DELETE }}
+                    </div>
+
                     <div class="flex-1">
                         <label class="block text-[10px] font-mono text-gray-500 mb-1">名称 (例: 結婚記念日)</label>
                         {{ form.label }}
@@ -230,18 +252,17 @@
                     </div>
                     <div class="pb-1">
                         {% if form.instance.pk %}
-                        <label class="flex items-center gap-1 text-red-500 text-xs cursor-pointer">
-                            {{ form.DELETE }} <span class="text-[10px]">削除</span>
-                        </label>
-                        {% else %}
-                        {# For new empty forms, DELETE checkbox is not needed initially #}
+                        <button type="button"
+                            class="delete-anniversary-btn text-xs bg-red-500/10 text-red-500 border border-red-500/30 px-3 py-1.5 rounded hover:bg-red-500/20 transition">
+                            削除
+                        </button>
                         {% endif %}
                     </div>
                 </div>
                 {% endfor %}
             </div>
             <button type="button" id="add-anniversary"
-                class="mt-4 w-full py-2 border border-dashed border-white/20 text-gray-400 hover:text-white hover:border-white/50 rounded font-mono text-xs transition">
+                class="mt-4 w-full py-2 bg-white/5 hover:bg-white/10 border border-dashed border-white/20 text-gray-400 hover:text-white rounded font-mono text-xs transition">
                 + 記念日を追加
             </button>
         </section>
@@ -268,14 +289,14 @@
 <div id="cropModal" class="hidden fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
     <div class="bg-surface border border-white/20 rounded-xl p-6 max-w-2xl w-full flex flex-col gap-4">
         <h3 class="text-xl font-mono text-white">画像トリミング</h3>
-        <div class="h-96 w-full bg-black flex items-center justify-center">
+        <div class="h-[500px] w-full bg-black flex items-center justify-center">
             <img id="imageToCrop" src="" class="max-w-full max-h-full">
         </div>
         <div class="flex justify-end gap-4">
             <button type="button" id="cancelCrop"
                 class="px-4 py-2 text-gray-400 hover:text-white border border-white/10 rounded">キャンセル</button>
-            <button type="button" id="confirmCrop"
-                class="px-6 py-2 bg-primary text-black font-bold rounded">適用する</button>
+            <button type="button" id="confirmCrop" class="px-6 py-2 bg-primary text-black font-bold rounded">適用する
+                (300px)</button>
         </div>
     </div>
 </div>
@@ -312,6 +333,8 @@
     <div class="anniversary-row flex gap-4 items-end bg-black/20 p-3 rounded border border-white/5">
         {{ anniversaries.empty_form.id }}
         {{ anniversaries.empty_form.target }}
+        <div class="hidden">{{ anniversaries.empty_form.DELETE }}</div>
+
         <div class="flex-1">
             <label class="block text-[10px] font-mono text-gray-500 mb-1">名称 (例: 結婚記念日)</label>
             {{ anniversaries.empty_form.label }}
@@ -321,15 +344,41 @@
             {{ anniversaries.empty_form.date }}
         </div>
         <div class="pb-1">
-            <label class="flex items-center gap-1 text-red-500 text-xs cursor-pointer">
-                {{ anniversaries.empty_form.DELETE }} <span class="text-[10px]">削除</span>
-            </label>
+            <button type="button"
+                class="delete-anniversary-btn text-xs bg-red-500/10 text-red-500 border border-red-500/30 px-3 py-1.5 rounded hover:bg-red-500/20 transition">
+                削除
+            </button>
         </div>
     </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 <script>
+    // --- Helper Functions ---
+    function getEto(year) {
+        if (!year) return '--';
+        const etos = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+        const etoIndex = (year - 4) % 12;
+        return etos[etoIndex < 0 ? etoIndex + 12 : etoIndex];
+    }
+
+    function calculateAge(year, month, day) {
+        if (!year) return '--';
+        const today = new Date();
+        const y = parseInt(year);
+        // Default to Jan 1st if no month provided for month-level precision check?
+        const m = month ? parseInt(month) : 1;
+        const d = day ? parseInt(day) : 1;
+
+        let age = today.getFullYear() - y;
+        const mDiff = today.getMonth() + 1 - m;
+
+        if (mDiff < 0 || (mDiff === 0 && today.getDate() < d)) {
+            age--;
+        }
+        return age;
+    }
+
     // --- Populate Year Select ---
     const yearSelect = document.getElementById('birth_year_select');
     const monthSelect = document.getElementById('birth_month_select');
@@ -338,21 +387,22 @@
     const monthInput = document.getElementById('id_birth_month');
     const dayInput = document.getElementById('id_birth_day');
 
+    const currentYear = new Date().getFullYear();
     const startYear = 1900;
-    const endYear = new Date().getFullYear();
-    for (let y = endYear; y >= startYear; y--) {
+
+    for (let y = currentYear; y >= startYear; y--) {
         let opt = document.createElement('option');
         opt.value = y;
-        opt.textContent = y + '年';
+        const simpleAge = currentYear - y;
+        const eto = getEto(y);
+        opt.textContent = `${y}年（${eto}）${simpleAge}歳`;
         yearSelect.appendChild(opt);
     }
 
-    // Set initial values from hidden inputs
     if (yearInput.value) yearSelect.value = yearInput.value;
     if (monthInput.value) monthSelect.value = monthInput.value;
     if (dayInput.value) daySelect.value = dayInput.value;
 
-    // Sync Selects to Hidden Inputs
     function syncDate() {
         yearInput.value = yearSelect.value;
         monthInput.value = monthSelect.value;
@@ -370,49 +420,39 @@
     const etoDisplay = document.getElementById('etoDisplay');
     const zodiacInput = document.getElementById('id_zodiac_sign');
     const zodiacSelect = document.getElementById('zodiacParams');
+    const zodiacRangeDisplay = document.getElementById('zodiacRangeDisplay');
 
-    function calculateAge(year, month, day) {
-        if (!year || !month || !day) return '--';
-        const today = new Date();
-        const birthDate = new Date(year, month - 1, day);
-        let age = today.getFullYear() - birthDate.getFullYear();
-        const m = today.getMonth() - birthDate.getMonth();
-        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-            age--;
-        }
-        return age;
-    }
-
-    function getEto(year) {
-        if (!year) return '--';
-        // Eto cycle starts with Rat (子) in 1900. 1900 % 12 = 4. So 4th element is Rat.
-        // The array should be ordered such that (year - offset) % 12 maps correctly.
-        // 1900 is Rat (子). (1900 - 4) % 12 = 0. So, if 1900 is index 0, then 4 is the offset.
-        // 1900 (子), 1901 (丑), 1902 (寅), 1903 (卯), 1904 (辰), 1905 (巳), 1906 (午), 1907 (未), 1908 (申), 1909 (酉), 1910 (戌), 1911 (亥)
-        // 1900 % 12 = 4. So 4th element in the array should be 子.
-        // The provided array is ['猿', '酉', '犬', '猪', '子', '丑', '寅', '卯', '辰', '巳', '午', '未']
-        // This array seems to be ordered for (year - 1900 + 4) % 12 or similar.
-        // Let's use a standard calculation: (year - 4) % 12, where 4 is the year of the Rat (子).
-        // 1900 is Rat. (1900 - 4) % 12 = 1896 % 12 = 0. So Rat should be index 0.
-        const etos = ['子 (Rat)', '丑 (Ox)', '寅 (Tiger)', '卯 (Rabbit)', '辰 (Dragon)', '巳 (Snake)', '午 (Horse)', '未 (Sheep)', '申 (Monkey)', '酉 (Rooster)', '戌 (Dog)', '亥 (Boar)'];
-        const etoIndex = (year - 4) % 12; // 4 AD was a Rat year
-        return etos[etoIndex < 0 ? etoIndex + 12 : etoIndex]; // Handle negative results for years < 4 AD if needed, though not for 1900+
-    }
+    const zodiacInfo = {
+        "牡羊座": { start: "3/21", end: "4/19" },
+        "牡牛座": { start: "4/20", end: "5/20" },
+        "双子座": { start: "5/21", end: "6/21" },
+        "蟹座": { start: "6/22", end: "7/22" },
+        "獅子座": { start: "7/23", end: "8/22" },
+        "乙女座": { start: "8/23", end: "9/22" },
+        "天秤座": { start: "9/23", end: "10/23" },
+        "蠍座": { start: "10/24", end: "11/22" },
+        "射手座": { start: "11/23", end: "12/21" },
+        "山羊座": { start: "12/22", end: "1/19" },
+        "水瓶座": { start: "1/20", end: "2/18" },
+        "魚座": { start: "2/19", end: "3/20" }
+    };
 
     function getZodiac(month, day) {
         if (!month || !day) return '';
-        if ((month == 1 && day <= 19) || (month == 12 && day >= 22)) return "Capricorn";
-        if ((month == 1 && day >= 20) || (month == 2 && day <= 18)) return "Aquarius";
-        if ((month == 2 && day >= 19) || (month == 3 && day <= 20)) return "Pisces";
-        if ((month == 3 && day >= 21) || (month == 4 && day <= 19)) return "Aries";
-        if ((month == 4 && day >= 20) || (month == 5 && day <= 20)) return "Taurus";
-        if ((month == 5 && day >= 21) || (month == 6 && day <= 20)) return "Gemini";
-        if ((month == 6 && day >= 21) || (month == 7 && day <= 22)) return "Cancer";
-        if ((month == 7 && day >= 23) || (month == 8 && day <= 22)) return "Leo";
-        if ((month == 8 && day >= 23) || (month == 9 && day <= 22)) return "Virgo";
-        if ((month == 9 && day >= 23) || (month == 10 && day <= 22)) return "Libra";
-        if ((month == 10 && day >= 23) || (month == 11 && day <= 21)) return "Scorpio";
-        if ((month == 11 && day >= 22) || (month == 12 && day <= 21)) return "Sagittarius";
+        const m = parseInt(month);
+        const d = parseInt(day);
+        if ((m == 1 && d <= 19) || (m == 12 && d >= 22)) return "山羊座";
+        if ((m == 1 && d >= 20) || (m == 2 && d <= 18)) return "水瓶座";
+        if ((m == 2 && d >= 19) || (m == 3 && d <= 20)) return "魚座";
+        if ((m == 3 && d >= 21) || (m == 4 && d <= 19)) return "牡羊座";
+        if ((m == 4 && d >= 20) || (m == 5 && d <= 20)) return "牡牛座";
+        if ((m == 5 && d >= 21) || (m == 6 && d <= 21)) return "双子座";
+        if ((m == 6 && d >= 21) || (m == 7 && d <= 22)) return "蟹座";
+        if ((m == 7 && d >= 23) || (m == 8 && d <= 22)) return "獅子座";
+        if ((m == 8 && d >= 23) || (m == 9 && d <= 22)) return "乙女座";
+        if ((m == 9 && d >= 23) || (m == 10 && d <= 23)) return "天秤座";
+        if ((m == 10 && d >= 23) || (m == 11 && d <= 21)) return "蠍座";
+        if ((m == 11 && d >= 22) || (m == 12 && d <= 21)) return "射手座";
         return "";
     }
 
@@ -421,36 +461,50 @@
         const m = parseInt(monthSelect.value);
         const d = parseInt(daySelect.value);
 
-        if (y && m && d) {
-            ageDisplay.textContent = `年齢: ${calculateAge(y, m, d)}歳`;
+        if (y) {
+            let age = calculateAge(y, m, d);
+            ageDisplay.textContent = `年齢: ${age}歳`;
             etoDisplay.textContent = `干支: ${getEto(y)}`;
-
-            // Only update zodiacInput if zodiacSelect is on "Auto"
-            if (zodiacSelect.value === "") {
-                const z = getZodiac(m, d);
-                zodiacInput.value = z;
-            }
         } else {
             ageDisplay.textContent = `年齢: --歳`;
             etoDisplay.textContent = `干支: --`;
-            if (zodiacSelect.value === "") {
-                zodiacInput.value = '';
-            }
+        }
+
+        if (m && d) {
+            const z = getZodiac(m, d);
+            zodiacSelect.value = "";
+            zodiacInput.value = z;
+        } else if (zodiacSelect.value === "") {
+            zodiacInput.value = "";
         }
     }
 
-    // Initial update
     updateBio();
 
     zodiacSelect.addEventListener('change', function () {
         if (this.value) {
-            zodiacInput.value = this.value; // Manual override
+            zodiacInput.value = this.value;
+            const info = zodiacInfo[this.value];
+            if (info) zodiacRangeDisplay.textContent = `${info.start} 〜 ${info.end}`;
         } else {
-            updateBio(); // Revert to auto-calculation
+            zodiacRangeDisplay.textContent = "";
+            updateBio();
         }
     });
 
-    // --- Cropper Logic ---
+    const originalUpdateBio = updateBio;
+    updateBio = function () {
+        originalUpdateBio();
+        const startEnd = zodiacInfo[zodiacInput.value];
+        if (startEnd) {
+            zodiacRangeDisplay.textContent = `${startEnd.start} 〜 ${startEnd.end}`;
+        } else {
+            zodiacRangeDisplay.textContent = "";
+        }
+    };
+
+
+    // --- Avatar Logic ---
     let cropper;
     const avatarInput = document.getElementById('id_avatar');
     const imageToCrop = document.getElementById('imageToCrop');
@@ -458,8 +512,10 @@
     const confirmCropBtn = document.getElementById('confirmCrop');
     const cancelCropBtn = document.getElementById('cancelCrop');
     const avatarPreviewContainer = document.getElementById('avatarPreviewContainer');
-    let avatarPreview = document.getElementById('avatarPreview'); // Existing img or will be created
-    const avatarPlaceholder = document.getElementById('avatarPlaceholder'); // Placeholder div
+    let avatarPreview = document.getElementById('avatarPreview'); // Existing or new
+    const avatarPlaceholder = document.getElementById('avatarPlaceholder');
+    const deleteAvatarBtn = document.getElementById('deleteAvatarBtn');
+    const avatarClearInput = document.getElementById('avatar-clear_id');
 
     avatarInput.addEventListener('change', function (e) {
         const files = e.target.files;
@@ -473,25 +529,26 @@
             cropper = new Cropper(imageToCrop, {
                 aspectRatio: 1,
                 viewMode: 1,
+                dragMode: 'move',
             });
+            if (avatarClearInput) avatarClearInput.checked = false;
         }
     });
 
     cancelCropBtn.addEventListener('click', function () {
         cropModal.classList.add('hidden');
         if (cropper) cropper.destroy();
-        avatarInput.value = ''; // Clear selection from the file input
+        avatarInput.value = '';
     });
 
     confirmCropBtn.addEventListener('click', function () {
         if (cropper) {
-            cropper.getCroppedCanvas().toBlob((blob) => {
-                const file = new File([blob], "avatar_cropped.jpg", { type: "image/jpeg" });
+            cropper.getCroppedCanvas({ width: 300, height: 300 }).toBlob((blob) => {
+                const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
                 const dataTransfer = new DataTransfer();
                 dataTransfer.items.add(file);
-                avatarInput.files = dataTransfer.files; // Assign the cropped file back to the input
+                avatarInput.files = dataTransfer.files;
 
-                // Update preview
                 const previewUrl = URL.createObjectURL(blob);
                 if (!avatarPreview) {
                     avatarPreview = document.createElement('img');
@@ -500,12 +557,18 @@
                     avatarPreviewContainer.appendChild(avatarPreview);
                 }
                 avatarPreview.src = previewUrl;
-                if (avatarPlaceholder) avatarPlaceholder.classList.add('hidden'); // Hide placeholder if present
-                avatarPreview.classList.remove('hidden'); // Ensure preview is visible
-
+                if (avatarPlaceholder) avatarPlaceholder.classList.add('hidden');
+                avatarPreview.classList.remove('hidden');
             }, 'image/jpeg');
             cropModal.classList.add('hidden');
         }
+    });
+
+    deleteAvatarBtn.addEventListener('click', function () {
+        avatarInput.value = '';
+        if (avatarPreview) avatarPreview.classList.add('hidden');
+        if (avatarPlaceholder) avatarPlaceholder.classList.remove('hidden');
+        if (avatarClearInput) avatarClearInput.checked = true;
     });
 
     // --- Group AJAX ---
@@ -536,7 +599,6 @@
             .then(data => {
                 if (data.success) {
                     const container = document.getElementById('groupsContainer');
-                    // Remove empty msg
                     const emptyMsg = container.querySelector('.text-center');
                     if (emptyMsg) emptyMsg.remove();
 
@@ -546,8 +608,7 @@
                     <input type="checkbox" name="groups" value="${data.id}" checked class="rounded border-gray-600 text-primary focus:ring-primary bg-gray-900 w-4 h-4">
                     <span class="text-sm text-gray-300">${data.name}</span>
                 `;
-                    container.prepend(label); // Add new group to the top
-
+                    container.prepend(label);
                     groupModal.classList.add('hidden');
                     groupForm.reset();
                 } else {
@@ -562,21 +623,33 @@
     const totalFormsInput = document.getElementById('id_customanniversary_set-TOTAL_FORMS');
     const emptyFormTemplate = document.getElementById('empty_anniversary_form_template');
 
+    anniversaryFormsContainer.addEventListener('click', function (e) {
+        if (e.target.closest('.delete-anniversary-btn')) {
+            const row = e.target.closest('.anniversary-row');
+            const idInput = row.querySelector('input[name$="-id"]');
+            const deleteInput = row.querySelector('input[name$="-DELETE"]');
+
+            if (idInput && idInput.value) {
+                if (deleteInput) deleteInput.checked = true;
+                row.classList.add('hidden');
+            } else {
+                row.remove();
+            }
+        }
+    });
+
     addAnniversaryBtn.addEventListener('click', function () {
         const formIdx = parseInt(totalFormsInput.value);
         const newFormHtml = emptyFormTemplate.innerHTML.replace(/__prefix__/g, formIdx);
-
         const div = document.createElement('div');
         div.innerHTML = newFormHtml;
         const newFormRow = div.firstElementChild;
 
-        // Clear values for the new form
         newFormRow.querySelectorAll('input').forEach(input => {
-            if (input.type !== 'hidden' && input.type !== 'checkbox') {
+            if (input.type !== 'hidden' && input.type !== 'checkbox' && !input.className.includes('delete-anniversary-btn')) {
                 input.value = '';
-            } else if (input.type === 'checkbox') {
-                input.checked = false;
             }
+            if (input.type === 'checkbox') input.checked = false;
         });
 
         anniversaryFormsContainer.appendChild(newFormRow);
