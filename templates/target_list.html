@@ -18,6 +18,20 @@
         </a>
     </div>
 
+    <!-- Sorting Toolbar -->
+    <div class="flex gap-2 items-center px-1 overflow-x-auto pb-1">
+        <span class="text-xs font-mono text-gray-500 mr-2 shrink-0">SORT ORDER:</span>
+        <a href="?sort=last_contact" class="px-3 py-1 rounded-full text-[10px] font-mono border transition-colors whitespace-nowrap {% if current_sort == 'last_contact' %}bg-primary/20 text-primary border-primary/50{% else %}bg-surface border-white/10 text-gray-400 hover:text-white hover:border-white/30{% endif %}">
+            LAST CONTACT
+        </a>
+        <a href="?sort=group" class="px-3 py-1 rounded-full text-[10px] font-mono border transition-colors whitespace-nowrap {% if current_sort == 'group' %}bg-primary/20 text-primary border-primary/50{% else %}bg-surface border-white/10 text-gray-400 hover:text-white hover:border-white/30{% endif %}">
+            GROUP
+        </a>
+        <a href="?sort=anniversary" class="px-3 py-1 rounded-full text-[10px] font-mono border transition-colors whitespace-nowrap {% if current_sort == 'anniversary' %}bg-primary/20 text-primary border-primary/50{% else %}bg-surface border-white/10 text-gray-400 hover:text-white hover:border-white/30{% endif %}">
+            ANNIVERSARY
+        </a>
+    </div>
+
     <!-- Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 overflow-y-auto pb-4 pr-2">
         {% for target in targets %}
@@ -46,6 +60,10 @@
                     <div class="flex justify-between items-start">
                         <h3 class="font-bold text-white truncate text-lg font-mono">{{ target.nickname }}</h3>
                         <div class="flex gap-2">
+                            <a href="{% url 'intelligence_log' %}?target_id={{ target.pk }}&date={% now 'Y-m-d' %}"
+                                class="text-xs bg-emerald-500/10 text-emerald-500 border border-emerald-500/30 px-2 py-0.5 rounded hover:bg-emerald-500/20 transition-colors uppercase tracking-wider flex items-center gap-1">
+                                <i class="fas fa-file-alt"></i> LOG
+                            </a>
                             <a href="{% url 'target_edit' target.pk %}"
                                 class="text-xs bg-primary/10 text-primary border border-primary/30 px-2 py-0.5 rounded hover:bg-primary/20 transition-colors uppercase tracking-wider">Edit</a>
                             <a href="{% url 'target_delete' target.pk %}"

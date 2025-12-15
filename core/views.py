@@ -28,8 +28,20 @@ def dashboard(request):
 
 @login_required
 def target_list(request):
-    targets = Target.objects.filter(user=request.user).order_by('-last_contact')
-    return render(request, 'target_list.html', {'targets': targets})
+    sort_by = request.GET.get('sort', 'last_contact')
+    targets = Target.objects.filter(user=request.user)
+
+    if sort_by == 'group':
+        targets = targets.order_by('groups__name', 'nickname')
+    elif sort_by == 'anniversary':
+        # Sort by birth month and day (Upcoming birthdays/anniversaries rough approx)
+        # Note: This simply sorts Jan -> Dec. For strict "Upcoming", python sorting is often easier for small lists.
+        targets = targets.order_by('birth_month', 'birth_day', 'nickname')
+    else: # last_contact
+        from django.db.models import F
+        targets = targets.order_by(F('last_contact').desc(nulls_last=True), 'nickname')
+
+    return render(request, 'target_list.html', {'targets': targets, 'current_sort': sort_by})
 
 # FormSet for Anniversaries
 AnniversaryFormSet = inlineformset_factory(
