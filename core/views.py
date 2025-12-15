@@ -282,9 +282,12 @@ class IntelligenceLogView(LoginRequiredMixin, View):
                 'age': age
             })
 
-        # Questions (Reuse Quest as Registry for now, or use QuestionRegistry)
-        from intelligence.models import QuestionRegistry, Tag
-        questions = QuestionRegistry.objects.all().order_by('category')
+        # Questions (Shared + Individual)
+        from intelligence.models import Question, Tag
+        # Use Q object (already imported at top of file)
+        questions = Question.objects.filter(
+            Q(is_shared=True) | Q(user=request.user)
+        ).order_by('order', 'content')
         tags = Tag.objects.all()
 
         context = {
