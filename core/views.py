@@ -34,7 +34,7 @@ def target_list(request):
 # FormSet for Anniversaries
 AnniversaryFormSet = inlineformset_factory(
     Target, CustomAnniversary, form=CustomAnniversaryForm,
-    extra=1, can_delete=True
+    extra=0, can_delete=True
 )
 
 class TargetCreateView(LoginRequiredMixin, CreateView):
@@ -195,40 +195,21 @@ class IntelligenceLogView(LoginRequiredMixin, View):
         current_weekday_field = weekday_map[weekday]
         
         # 2. Base Targets (Group Schedule)
-        # Filter targets that belong to groups active on this weekday
-        # And construct a list of IDs to start with.
-        # Since targets have M2M to groups, we filter Targets where groups__<weekday_field>=True
         base_targets = Target.objects.filter(
             user=request.user,
             groups__pk__in=TargetGroup.objects.filter(**{current_weekday_field: True}).values('pk')
         ).distinct()
 
         # 3. Anniversary/Birthday Targets
-        # Targets who have birthday today or CustomAnniversary today
         birthday_targets = Target.objects.filter(
             user=request.user,
             birth_month=current_date.month,
             birth_day=current_date.day
         )
-        custom_anniv_targets = Target.objects.filter(
-            user=request.user,
-            customanniversary__date__month=current_date.month,
-            customanniversary__date__day=current_date.day
-        ) # Note: This simple month/day filter for custom anniv might need Year handling if it's one-time? 
-          # Assuming CustomAnniversary is annual for now? Or implies specific date?
-          # User "Add Anniversary" usually implies recurring. But DateField implies specific.
-          # Let's assume specific date matches for now, or maybe check month/day ignoring year?
-          # If it's "Wedding Anniversary", year matters for calculation but day matters for alert.
-          # Let's check month/day match.
         
         anniv_ids = set()
         for t in birthday_targets: anniv_ids.add(t.id)
-        # For custom, let's just match exact date OR month/day? 
-        # Usually "Anniversary" in strictly data sense is exact date. But for "Celebrating", it's recurring.
-        # Let's match month/day for custom annivs representing recurring events.
-        # We can't easily do month/day filter on DateField in generic manner without more complex lookup or specific year interaction.
-        # Simple approach: Fetch all custom annivs for user, check in python for small sets, or filter by month/day.
-        # Django's __month and __day work on DateField.
+        
         custom_annivs = CustomAnniversary.objects.filter(
             target__user=request.user,
             date__month=current_date.month,
@@ -243,36 +224,18 @@ class IntelligenceLogView(LoginRequiredMixin, View):
         hidden_ids = set(daily_states.filter(is_hidden=True).values_list('target_id', flat=True))
 
         # 5. Combine Logic
-        # Start with Base (Groups)
         final_ids = set(base_targets.values_list('id', flat=True))
-        
-        # Add Anniversaries
         final_ids.update(anniv_ids)
-        
-        # Add Manuals
         final_ids.update(manual_add_ids)
-        
-        # Remove Hidden
         final_ids = final_ids - hidden_ids
         
         # Fetch Objects & Annotate for UI
-        targets = Target.objects.filter(id__in=final_ids)
-        
-        # Sort? Maybe by nickname
-        targets = targets.order_by('nickname')
+        targets = Target.objects.filter(id__in=final_ids).order_by('nickname')
         
         target_list = []
         for t in targets:
-            # Check unfulfilled status
-            # Assumption: "Unfulfilled" means no Log (TimelineItem) for THIS date?
-            # Or just no "Contact"? User said "未記入" (Unfilled/No Entry).
-            # Let's check if any TimelineItem exists for this target on this date.
             has_entry = TimelineItem.objects.filter(target=t, date=current_date).exists()
-            
-            # Check if Anniversary today
             is_anniv = (t.id in anniv_ids)
-            
-            # Check age
             age = t.age
             
             target_list.append({
@@ -282,121 +245,75 @@ class IntelligenceLogView(LoginRequiredMixin, View):
                 'age': age
             })
 
-        # Questions (Shared + Individual)
+        # Questions & Tags
         from intelligence.models import Question, Tag
-        # Use Q object (already imported at top of file)
         questions = Question.objects.filter(
             Q(is_shared=True) | Q(user=request.user)
         ).order_by('order', 'content')
         tags = Tag.objects.all()
         
-        # All Targets for "Add Manual" search
         all_targets = Target.objects.filter(user=request.user)
 
         context = {
-            'targets': target_list, # Correct context key for the main list
+            'todays_targets': target_list, # Fixed context key to match template
             'all_targets': all_targets,
             'questions': questions,
             'tags': tags,
-            'today_date': current_date.strftime('%Y-%m-%d'), # Use current_date, not 'today'
+            'today_date': current_date.strftime('%Y-%m-%d'),
             'weekday_jp': ['月','火','水','木','金','土','日'][weekday]
         }
         return render(request, self.template_name, context)
 
-class TargetStateToggleView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
+        import datetime
         try:
             data = json.loads(request.body)
             target_id = data.get('target_id')
             date_str = data.get('date')
-            action = data.get('action') # 'hide', 'add', 'remove_manual'
-            
-            if not target_id or not date_str or not action:
-                return JsonResponse({'success': False, 'error': 'Missing params'})
-            
-            try:
-                date_obj = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
-            except ValueError:
-                 return JsonResponse({'success': False, 'error': 'Invalid date'})
-
-            target = Target.objects.get(pk=target_id, user=request.user)
-            
-            state, created = DailyTargetState.objects.get_or_create(target=target, date=date_obj)
-            
-            if action == 'hide':
-                state.is_hidden = True
-                # If it was manually added, maybe we keep that true so we know origin? 
-                # Or does hide override everything? Yes, logic says (Group|Manual) - Hidden. 
-                # So setting hidden=True is sufficient.
-            elif action == 'add':
-                state.is_manual_add = True
-                state.is_hidden = False # Unhide if previously hidden
-            elif action == 'remove_manual':
-                state.is_manual_add = False
-                
-            state.save()
-            
-            return JsonResponse({'success': True})
-        except Target.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'Target not found'})
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
-
-class IntelligenceLogEntryView(LoginRequiredMixin, View):
-     # Separate view for saving log entries to keep clean? 
-     # Or keep it in IntelligenceLogView.post?
-     # User asked for "Remove unfulfilled" button which is a state change.
-     # Log saving is established in 'post' of template usually.
-     # Let's keep Log Logic separate or reusing common patterns.
-     # The previous implementation had no POST in IntelligenceLogView for saving logs shown in snippet?
-     # Checking snippet... ah I replaced the whole class. 
-     # I need to re-implement the POST logic for saving logs if it was there or add it.
-     
-     def post(self, request, *args, **kwargs):
-        # Save TimelineItem LOG logic
-        try:
-            data = json.loads(request.body)
-            # ... Log saving logic same as before or improved ...
-            # For brevity in this generic replacement, I'll stub it or assume generic view handling
-            # ACTUALLY, I should implement the Log Saving here since I overwrote the class.
-            
-            target_id = data.get('target_id')
-            date_str = data.get('date')
-            entry_type = data.get('type') # Event, Question, etc.
+            entry_type = data.get('type') # EVENT or ANSWER
             content = data.get('content')
             contact_made = data.get('contact_made', False)
             
-            if not target_id: return JsonResponse({'error': 'No target'}, status=400)
+            if not target_id: 
+                return JsonResponse({'success': False, 'error': 'No target specified'})
             
-            target = Target.objects.get(pk=target_id, user=request.user)
-            date_obj = datetime.datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else datetime.date.today()
+            target = get_object_or_404(Target, pk=target_id, user=request.user)
+            
+            # Date validation
+            if date_str:
+                try:
+                    date_obj = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+                except ValueError:
+                    date_obj = datetime.date.today()
+            else:
+                date_obj = datetime.date.today()
             
             # Create Timeline Item
-            item = TimelineItem.objects.create(
+            item = TimelineItem(
                 target=target,
-                date=date_str, # Should validate format or use parse
+                date=date_obj,
                 contact_made=contact_made
             )
             
-            if action_type == 'EVENT':
-                item.content = data.get('content', '')
-                # Tags: handled via set() after save if many-to-many
-            elif action_type == 'ANSWER':
+            if entry_type == 'EVENT':
+                item.content = content
+                # Tags handling could be added here if model supports it (Many2Many needs save first)
+                if not content and not contact_made:
+                     return JsonResponse({'success': False, 'error': 'Content or Contact is required'})
+            elif entry_type == 'ANSWER':
                 item.question_category = data.get('category', '')
                 item.question_text = data.get('question_text', '')
                 item.question_answer = data.get('answer', '')
-                # Construct content for easy reading
                 item.content = f"Q: {item.question_text}\nA: {item.question_answer}"
-            
+                
             item.save()
             
-            # Handle Tags (assuming list of names provided)
-            # if data.get('tags'): ... (Simplified for now)
-
+            # Update Last Contact if contact made
             if contact_made:
-                target.last_contact = datetime.datetime.now() # Or parsed date
+                target.last_contact = datetime.datetime.now()
                 target.save()
-            
+                
             return JsonResponse({'success': True})
+            
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
