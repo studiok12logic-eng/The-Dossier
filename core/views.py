@@ -140,6 +140,39 @@ class TargetGroupCreateView(LoginRequiredMixin, View):
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
 
+class TargetGroupUpdateView(LoginRequiredMixin, View):
+    def post(self, request, pk, *args, **kwargs):
+        try:
+            group = TargetGroup.objects.get(pk=pk, user=request.user)
+            data = json.loads(request.body)
+            group.name = data.get('name', group.name)
+            group.description = data.get('description', group.description)
+            # Update frequency fields ?? User didn't explicitly ask but good to have
+            if 'is_mon' in data: group.is_mon = data.get('is_mon')
+            if 'is_tue' in data: group.is_tue = data.get('is_tue')
+            if 'is_wed' in data: group.is_wed = data.get('is_wed')
+            if 'is_thu' in data: group.is_thu = data.get('is_thu')
+            if 'is_fri' in data: group.is_fri = data.get('is_fri')
+            if 'is_sat' in data: group.is_sat = data.get('is_sat')
+            if 'is_sun' in data: group.is_sun = data.get('is_sun')
+            group.save()
+            return JsonResponse({'success': True})
+        except TargetGroup.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Group not found'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
+class TargetGroupDeleteView(LoginRequiredMixin, View):
+    def post(self, request, pk, *args, **kwargs):
+        try:
+            group = TargetGroup.objects.get(pk=pk, user=request.user)
+            group.delete()
+            return JsonResponse({'success': True})
+        except TargetGroup.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Group not found'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
 class IntelligenceLogView(LoginRequiredMixin, View):
     template_name = 'intelligence_log.html'
 
