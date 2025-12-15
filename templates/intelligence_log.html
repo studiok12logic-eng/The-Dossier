@@ -21,8 +21,8 @@
             <div class="target-item p-3 rounded flex items-center gap-3 cursor-pointer hover:bg-white/5 transition border border-transparent hover:border-primary/30 group"
                 data-id="{{ target.id }}" data-name="{{ target.nickname }}"
                 data-avatar="{% if target.avatar %}{{ target.avatar.url }}{% endif %}">
-                <div
-                    class="w-[100px] h-[100px] rounded-full bg-black border border-white/10 overflow-hidden flex-shrink-0 relative">
+                <div class="w-[100px] h-[100px] rounded-full bg-black border border-white/10 overflow-hidden flex-shrink-0 relative"
+                    style="width: 100px; height: 100px;">
                     {% if target.avatar %}
                     <img src="{{ target.avatar.url }}" class="w-full h-full object-cover">
                     {% else %}
