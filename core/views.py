@@ -4,13 +4,17 @@ from django.urls import reverse_lazy
 from django.db import transaction
 from django.http import JsonResponse
 from django.forms import inlineformset_factory
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+
 from intelligence.models import Target, TimelineItem, CustomAnniversary, TargetGroup
 from intelligence.forms import TargetForm, CustomAnniversaryForm, TargetGroupForm
 import json
 
+@login_required
 def dashboard(request):
-    # For now, just pick the first target or None if empty
-    active_target = Target.objects.first()
+    # Pick the first target owned by the user
+    active_target = Target.objects.filter(user=request.user).first()
     timeline = []
     if active_target:
         timeline = TimelineItem.objects.filter(target=active_target).order_by('-date')[:10]
@@ -21,8 +25,9 @@ def dashboard(request):
     }
     return render(request, 'dashboard.html', context)
 
+@login_required
 def target_list(request):
-    targets = Target.objects.all().order_by('-last_contact')
+    targets = Target.objects.filter(user=request.user).order_by('-last_contact')
     return render(request, 'target_list.html', {'targets': targets})
 
 # FormSet for Anniversaries
@@ -31,7 +36,7 @@ AnniversaryFormSet = inlineformset_factory(
     extra=1, can_delete=True
 )
 
-class TargetCreateView(CreateView):
+class TargetCreateView(LoginRequiredMixin, CreateView):
     model = Target
     form_class = TargetForm
     template_name = 'target_form.html'
@@ -50,17 +55,22 @@ class TargetCreateView(CreateView):
         context = self.get_context_data()
         anniversaries = context['anniversaries']
         with transaction.atomic():
+            form.instance.user = self.request.user  # Assign current user
             self.object = form.save()
             if anniversaries.is_valid():
                 anniversaries.instance = self.object
                 anniversaries.save()
         return super().form_valid(form)
 
-class TargetUpdateView(UpdateView):
+class TargetUpdateView(LoginRequiredMixin, UpdateView):
     model = Target
     form_class = TargetForm
     template_name = 'target_form.html' # Reuse template
     success_url = reverse_lazy('target_list')
+
+    def get_queryset(self):
+        # Ensure user can only edit their own targets
+        return Target.objects.filter(user=self.request.user)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -82,7 +92,7 @@ class TargetUpdateView(UpdateView):
                 anniversaries.save()
         return super().form_valid(form)
 
-class TargetGroupCreateView(View):
+class TargetGroupCreateView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         try:
             data = json.loads(request.body)
@@ -94,13 +104,6 @@ class TargetGroupCreateView(View):
             group, created = TargetGroup.objects.get_or_create(name=name, defaults={'description': description})
             
             if not created:
-                # Update description if exists? Or just return existing.
-                # User said "Same name insert impossible", so likely just return error or select existing?
-                # "同名のグループはinsert不可" -> Error if not created? Or just simple unique check.
-                # get_or_create will get it if exists. 
-                # If the user explicitly wants to "Create", finding an existing one might be confusing.
-                # But for UX, selecting the existing one is usually fine.
-                # Let's return success with the ID.
                 return JsonResponse({'success': True, 'id': group.id, 'name': group.name})
             
             return JsonResponse({'success': True, 'id': group.id, 'name': group.name})
