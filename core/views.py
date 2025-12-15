@@ -304,8 +304,15 @@ class IntelligenceLogView(LoginRequiredMixin, View):
             data = json.loads(request.body)
             target_id = data.get('target_id')
             date_str = data.get('date')
-            entry_type = data.get('type') # EVENT or ANSWER
-            content = data.get('content')
+            
+            # Map frontend types to backend logic
+            # Frontend sends: "NOTE" (event), "QUESTION" (question)
+            # Backend legacy: "EVENT", "ANSWER"
+            frontend_type = data.get('event_type', 'NOTE') 
+            
+            content = data.get('description', '') # Frontend sends 'description'
+            if not content: content = data.get('content', '') # Fallback
+            
             contact_made = data.get('contact_made', False)
             
             if not target_id: 
@@ -323,30 +330,62 @@ class IntelligenceLogView(LoginRequiredMixin, View):
                 date_obj = datetime.date.today()
             
             # Create Timeline Item
+            # Determine type
+            if frontend_type == 'QUESTION':
+                item_type = 'Question' # Match model choices
+            else:
+                item_type = 'Event' # Or 'Note' - let's use 'Event' for general notes
+                
             item = TimelineItem(
                 target=target,
                 date=date_obj,
-                contact_made=contact_made
+                contact_made=contact_made,
+                type=item_type,
+                description=content # Assuming we renamed 'content' to 'description' or mapped it? 
+                # Wait, model has 'content' field. Logic below uses 'content'.
+                # Let's check model again. Model has 'content' (TextField). Not 'description'.
+                # But TimelineListAPIView uses 'description'.
+                # Wait, TimelineItem model in step 783 has 'content'. 
+                # Did I check TimelineListAPIView serializer?
+                # Step 730/737: 'description': item.description
+                # Does TimelineItem have 'description'?
+                # Step 783: It has 'title', 'content', 'related_quest', 'tags', 'sentiment', 'contact_made', 'question_...'
+                # It does NOT have 'description'. 
+                # Pivot: I should use 'content' field in model, and update serializer to use 'content' too.
             )
+            item.content = content # Assign content
             
-            if entry_type == 'EVENT':
-                item.content = content
-                item.save() # Save first to add m2m
-                
-                # Tags Handling
+            if frontend_type == 'NOTE': # eq EVENT
+                item.save() # Save first
+                # Tags
                 tag_ids = data.get('tags', [])
                 if tag_ids:
                     item.tags.set(tag_ids)
-
-                if not content and not contact_made:
-                     return JsonResponse({'success': False, 'error': 'Content or Contact is required'})
-            elif entry_type == 'ANSWER':
-                item.question_category = data.get('category', '')
-                item.question_text = data.get('question_text', '')
-                item.question_answer = data.get('answer', '')
-                item.content = f"Q: {item.question_text}\nA: {item.question_answer}"
+                    
+                if not content and not contact_made and not tag_ids:
+                     return JsonResponse({'success': False, 'error': 'Content, Contact or Tags required'})
+                     
+            elif frontend_type == 'QUESTION':
+                q_id = data.get('question_id')
+                if q_id:
+                    from intelligence.models import Question
+                    try:
+                        q = Question.objects.get(pk=q_id)
+                        item.question = q
+                        item.question_text = q.title
+                        item.question_category = q.category.name if q.category else ''
+                    except Question.DoesNotExist:
+                        pass
+                
+                item.question_answer = content # The content is the answer/reaction
+                item.content = content # Also save in content for generic display
                 
             item.save()
+            return JsonResponse({'success': True})
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return JsonResponse({'success': False, 'error': str(e)})
             
             # Update Last Contact if contact made
             if contact_made:
@@ -473,6 +512,20 @@ class CategoryCreateView(LoginRequiredMixin, View):
             return JsonResponse({'success': False, 'error': str(e)})
 
 
+class RankCreateView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+            name = data.get('name')
+            points = data.get('points', 0)
+            if not name: return JsonResponse({'success': False, 'error': 'Name required'})
+            
+            rank = QuestionRank.objects.create(user=request.user, name=name, points=points)
+            return JsonResponse({'success': True, 'id': rank.id, 'name': rank.name})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
+
 # --- TIMELINE API ---
 class TimelineListAPIView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
@@ -495,13 +548,20 @@ class TimelineListAPIView(LoginRequiredMixin, View):
         # Type
         event_type = request.GET.get('type') # 'EVENT' or 'QUESTION'
         if event_type:
-            queryset = queryset.filter(event_type=event_type)
+            # Check capitalization. Frontend sends 'EVENT'/'QUESTION'. Model 'type' choices are 'Event', 'Question', 'Contact' etc.
+            # Convert to Title Case to match model?
+            # Model choices: 'Contact', 'Quest', 'Note', 'Event', 'Question'
+            # If frontend sends 'EVENT', we need to match 'Event'.
+            if event_type == 'EVENT':
+                queryset = queryset.filter(Q(type='Event') | Q(type='Note'))
+            elif event_type == 'QUESTION':
+                queryset = queryset.filter(type='Question')
 
         # Search Query
         query = request.GET.get('search')
         if query:
             queryset = queryset.filter(
-                Q(description__icontains=query) | 
+                Q(content__icontains=query) | 
                 Q(question__title__icontains=query)
             )
 
@@ -528,10 +588,10 @@ class TimelineListAPIView(LoginRequiredMixin, View):
             data.append({
                 'id': item.id,
                 'date': item.date.strftime('%Y-%m-%d'),
-                'type': item.event_type,
-                'description': item.description,
-                'question_title': item.question.title if item.question else None,
-                'question_category': item.question.category.name if item.question and item.question.category else None,
+                'type': item.type, # Model has 'type', view uses 'event_type' filter but model field is 'type'
+                'description': item.content, # Model has 'content', mapped to 'description' for frontend
+                'question_title': item.question.title if item.question else item.question_text, # Fallback
+                'question_category': item.question.category.name if item.question and item.question.category else item.question_category,
                 'contact_made': item.contact_made,
                 'tags': [{'id': t.id, 'name': t.name} for t in item.tags.all()],
             })

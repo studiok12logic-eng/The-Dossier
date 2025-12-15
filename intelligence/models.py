@@ -131,6 +131,7 @@ class TimelineItem(models.Model):
     question_category = models.CharField(max_length=100, blank=True)
     question_text = models.CharField(max_length=255, blank=True)
     question_answer = models.TextField(blank=True)
+    question = models.ForeignKey('Question', on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return f"{self.target} - {self.type} ({self.date.strftime('%Y-%m-%d')})"
