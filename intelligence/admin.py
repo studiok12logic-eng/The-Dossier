@@ -2,9 +2,9 @@ from django.contrib import admin
 from .models import Question, Target, TargetGroup, Quest, Tag, DailyTargetState, CustomAnniversary, TimelineItem
 
 class QuestionAdmin(admin.ModelAdmin):
-    list_display = ('content', 'is_shared', 'user', 'order')
-    list_filter = ('is_shared', 'user')
-    search_fields = ('content',)
+    list_display = ('title', 'category', 'rank', 'is_shared', 'user', 'order')
+    list_filter = ('is_shared', 'user', 'category', 'rank')
+    search_fields = ('title', 'description')
     ordering = ('order',)
 
 admin.site.register(Question, QuestionAdmin)
