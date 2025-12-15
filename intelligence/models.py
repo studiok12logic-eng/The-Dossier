@@ -118,8 +118,8 @@ class TimelineItem(models.Model):
     target = models.ForeignKey(Target, on_delete=models.CASCADE)
     date = models.DateField()
     type = models.CharField(max_length=20, choices=TYPE_CHOICES)
-    title = models.CharField(max_length=200, blank=True)
-    content = models.TextField(blank=True) # Blank allowed if just contact check?
+    title = models.CharField(max_length=200, blank=True, null=True)
+    content = models.TextField(blank=True, default='') 
     related_quest = models.ForeignKey(Quest, on_delete=models.SET_NULL, null=True, blank=True)
     tags = models.ManyToManyField(Tag, blank=True)
     sentiment = models.CharField(max_length=10, choices=SENTIMENT_CHOICES, default='Neutral')
@@ -128,9 +128,9 @@ class TimelineItem(models.Model):
     contact_made = models.BooleanField(default=False)
     
     # Question specific
-    question_category = models.CharField(max_length=100, blank=True)
-    question_text = models.CharField(max_length=255, blank=True)
-    question_answer = models.TextField(blank=True)
+    question_category = models.CharField(max_length=100, blank=True, null=True)
+    question_text = models.CharField(max_length=255, blank=True, null=True)
+    question_answer = models.TextField(blank=True, default='')
     question = models.ForeignKey('Question', on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
