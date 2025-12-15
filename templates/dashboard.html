@@ -107,15 +107,20 @@
 
                 <div class="space-y-4 font-mono text-sm">
                     {% for item in timeline %}
-                    <div
-                        class="flex gap-4 p-3 rounded hover:bg-white/5 border-l-2 {% if item.sentiment == 'Alert' or item.sentiment == 'Negative' %}border-red-500/50{% else %}border-primary{% endif %} bg-primary/5 transition-colors">
+                    <div class="flex gap-4 p-3 rounded hover:bg-white/5 border-l-2 {% if item.sentiment == 'Alert' or item.sentiment == 'Negative' %}border-red-500/50{% else %}border-primary{% endif %} bg-primary/5 transition-colors">
                         <span class="text-gray-500 w-24 text-right flex-shrink-0">{{ item.date|date:"m/d" }}</span>
-                        <div>
-                            <span
-                                class="{% if item.sentiment == 'Alert' or item.sentiment == 'Negative' %}text-red-400{% else %}text-primary{% endif %} font-bold">{{
-                                item.get_type_display }}</span>
-                            <span class="text-gray-400">@{{ item.target.origin }}</span>
-                            <p class="text-xs text-gray-500 mt-1">{{ item.content }}</p>
+                        <div class="overflow-hidden">
+                            <div class="flex items-center gap-2">
+                                <span class="{% if item.sentiment == 'Alert' or item.sentiment == 'Negative' %}text-red-400{% else %}text-primary{% endif %} font-bold text-xs uppercase">{{ item.get_type_display }}</span>
+                                <span class="text-gray-400 text-xs truncate">@{{ item.target.nickname }}</span> 
+                            </div>
+                            
+                            {% if item.type == 'Question' and item.question %}
+                            <div class="text-xs text-white font-bold mt-1 truncate">Q. {{ item.question.title }}</div>
+                            <p class="text-xs text-gray-500 mt-0.5 line-clamp-2">{{ item.question_answer }}</p>
+                            {% else %}
+                            <p class="text-xs text-gray-500 mt-1 line-clamp-2">{{ item.content }}</p>
+                            {% endif %}
                         </div>
                     </div>
                     {% empty %}

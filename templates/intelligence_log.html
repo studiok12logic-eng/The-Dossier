@@ -674,15 +674,18 @@
     });
 
     function toggleChoice(btn, value) {
-        if (selectedChoices.has(value)) {
-            selectedChoices.delete(value);
-            btn.classList.remove('bg-primary/20', 'border-primary', 'text-primary');
-            btn.classList.add('bg-black/40', 'border-white/20', 'text-gray-300');
-        } else {
-            selectedChoices.add(value);
-            btn.classList.add('bg-primary/20', 'border-primary', 'text-primary');
-            btn.classList.remove('bg-black/40', 'border-white/20', 'text-gray-300');
-        }
+        // Single Select Logic
+        // Clear previous selection
+        selectedChoices.clear();
+        document.querySelectorAll('.choice-btn').forEach(b => {
+            b.classList.remove('bg-primary/20', 'border-primary', 'text-primary');
+            b.classList.add('bg-black/40', 'border-white/20', 'text-gray-300');
+        });
+
+        // Set new selection
+        selectedChoices.add(value);
+        btn.classList.add('bg-primary/20', 'border-primary', 'text-primary');
+        btn.classList.remove('bg-black/40', 'border-white/20', 'text-gray-300');
     }
 
     // --- Tag Interaction ---
@@ -736,12 +739,13 @@
                 return;
             }
             
-            // Prepend choices if any
+            // Prepend choices if any (Single select now)
             if (currentQuestion && currentQuestion.answer_type === 'SELECTION' && selectedChoices.size > 0) {
-                const choicesStr = Array.from(selectedChoices).join(', ');
-                ans = `[選択: ${choicesStr}]\n${ans}`;
+                const choice = Array.from(selectedChoices)[0]; // Single item
+                ans = `[選択: ${choice}]\n${ans}`;
             }
 
+            // Validation: Must have answer OR choice selected
             if (!ans.trim() && selectedChoices.size === 0) {
                  alert('回答を入力または選択してください');
                  return;
@@ -763,14 +767,21 @@
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                // Instead of reload, append to timeline
-                // But simplified: reset timeline to show new item at bottom
                 // Clear inputs
                 document.getElementById('eventContent').value = '';
                 document.getElementById('qAnswer').value = '';
-                // Optional: visual feedback
+                if(activeTab === 'tabEvent') {
+                    // Reset tags
+                    document.querySelectorAll('.tag-btn').forEach(b => {
+                         b.classList.remove('border-primary', 'text-primary', 'bg-primary/10');
+                         b.classList.add('border-white/20');
+                    });
+                }
+                
+                // Refresh Timeline to show new item
                 resetTimeline();
                 fetchTimeline();
+                
             } else {
                 alert("Error: " + data.error);
             }
