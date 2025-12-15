@@ -3,84 +3,78 @@
 
 {% block content %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
+
 <div class="h-full flex flex-col gap-6 overflow-y-auto pr-2 pb-10">
     <div class="flex items-center justify-between">
         <h1 class="text-2xl font-mono font-bold text-white flex items-center gap-2">
             <span class="w-2 h-8 bg-primary block"></span>
-            {% if is_edit %}TARGET EDIT{% else %}NEW TARGET{% endif %}
+            {% if is_edit %}ターゲット情報編集{% else %}新規ターゲット登録{% endif %}
         </h1>
         <a href="{% url 'target_list' %}" class="text-gray-500 hover:text-white font-mono text-sm">
-            [ BACK TO LIST ]
+            [ キャンセル / 一覧へ戻る ]
         </a>
     </div>
 
-    <!-- Main Form -->
     <form method="post" enctype="multipart/form-data" class="space-y-8" id="targetForm">
         {% csrf_token %}
         {{ form.non_field_errors }}
 
-        <!-- 1. Basic Info Section -->
-        <section class="bg-surface/30 border border-white/10 rounded-xl p-6 relative overflow-hidden">
-            <!-- Corner decorations -->
-            <div class="absolute top-0 left-0 w-2 h-2 border-t border-l border-primary/50"></div>
-            <div class="absolute top-0 right-0 w-2 h-2 border-t border-r border-primary/50"></div>
-            <div class="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-primary/50"></div>
-            <div class="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-primary/50"></div>
-
+        <!-- 1. 基本情報 (Basic Identity) -->
+        <section class="bg-surface/30 border border-white/10 rounded-xl p-6 relative">
             <h2 class="text-primary font-mono text-lg mb-6 flex items-center gap-2 border-b border-white/5 pb-2">
-                <span class="text-primary/50">01.</span> BASIC IDENTITY
+                <span class="text-primary/50">01.</span> 基本情報 (IDENTITY)
             </h2>
 
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                <!-- Avatar Column -->
+                <!-- Avatar -->
                 <div class="md:col-span-1 flex flex-col gap-4">
+                    <label class="block text-xs font-mono text-gray-400 mb-1">プロフィール画像</label>
                     <div class="aspect-square bg-black border-2 border-dashed border-white/20 rounded-lg flex items-center justify-center relative group overflow-hidden"
                         id="avatarPreviewContainer">
                         {% if form.instance.avatar %}
-                        <img src="{{ form.instance.avatar.url }}" class="w-full h-full object-cover">
+                        <img src="{{ form.instance.avatar.url }}" id="avatarPreview" class="w-full h-full object-cover">
                         {% else %}
-                        <div class="text-center text-gray-500 p-4">
+                        <div id="avatarPlaceholder" class="text-center text-gray-500 p-4">
                             <span class="block text-4xl mb-2">+</span>
                             <span class="text-xs font-mono">UPLOAD PHOTO</span>
                         </div>
                         {% endif %}
-                        <!-- File Input Overlay -->
                         <input type="file" name="avatar" id="id_avatar" accept="image/*"
                             class="absolute inset-0 opacity-0 cursor-pointer z-10 w-full h-full">
                     </div>
-                    <div class="text-[10px] text-gray-500 font-mono text-center">
-                        CLICK TO UPLOAD / DRAG & DROP<br>
-                        (Auto-crop to Square)
+                    <div class="text-[10px] text-gray-500 text-center">
+                        クリックで選択 (自動で正方形にトリミング可能)
                     </div>
                 </div>
 
-                <!-- Fields Column -->
+                <!-- Text Fields -->
                 <div class="md:col-span-3 space-y-4">
-                    <!-- Nickname (Required) -->
+                    <!-- Nickname -->
                     <div class="form-group">
-                        <label class="block text-xs font-mono text-gray-400 mb-1">CODENAME (NICKNAME) *</label>
+                        <label class="block text-xs font-mono text-gray-400 mb-1">ニックネーム / コードネーム <span
+                                class="text-red-500">*</span></label>
                         {{ form.nickname }}
                     </div>
 
-                    <!-- Name Split -->
+                    <!-- Name -->
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-mono text-gray-400 mb-1">SURNAME</label>
+                            <label class="block text-xs font-mono text-gray-400 mb-1">姓 (Surname)</label>
                             {{ form.last_name }}
                         </div>
                         <div>
-                            <label class="block text-xs font-mono text-gray-400 mb-1">GIVEN NAME</label>
+                            <label class="block text-xs font-mono text-gray-400 mb-1">名 (Given Name)</label>
                             {{ form.first_name }}
                         </div>
                     </div>
-                    <!-- Kana Split -->
+                    <!-- Kana -->
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-mono text-gray-400 mb-1">SURNAME (KANA)</label>
+                            <label class="block text-xs font-mono text-gray-400 mb-1">せい (Kana)</label>
                             {{ form.last_name_kana }}
                         </div>
                         <div>
-                            <label class="block text-xs font-mono text-gray-400 mb-1">GIVEN NAME (KANA)</label>
+                            <label class="block text-xs font-mono text-gray-400 mb-1">めい (Kana)</label>
                             {{ form.first_name_kana }}
                         </div>
                     </div>
@@ -88,50 +82,78 @@
             </div>
         </section>
 
-        <!-- 2. Physical & Bio Data -->
+        <!-- 2. 生体情報 (Bio-Metrics) -->
         <section class="bg-surface/30 border border-white/10 rounded-xl p-6">
             <h2 class="text-primary font-mono text-lg mb-6 flex items-center gap-2 border-b border-white/5 pb-2">
-                <span class="text-primary/50">02.</span> BIO-METRICS
+                <span class="text-primary/50">02.</span> 生体情報 (BIO-METRICS)
             </h2>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Birthdate -->
+                <!-- Birthdate (Selects) -->
                 <div class="bg-black/20 p-4 rounded border border-white/5">
-                    <label class="block text-xs font-mono text-gray-400 mb-2">DATE OF BIRTH</label>
+                    <label class="block text-xs font-mono text-gray-400 mb-2">生年月日</label>
                     <div class="grid grid-cols-3 gap-2 mb-2">
-                        {{ form.birth_year }}
-                        {{ form.birth_month }}
-                        {{ form.birth_day }}
+                        <!-- Year (Hidden Input + Select) -->
+                        <div class="relative">
+                            {{ form.birth_year.as_hidden }}
+                            <select id="birth_year_select"
+                                class="w-full bg-surface border border-white/10 rounded px-2 py-2 text-white text-sm appearance-none focus:border-primary">
+                                <option value="">年</option>
+                                <!-- JS will populate 1900-Current -->
+                            </select>
+                        </div>
+                        <!-- Month -->
+                        <div class="relative">
+                            {{ form.birth_month.as_hidden }}
+                            <select id="birth_month_select"
+                                class="w-full bg-surface border border-white/10 rounded px-2 py-2 text-white text-sm appearance-none focus:border-primary">
+                                <option value="">月</option>
+                                {% for i in "x"|ljust:"12" %}
+                                <option value="{{ forloop.counter }}">{{ forloop.counter }}月</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <!-- Day -->
+                        <div class="relative">
+                            {{ form.birth_day.as_hidden }}
+                            <select id="birth_day_select"
+                                class="w-full bg-surface border border-white/10 rounded px-2 py-2 text-white text-sm appearance-none focus:border-primary">
+                                <option value="">日</option>
+                                <!-- JS can populate or just static 1-31 -->
+                                {% for i in "x"|ljust:"31" %}
+                                <option value="{{ forloop.counter }}">{{ forloop.counter }}日</option>
+                                {% endfor %}
+                            </select>
+                        </div>
                     </div>
                     <div class="flex items-center gap-4 text-xs font-mono text-gray-500 mt-2">
-                        <span id="ageDisplay">AGE: --</span>
-                        <span id="etoDisplay">ETO: --</span>
+                        <span id="ageDisplay">年齢: --歳</span>
+                        <span id="etoDisplay">干支: --</span>
                     </div>
                 </div>
 
                 <!-- Zodiac -->
                 <div class="bg-black/20 p-4 rounded border border-white/5 relative">
-                    <label class="block text-xs font-mono text-gray-400 mb-2">ZODIAC SIGN</label>
+                    <label class="block text-xs font-mono text-gray-400 mb-2">星座 (自動判定 / 手動変更可)</label>
                     <div class="flex gap-2">
                         <div class="flex-1">
                             {{ form.zodiac_sign }}
                         </div>
-                        <!-- Manual Override Select -->
                         <select id="zodiacParams"
-                            class="bg-surface border border-white/10 rounded px-2 text-white text-xs w-24">
-                            <option value="">AUTO</option>
-                            <option value="Aries">♈ Aries</option>
-                            <option value="Taurus">♉ Taurus</option>
-                            <option value="Gemini">♊ Gemini</option>
-                            <option value="Cancer">♋ Cancer</option>
-                            <option value="Leo">♌ Leo</option>
-                            <option value="Virgo">♍ Virgo</option>
-                            <option value="Libra">♎ Libra</option>
-                            <option value="Scorpio">♏ Scorpio</option>
-                            <option value="Sagittarius">♐ Sagittarius</option>
-                            <option value="Capricorn">♑ Capricorn</option>
-                            <option value="Aquarius">♒ Aquarius</option>
-                            <option value="Pisces">♓ Pisces</option>
+                            class="bg-surface border border-white/10 rounded px-2 text-white text-xs w-28">
+                            <option value="">自動 (Auto)</option>
+                            <option value="Aries">♈ 牡羊座</option>
+                            <option value="Taurus">♉ 牡牛座</option>
+                            <option value="Gemini">♊ 双子座</option>
+                            <option value="Cancer">♋ 蟹座</option>
+                            <option value="Leo">♌ 獅子座</option>
+                            <option value="Virgo">♍ 乙女座</option>
+                            <option value="Libra">♎ 天秤座</option>
+                            <option value="Scorpio">♏ 蠍座</option>
+                            <option value="Sagittarius">♐ 射手座</option>
+                            <option value="Capricorn">♑ 山羊座</option>
+                            <option value="Aquarius">♒ 水瓶座</option>
+                            <option value="Pisces">♓ 魚座</option>
                         </select>
                     </div>
                 </div>
@@ -139,238 +161,428 @@
                 <!-- Gender & Blood -->
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-mono text-gray-400 mb-1">GENDER</label>
+                        <label class="block text-xs font-mono text-gray-400 mb-1">性別</label>
                         {{ form.gender }}
                     </div>
                     <div>
-                        <label class="block text-xs font-mono text-gray-400 mb-1">BLOOD TYPE</label>
+                        <label class="block text-xs font-mono text-gray-400 mb-1">血液型</label>
                         {{ form.blood_type }}
                     </div>
                 </div>
                 <!-- Origin -->
                 <div>
-                    <label class="block text-xs font-mono text-gray-400 mb-1">ORIGIN (BIRTHPLACE)</label>
+                    <label class="block text-xs font-mono text-gray-400 mb-1">出身地</label>
                     {{ form.birthplace }}
                 </div>
             </div>
         </section>
 
-        <!-- 3. Affiliation & Groups -->
+        <!-- 3. 所属 (Affiliation) -->
         <section class="bg-surface/30 border border-white/10 rounded-xl p-6">
             <h2 class="text-primary font-mono text-lg mb-6 flex items-center gap-2 border-b border-white/5 pb-2">
-                <span class="text-primary/50">03.</span> AFFILIATION
+                <span class="text-primary/50">03.</span> 所属・グループ (AFFILIATION)
             </h2>
 
             <div class="form-group">
                 <div class="flex justify-between items-center mb-2">
-                    <label class="block text-xs font-mono text-gray-400">ASSIGNED GROUPS</label>
+                    <label class="block text-xs font-mono text-gray-400">所属グループ選択</label>
                     <button type="button" id="openGroupModal"
                         class="text-xs bg-primary/20 text-primary border border-primary/50 px-2 py-1 rounded hover:bg-primary/30 transition">
-                        + NEW GROUP
+                        + 新規グループ作成
                     </button>
                 </div>
-                {% if is_edit %}更新 (UPDATE){% else %}登録 (EXECUTE){% endif %}
-                </button>
+                <!-- Checkbox Grid -->
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto p-2 bg-black/20 rounded border border-white/5"
+                    id="groupsContainer">
+                    {% for group in form.groups.field.queryset %}
+                    <label
+                        class="flex items-center gap-2 p-2 rounded cursor-pointer hover:bg-white/5 transition border border-transparent hover:border-white/10 group-checkbox-item">
+                        <input type="checkbox" name="groups" value="{{ group.id }}" {% if group in
+                            form.instance.groups.all %}checked{% endif %}
+                            class="rounded border-gray-600 text-primary focus:ring-primary bg-gray-900 w-4 h-4">
+                        <span class="text-sm text-gray-300">{{ group.name }}</span>
+                    </label>
+                    {% empty %}
+                    <div class="col-span-full text-center text-gray-500 text-xs py-4">グループがまだありません</div>
+                    {% endfor %}
+                </div>
             </div>
+        </section>
+
+        <!-- 4. 記念日 (Anniversaries) -->
+        <section class="bg-surface/30 border border-white/10 rounded-xl p-6">
+            <h2 class="text-primary font-mono text-lg mb-6 flex items-center gap-2 border-b border-white/5 pb-2">
+                <span class="text-primary/50">04.</span> 重要な日付・記念日 (DATES)
+            </h2>
+
+            {{ anniversaries.management_form }}
+            <div id="anniversary-forms" class="space-y-4">
+                {% for form in anniversaries %}
+                <div class="anniversary-row flex gap-4 items-end bg-black/20 p-3 rounded border border-white/5">
+                    {{ form.id }} {# Hidden ID field for existing instances #}
+                    {{ form.target }} {# Hidden target field #}
+                    <div class="flex-1">
+                        <label class="block text-[10px] font-mono text-gray-500 mb-1">名称 (例: 結婚記念日)</label>
+                        {{ form.label }}
+                    </div>
+                    <div class="w-40">
+                        <label class="block text-[10px] font-mono text-gray-500 mb-1">日付</label>
+                        {{ form.date }}
+                    </div>
+                    <div class="pb-1">
+                        {% if form.instance.pk %}
+                        <label class="flex items-center gap-1 text-red-500 text-xs cursor-pointer">
+                            {{ form.DELETE }} <span class="text-[10px]">削除</span>
+                        </label>
+                        {% else %}
+                        {# For new empty forms, DELETE checkbox is not needed initially #}
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <button type="button" id="add-anniversary"
+                class="mt-4 w-full py-2 border border-dashed border-white/20 text-gray-400 hover:text-white hover:border-white/50 rounded font-mono text-xs transition">
+                + 記念日を追加
+            </button>
+        </section>
+
+        <!-- 5. メモ (Notes) -->
+        <section class="bg-surface/30 border border-white/10 rounded-xl p-6">
+            <h2 class="text-primary font-mono text-lg mb-6 flex items-center gap-2 border-b border-white/5 pb-2">
+                <span class="text-primary/50">05.</span> その他メモ (NOTES)
+            </h2>
+            {{ form.description }}
+        </section>
+
+        <!-- Submit -->
+        <div class="sticky bottom-4 z-40">
+            <button type="submit"
+                class="w-full bg-primary text-black font-bold py-4 rounded shadow-[0_0_20px_rgba(34,197,94,0.3)] hover:shadow-[0_0_30px_rgba(34,197,94,0.5)] transition font-mono border border-green-400">
+                {% if is_edit %}更新を保存 (SAVE){% else %}登録する (REGISTER){% endif %}
+            </button>
+        </div>
     </form>
 </div>
-</div>
 
-<!-- Group Modal -->
-<div id="group_modal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center">
-    <div class="bg-surface border border-primary/50 rounded-xl p-6 w-96 shadow-2xl">
-        <h3 class="text-lg font-mono text-white mb-4">新規グループ作成</h3>
-        <div class="space-y-4">
-            <div>
-                <label class="block text-xs text-gray-400 mb-1">グループ名</label>
-                {{ group_form.name }}
-            </div>
-            <div>
-                <label class="block text-xs text-gray-400 mb-1">説明</label>
-                {{ group_form.description }}
-            </div>
-            <div class="flex justify-end gap-2 pt-4">
-                <button type="button" onclick="document.getElementById('group_modal').classList.add('hidden')"
-                    class="px-4 py-2 text-xs text-gray-400 hover:text-white">キャンセル</button>
-                <button type="button" id="create_group_btn"
-                    class="px-4 py-2 bg-primary text-black text-xs font-bold rounded hover:bg-primary/90">作成</button>
-            </div>
+<!-- Crop Modal -->
+<div id="cropModal" class="hidden fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
+    <div class="bg-surface border border-white/20 rounded-xl p-6 max-w-2xl w-full flex flex-col gap-4">
+        <h3 class="text-xl font-mono text-white">画像トリミング</h3>
+        <div class="h-96 w-full bg-black flex items-center justify-center">
+            <img id="imageToCrop" src="" class="max-w-full max-h-full">
+        </div>
+        <div class="flex justify-end gap-4">
+            <button type="button" id="cancelCrop"
+                class="px-4 py-2 text-gray-400 hover:text-white border border-white/10 rounded">キャンセル</button>
+            <button type="button" id="confirmCrop"
+                class="px-6 py-2 bg-primary text-black font-bold rounded">適用する</button>
         </div>
     </div>
 </div>
 
-<!-- Hidden Template for Anniversary Row -->
-<div id="empty_form" class="hidden">
-    <div class="anniversary-row flex gap-2 items-center mt-2">
-        <div class="flex-1">{{ anniversaries.empty_form.label }}</div>
-        <div class="w-40">{{ anniversaries.empty_form.date }}</div>
+<!-- Group Modal -->
+<div id="groupModal"
+    class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-surface border border-white/20 rounded-xl p-6 w-full max-w-md shadow-2xl">
+        <h3 class="text-xl font-mono text-white mb-4 flex items-center gap-2">
+            <span class="w-1 h-6 bg-primary block"></span>
+            新規グループ作成
+        </h3>
+        <form id="groupCreateForm" class="space-y-4">
+            <div>
+                <label class="block text-xs font-mono text-gray-400 mb-1">グループ名</label>
+                {{ group_form.name }}
+            </div>
+            <div>
+                <label class="block text-xs font-mono text-gray-400 mb-1">説明</label>
+                {{ group_form.description }}
+            </div>
+            <div class="flex justify-end gap-3 pt-4 border-t border-white/10">
+                <button type="button" id="closeGroupModal"
+                    class="px-4 py-2 text-gray-400 hover:text-white text-sm">キャンセル</button>
+                <button type="submit"
+                    class="px-6 py-2 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/50 rounded text-sm">作成</button>
+            </div>
+        </form>
     </div>
 </div>
 
+<!-- Hidden Template for Anniversary Row -->
+<div id="empty_anniversary_form_template" class="hidden">
+    <div class="anniversary-row flex gap-4 items-end bg-black/20 p-3 rounded border border-white/5">
+        {{ anniversaries.empty_form.id }}
+        {{ anniversaries.empty_form.target }}
+        <div class="flex-1">
+            <label class="block text-[10px] font-mono text-gray-500 mb-1">名称 (例: 結婚記念日)</label>
+            {{ anniversaries.empty_form.label }}
+        </div>
+        <div class="w-40">
+            <label class="block text-[10px] font-mono text-gray-500 mb-1">日付</label>
+            {{ anniversaries.empty_form.date }}
+        </div>
+        <div class="pb-1">
+            <label class="flex items-center gap-1 text-red-500 text-xs cursor-pointer">
+                {{ anniversaries.empty_form.DELETE }} <span class="text-[10px]">削除</span>
+            </label>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // Loader removed
-        // --- Birthdate Logic (Same as before but refined) ---
-        const yearSelect = document.getElementById('birth_year_select');
-        const monthSelect = document.getElementById('birth_month_select');
-        const daySelect = document.getElementById('birth_day_select');
-        const zodiacInput = document.querySelector('input[name="zodiac_sign"]');
+    // --- Populate Year Select ---
+    const yearSelect = document.getElementById('birth_year_select');
+    const monthSelect = document.getElementById('birth_month_select');
+    const daySelect = document.getElementById('birth_day_select');
+    const yearInput = document.getElementById('id_birth_year');
+    const monthInput = document.getElementById('id_birth_month');
+    const dayInput = document.getElementById('id_birth_day');
 
-        // Eto Array
-        const eto = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+    const startYear = 1900;
+    const endYear = new Date().getFullYear();
+    for (let y = endYear; y >= startYear; y--) {
+        let opt = document.createElement('option');
+        opt.value = y;
+        opt.textContent = y + '年';
+        yearSelect.appendChild(opt);
+    }
 
-        // Populate Years
-        const currentYear = new Date().getFullYear();
-        // Pre-select logic if editing (can parse from hidden input or context if avail, 
-        // but simpler to just populate and let user re-select for now if values missing)
-        // Actually Django form handles initial binding for standard fields, but we split them.
-        // Ideally we should pass initial values for year/month/day if editing.
-        // For now, populate options first.
+    // Set initial values from hidden inputs
+    if (yearInput.value) yearSelect.value = yearInput.value;
+    if (monthInput.value) monthSelect.value = monthInput.value;
+    if (dayInput.value) daySelect.value = dayInput.value;
 
-        for (let y = currentYear; y >= 1900; y--) {
-            const option = document.createElement('option');
-            const age = currentYear - y;
-            const etoIndex = (y - 4) % 12;
-            const etoName = eto[etoIndex];
-            option.value = y;
-            option.text = `${y}年 (${age}歳・${etoName})`;
-            yearSelect.appendChild(option);
+    // Sync Selects to Hidden Inputs
+    function syncDate() {
+        yearInput.value = yearSelect.value;
+        monthInput.value = monthSelect.value;
+        dayInput.value = daySelect.value;
+        updateBio();
+    }
+
+    yearSelect.addEventListener('change', syncDate);
+    monthSelect.addEventListener('change', syncDate);
+    daySelect.addEventListener('change', syncDate);
+
+
+    // --- Bio Logic (Age, Eto, Zodiac) ---
+    const ageDisplay = document.getElementById('ageDisplay');
+    const etoDisplay = document.getElementById('etoDisplay');
+    const zodiacInput = document.getElementById('id_zodiac_sign');
+    const zodiacSelect = document.getElementById('zodiacParams');
+
+    function calculateAge(year, month, day) {
+        if (!year || !month || !day) return '--';
+        const today = new Date();
+        const birthDate = new Date(year, month - 1, day);
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
         }
+        return age;
+    }
 
-        // Populate Days & Zodiac
-        function updateDays() {
-            const y = parseInt(yearSelect.value);
-            const m = parseInt(monthSelect.value);
-            const currentDay = parseInt(daySelect.value);
+    function getEto(year) {
+        if (!year) return '--';
+        // Eto cycle starts with Rat (子) in 1900. 1900 % 12 = 4. So 4th element is Rat.
+        // The array should be ordered such that (year - offset) % 12 maps correctly.
+        // 1900 is Rat (子). (1900 - 4) % 12 = 0. So, if 1900 is index 0, then 4 is the offset.
+        // 1900 (子), 1901 (丑), 1902 (寅), 1903 (卯), 1904 (辰), 1905 (巳), 1906 (午), 1907 (未), 1908 (申), 1909 (酉), 1910 (戌), 1911 (亥)
+        // 1900 % 12 = 4. So 4th element in the array should be 子.
+        // The provided array is ['猿', '酉', '犬', '猪', '子', '丑', '寅', '卯', '辰', '巳', '午', '未']
+        // This array seems to be ordered for (year - 1900 + 4) % 12 or similar.
+        // Let's use a standard calculation: (year - 4) % 12, where 4 is the year of the Rat (子).
+        // 1900 is Rat. (1900 - 4) % 12 = 1896 % 12 = 0. So Rat should be index 0.
+        const etos = ['子 (Rat)', '丑 (Ox)', '寅 (Tiger)', '卯 (Rabbit)', '辰 (Dragon)', '巳 (Snake)', '午 (Horse)', '未 (Sheep)', '申 (Monkey)', '酉 (Rooster)', '戌 (Dog)', '亥 (Boar)'];
+        const etoIndex = (year - 4) % 12; // 4 AD was a Rat year
+        return etos[etoIndex < 0 ? etoIndex + 12 : etoIndex]; // Handle negative results for years < 4 AD if needed, though not for 1900+
+    }
 
-            // Save current selection
-            const prevVal = daySelect.value;
+    function getZodiac(month, day) {
+        if (!month || !day) return '';
+        if ((month == 1 && day <= 19) || (month == 12 && day >= 22)) return "Capricorn";
+        if ((month == 1 && day >= 20) || (month == 2 && day <= 18)) return "Aquarius";
+        if ((month == 2 && day >= 19) || (month == 3 && day <= 20)) return "Pisces";
+        if ((month == 3 && day >= 21) || (month == 4 && day <= 19)) return "Aries";
+        if ((month == 4 && day >= 20) || (month == 5 && day <= 20)) return "Taurus";
+        if ((month == 5 && day >= 21) || (month == 6 && day <= 20)) return "Gemini";
+        if ((month == 6 && day >= 21) || (month == 7 && day <= 22)) return "Cancer";
+        if ((month == 7 && day >= 23) || (month == 8 && day <= 22)) return "Leo";
+        if ((month == 8 && day >= 23) || (month == 9 && day <= 22)) return "Virgo";
+        if ((month == 9 && day >= 23) || (month == 10 && day <= 22)) return "Libra";
+        if ((month == 10 && day >= 23) || (month == 11 && day <= 21)) return "Scorpio";
+        if ((month == 11 && day >= 22) || (month == 12 && day <= 21)) return "Sagittarius";
+        return "";
+    }
 
-            daySelect.innerHTML = '<option value="">日</option>';
-            if (!m) return;
-            const daysInMonth = new Date(y || 2000, m, 0).getDate();
-            for (let d = 1; d <= daysInMonth; d++) {
-                const option = document.createElement('option');
-                option.value = d;
-                option.text = d + '日';
-                if (d == prevVal) option.selected = true;
-                daySelect.appendChild(option);
+    function updateBio() {
+        const y = parseInt(yearSelect.value);
+        const m = parseInt(monthSelect.value);
+        const d = parseInt(daySelect.value);
+
+        if (y && m && d) {
+            ageDisplay.textContent = `年齢: ${calculateAge(y, m, d)}歳`;
+            etoDisplay.textContent = `干支: ${getEto(y)}`;
+
+            // Only update zodiacInput if zodiacSelect is on "Auto"
+            if (zodiacSelect.value === "") {
+                const z = getZodiac(m, d);
+                zodiacInput.value = z;
             }
-            updateZodiac();
+        } else {
+            ageDisplay.textContent = `年齢: --歳`;
+            etoDisplay.textContent = `干支: --`;
+            if (zodiacSelect.value === "") {
+                zodiacInput.value = '';
+            }
         }
+    }
 
-        function updateZodiac() {
-            const m = parseInt(monthSelect.value);
-            const d = parseInt(daySelect.value);
-            if (!m || !d) { zodiacInput.value = ''; return; }
+    // Initial update
+    updateBio();
 
-            let sign = '';
-            if ((m == 3 && d >= 21) || (m == 4 && d <= 19)) sign = '牡羊座';
-            else if ((m == 4 && d >= 20) || (m == 5 && d <= 20)) sign = '牡牛座';
-            else if ((m == 5 && d >= 21) || (m == 6 && d <= 21)) sign = '双子座';
-            else if ((m == 6 && d >= 22) || (m == 7 && d <= 22)) sign = '蟹座';
-            else if ((m == 7 && d >= 23) || (m == 8 && d <= 22)) sign = '獅子座';
-            else if ((m == 8 && d >= 23) || (m == 9 && d <= 22)) sign = '乙女座';
-            else if ((m == 9 && d >= 23) || (m == 10 && d <= 23)) sign = '天秤座';
-            else if ((m == 10 && d >= 24) || (m == 11 && d <= 22)) sign = '蠍座';
-            else if ((m == 11 && d >= 23) || (m == 12 && d <= 21)) sign = '射手座';
-            else if ((m == 12 && d >= 22) || (m == 1 && d <= 19)) sign = '山羊座';
-            else if ((m == 1 && d >= 20) || (m == 2 && d <= 18)) sign = '水瓶座';
-            else sign = '魚座';
-
-            zodiacInput.value = sign;
+    zodiacSelect.addEventListener('change', function () {
+        if (this.value) {
+            zodiacInput.value = this.value; // Manual override
+        } else {
+            updateBio(); // Revert to auto-calculation
         }
-
-        yearSelect.addEventListener('change', updateDays);
-        monthSelect.addEventListener('change', updateDays);
-        daySelect.addEventListener('change', updateZodiac);
-
-        // --- Pre-fill Date Logic for Edit Mode ---
-        // If instance exists, we might need to parse birthdate if it's not None.
-        // However, since we use `birth_year` etc. as fields in form, Django might fill them if we set initial in GET.
-        // The current Form implementation extracts from cleaned_data on save, but doesn't decompose on init.
-        // We should probably rely on the user re-entering detailed date if editing, OR improved Form __init__.
-        // For this prototype, I'll rely on Django filling the `birth_year` input value if it matches the field name. 
-        // And I need to sync the Select with that value.
-
-        // Attempt to sync Selects with the Inputs (which might have values from backend)
-        // But wait, I rendered them AS Select widgets in the HTML manually...
-        // Actually in the Template I used `select` tags with IDs, but the `form.birth_year` renders an INPUT or SELECT?
-        // In forms.py I used `NumberInput`. So `{{ form.birth_year }}` renders `<input type="number">`.
-        // In my HTML I manually wrote `<select id="birth_year_select" name="birth_year">`.
-        // This naming collision `name="birth_year"` is good, it submits correctly.
-        // But to show existing value, I need to know the value.
-        // I will read the `value` attribute if Django rendered it, but I replaced Django's rendering with manual HTML.
-        // So I need to inject the value.
-        // A quick hack: Get the value from the form object in template.
-
-        const initialYear = "{{ form.birth_year.value|default:'' }}";
-        const initialMonth = "{{ form.birth_month.value|default:'' }}";
-        const initialDay = "{{ form.birth_day.value|default:'' }}";
-
-        if (initialYear) yearSelect.value = initialYear;
-        if (initialMonth) monthSelect.value = initialMonth;
-        // Trigger update days to populate day select
-        updateDays();
-        if (initialDay) daySelect.value = initialDay;
-        updateZodiac();
-
-
-        // --- Anniversary FormSet ---
-        const addAnniversaryBtn = document.getElementById('add_anniversary');
-        const anniversariesContainer = document.getElementById('anniversaries_container');
-        const totalForms = document.getElementById('id_customanniversary_set-TOTAL_FORMS');
-
-        addAnniversaryBtn.addEventListener('click', function () {
-            const formIdx = totalForms.value;
-            const emptyFormHtml = document.getElementById('empty_form').innerHTML;
-            const newFormHtml = emptyFormHtml.replace(/__prefix__/g, formIdx);
-
-            const div = document.createElement('div');
-            div.innerHTML = newFormHtml;
-            anniversariesContainer.appendChild(div.firstElementChild);
-
-            totalForms.value = parseInt(formIdx) + 1;
-        });
-
-        // --- Group Creation (AJAX) ---
-        const createGroupBtn = document.getElementById('create_group_btn');
-        createGroupBtn.addEventListener('click', function () {
-            const nameInput = document.getElementById('id_name'); // From group_form
-            const descInput = document.getElementById('id_description');
-            const name = nameInput.value;
-            const desc = descInput.value;
-
-            if (!name) return alert('グループ名を入力してください');
-
-            fetch('{% url "group_add" %}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                },
-                body: JSON.stringify({ name: name, description: desc })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Add to select list
-                        const select = document.getElementById('id_groups');
-                        const option = document.createElement('option');
-                        option.value = data.id;
-                        option.text = data.name;
-                        option.selected = true; // Auto-select new group
-                        select.appendChild(option);
-
-                        // Clear and close modal
-                        nameInput.value = '';
-                        descInput.value = '';
-                        document.getElementById('group_modal').classList.add('hidden');
-                    } else {
-                        alert('エラー: ' + data.error);
-                    }
-                });
-        });
     });
+
+    // --- Cropper Logic ---
+    let cropper;
+    const avatarInput = document.getElementById('id_avatar');
+    const imageToCrop = document.getElementById('imageToCrop');
+    const cropModal = document.getElementById('cropModal');
+    const confirmCropBtn = document.getElementById('confirmCrop');
+    const cancelCropBtn = document.getElementById('cancelCrop');
+    const avatarPreviewContainer = document.getElementById('avatarPreviewContainer');
+    let avatarPreview = document.getElementById('avatarPreview'); // Existing img or will be created
+    const avatarPlaceholder = document.getElementById('avatarPlaceholder'); // Placeholder div
+
+    avatarInput.addEventListener('change', function (e) {
+        const files = e.target.files;
+        if (files && files.length > 0) {
+            const file = files[0];
+            const url = URL.createObjectURL(file);
+            imageToCrop.src = url;
+            cropModal.classList.remove('hidden');
+
+            if (cropper) cropper.destroy();
+            cropper = new Cropper(imageToCrop, {
+                aspectRatio: 1,
+                viewMode: 1,
+            });
+        }
+    });
+
+    cancelCropBtn.addEventListener('click', function () {
+        cropModal.classList.add('hidden');
+        if (cropper) cropper.destroy();
+        avatarInput.value = ''; // Clear selection from the file input
+    });
+
+    confirmCropBtn.addEventListener('click', function () {
+        if (cropper) {
+            cropper.getCroppedCanvas().toBlob((blob) => {
+                const file = new File([blob], "avatar_cropped.jpg", { type: "image/jpeg" });
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                avatarInput.files = dataTransfer.files; // Assign the cropped file back to the input
+
+                // Update preview
+                const previewUrl = URL.createObjectURL(blob);
+                if (!avatarPreview) {
+                    avatarPreview = document.createElement('img');
+                    avatarPreview.id = 'avatarPreview';
+                    avatarPreview.className = "w-full h-full object-cover";
+                    avatarPreviewContainer.appendChild(avatarPreview);
+                }
+                avatarPreview.src = previewUrl;
+                if (avatarPlaceholder) avatarPlaceholder.classList.add('hidden'); // Hide placeholder if present
+                avatarPreview.classList.remove('hidden'); // Ensure preview is visible
+
+            }, 'image/jpeg');
+            cropModal.classList.add('hidden');
+        }
+    });
+
+    // --- Group AJAX ---
+    const groupModal = document.getElementById('groupModal');
+    const openGroupBtn = document.getElementById('openGroupModal');
+    const closeGroupBtn = document.getElementById('closeGroupModal');
+    const groupForm = document.getElementById('groupCreateForm');
+
+    openGroupBtn.addEventListener('click', () => groupModal.classList.remove('hidden'));
+    closeGroupBtn.addEventListener('click', () => groupModal.classList.add('hidden'));
+
+    groupForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const formData = {
+            name: this.querySelector('[name="name"]').value,
+            description: this.querySelector('[name="description"]').value
+        };
+
+        fetch('{% url "group_add" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(formData)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const container = document.getElementById('groupsContainer');
+                    // Remove empty msg
+                    const emptyMsg = container.querySelector('.text-center');
+                    if (emptyMsg) emptyMsg.remove();
+
+                    const label = document.createElement('label');
+                    label.className = "flex items-center gap-2 p-2 rounded cursor-pointer hover:bg-white/5 transition border border-transparent hover:border-white/10 group-checkbox-item";
+                    label.innerHTML = `
+                    <input type="checkbox" name="groups" value="${data.id}" checked class="rounded border-gray-600 text-primary focus:ring-primary bg-gray-900 w-4 h-4">
+                    <span class="text-sm text-gray-300">${data.name}</span>
+                `;
+                    container.prepend(label); // Add new group to the top
+
+                    groupModal.classList.add('hidden');
+                    groupForm.reset();
+                } else {
+                    alert('エラー: ' + data.error);
+                }
+            });
+    });
+
+    // --- Anniversary FormSet ---
+    const addAnniversaryBtn = document.getElementById('add-anniversary');
+    const anniversaryFormsContainer = document.getElementById('anniversary-forms');
+    const totalFormsInput = document.getElementById('id_customanniversary_set-TOTAL_FORMS');
+    const emptyFormTemplate = document.getElementById('empty_anniversary_form_template');
+
+    addAnniversaryBtn.addEventListener('click', function () {
+        const formIdx = parseInt(totalFormsInput.value);
+        const newFormHtml = emptyFormTemplate.innerHTML.replace(/__prefix__/g, formIdx);
+
+        const div = document.createElement('div');
+        div.innerHTML = newFormHtml;
+        const newFormRow = div.firstElementChild;
+
+        // Clear values for the new form
+        newFormRow.querySelectorAll('input').forEach(input => {
+            if (input.type !== 'hidden' && input.type !== 'checkbox') {
+                input.value = '';
+            } else if (input.type === 'checkbox') {
+                input.checked = false;
+            }
+        });
+
+        anniversaryFormsContainer.appendChild(newFormRow);
+        totalFormsInput.value = formIdx + 1;
+    });
+
 </script>
 {% endblock %}
