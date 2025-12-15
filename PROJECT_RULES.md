@@ -77,3 +77,23 @@ defaultは当日でいいが、別の日にちを選択できるようにする�
 〇左サイドメニューにカレンダーを追加。
 誕生日・カスタム記念日を表記、出来事・質問・接触の入力があったかどうかの印も表示。
 日付をクリックするとその日の諜報ログに飛ぶ。
+
+
+1. Accountsアプリ: ユーザー権限 (Roles)
+    accounts/models.py の CustomUser に role フィールドを追加。
+    階級定義 (Choices):
+        MASTER: 管理者・運営 (全権限)
+        ELITE_AGENT: 上級会員 (有料枠想定)
+        AGENT: 一般工作員 (無料枠想定)
+    デフォルト値は AGENT とする。
+2. Intelligenceアプリ: 質問管理 (Shared vs Individual)
+    intelligence/models.py に Question モデルを作成（または修正）。
+    フィールド構成:
+        user: ForeignKey (作成者)。
+        is_shared: Boolean (デフォルトFalse)。MASTERのみがTrueにできる。
+        content: 質問内容 (Text)。
+        order: 表示順 (Integer)。
+    ロジック要件:
+        共有質問 (Shared): is_shared=True のレコード。全ユーザーの画面に表示される。編集・削除はMASTERのみ可能。
+        個別質問 (Individual): is_shared=False のレコード。作成した本人(user)のみが表示・編集可能。
+        取得クエリ: ユーザーが質問一覧を見る際は、「共有質問」OR「自分の個別質問」を結合して取得すること。

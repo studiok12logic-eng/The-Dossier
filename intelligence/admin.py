@@ -1,3 +1,17 @@
 from django.contrib import admin
+from .models import Question, Target, TargetGroup, Quest, Tag, DailyTargetState, CustomAnniversary, TimelineItem
 
-# Register your models here.
+class QuestionAdmin(admin.ModelAdmin):
+    list_display = ('content', 'is_shared', 'user', 'order')
+    list_filter = ('is_shared', 'user')
+    search_fields = ('content',)
+    ordering = ('order',)
+
+admin.site.register(Question, QuestionAdmin)
+admin.site.register(Target)
+admin.site.register(TargetGroup)
+admin.site.register(Quest)
+admin.site.register(Tag)
+admin.site.register(DailyTargetState)
+admin.site.register(CustomAnniversary)
+admin.site.register(TimelineItem)

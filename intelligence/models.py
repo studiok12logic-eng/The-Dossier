@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 import uuid
 
 class Tag(models.Model):
@@ -12,14 +12,14 @@ class Quest(models.Model):
     text = models.CharField(max_length=200)
     category = models.CharField(max_length=50)
     difficulty = models.IntegerField(default=1)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return self.text
 
 class TargetGroup(models.Model):
     name = models.CharField(max_length=100) # Removed unique=True for multi-tenancy
-    user = models.ForeignKey(User, on_delete=models.CASCADE, default=1)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, default=1)
     description = models.TextField(blank=True)
     # Contact Frequency (Days of Week)
     is_mon = models.BooleanField(default=False, verbose_name="月")
@@ -36,7 +36,7 @@ class TargetGroup(models.Model):
 
 class Target(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, default=1)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, default=1)
     
     # 1. Identity
     nickname = models.CharField(max_length=100, verbose_name="ニックネーム")
@@ -64,7 +64,7 @@ class Target(models.Model):
     description = models.TextField(blank=True) # Use description for general notes
     
     # Metadata
-    # status = models.CharField(...) # Removed rank concept for now
+    last_contact = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -135,9 +135,15 @@ class TimelineItem(models.Model):
     def __str__(self):
         return f"{self.target} - {self.type} ({self.date.strftime('%Y-%m-%d')})"
 
-class QuestionRegistry(models.Model):
-    category = models.CharField(max_length=100)
-    text = models.CharField(max_length=255)
+class Question(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    is_shared = models.BooleanField(default=False, verbose_name="共通質問")
+    content = models.TextField(verbose_name="質問内容")
+    order = models.IntegerField(default=0, verbose_name="表示順")
+
+    def __str__(self):
+        type_label = "Shared" if self.is_shared else "Individual"
+        return f"[{type_label}] {self.content}"
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
