@@ -26,44 +26,8 @@
             </h2>
 
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                <!-- Avatar -->
-                <div class="md:col-span-1 flex flex-col gap-4">
-                    <label class="block text-xs font-mono text-gray-400 mb-1">プロフィール画像 (300x300)</label>
-                    <div class="w-[300px] h-[300px] bg-black border-2 border-dashed border-white/20 rounded-lg flex items-center justify-center relative group overflow-hidden mx-auto md:mx-0"
-                        id="avatarPreviewContainer">
-                        {% if form.instance.avatar %}
-                        <img src="{{ form.instance.avatar.url }}" id="avatarPreview" class="w-full h-full object-cover">
-                        {% else %}
-                        <div id="avatarPlaceholder" class="text-center text-gray-500 p-4">
-                            <span class="block text-4xl mb-2">+</span>
-                            <span class="text-xs font-mono">UPLOAD PHOTO</span>
-                        </div>
-                        {% endif %}
-                        <input type="file" name="avatar" id="id_avatar" accept="image/*"
-                            class="absolute inset-0 opacity-0 cursor-pointer z-10 w-full h-full">
-                    </div>
-
-                    <!-- Avatar Delete Button -->
-                    <div class="flex justify-center md:justify-start gap-2">
-                        <button type="button" id="deleteAvatarBtn"
-                            class="text-xs text-red-500 hover:text-red-400 border border-red-500/30 px-2 py-1 rounded bg-red-500/10">
-                            画像削除
-                        </button>
-                    </div>
-
-                    <div class="text-[10px] text-gray-500 text-center md:text-left">
-                        クリックで選択 (自動で正方形にトリミング可能)
-                    </div>
-
-                    {% if form.instance.avatar %}
-                    <div class="hidden">
-                        <input type="checkbox" name="avatar-clear" id="avatar-clear_id">
-                    </div>
-                    {% endif %}
-                </div>
-
-                <!-- Text Fields -->
-                <div class="md:col-span-3 space-y-4">
+                <!-- Text Fields (Left) -->
+                <div class="md:col-span-3 space-y-4 order-2 md:order-1">
                     <!-- Nickname -->
                     <div class="form-group">
                         <label class="block text-xs font-mono text-gray-400 mb-1">ニックネーム / コードネーム <span
@@ -93,6 +57,43 @@
                             {{ form.first_name_kana }}
                         </div>
                     </div>
+                </div>
+
+                <!-- Avatar (Right) -->
+                <div class="md:col-span-1 flex flex-col gap-4 order-1 md:order-2">
+                    <label class="block text-xs font-mono text-gray-400 mb-1 md:text-right">プロフィール画像 (300x300)</label>
+                    <div class="w-[300px] h-[300px] bg-black border-2 border-dashed border-white/20 rounded-lg flex items-center justify-center relative group overflow-hidden mx-auto md:ml-auto"
+                        id="avatarPreviewContainer">
+                        {% if form.instance.avatar %}
+                        <img src="{{ form.instance.avatar.url }}" id="avatarPreview" class="w-full h-full object-cover">
+                        {% else %}
+                        <div id="avatarPlaceholder"
+                            class="text-center text-gray-500 p-4 flex flex-col items-center justify-center h-full">
+                            <span class="block text-[80px] leading-none mb-4 mix-blend-difference opacity-50">+</span>
+                            <span class="text-xs font-mono">UPLOAD PHOTO</span>
+                        </div>
+                        {% endif %}
+                        <input type="file" name="avatar" id="id_avatar" accept="image/*"
+                            class="absolute inset-0 opacity-0 cursor-pointer z-10 w-full h-full">
+                    </div>
+
+                    <!-- Avatar Delete Button -->
+                    <div class="flex justify-center md:justify-end gap-2">
+                        <button type="button" id="deleteAvatarBtn"
+                            class="text-xs text-red-500 hover:text-red-400 border border-red-500/30 px-2 py-1 rounded bg-red-500/10">
+                            画像削除
+                        </button>
+                    </div>
+
+                    <div class="text-[10px] text-gray-500 text-center md:text-right">
+                        クリックで選択 (自動で正方形にトリミング可能)
+                    </div>
+
+                    {% if form.instance.avatar %}
+                    <div class="hidden">
+                        <input type="checkbox" name="avatar-clear" id="avatar-clear_id">
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </section>
@@ -215,8 +216,8 @@
                         class="flex items-center gap-2 p-2 rounded cursor-pointer hover:bg-white/5 transition border border-transparent hover:border-white/10 group-checkbox-item">
 
                         <input type="checkbox" name="groups" value="{{ group.id }}"
-                        class="rounded border-gray-600 text-primary focus:ring-primary bg-gray-900 w-4 h-4"
-                        {% if group in form.instance.groups.all %}checked{% endif %}>
+                            class="rounded border-gray-600 text-primary focus:ring-primary bg-gray-900 w-4 h-4" {% if
+                            group in form.instance.groups.all %}checked{% endif %}>
                         <span class="text-sm text-gray-300">{{ group.name }}</span>
                     </label>
                     {% empty %}
