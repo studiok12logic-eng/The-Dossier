@@ -1,0 +1,402 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="h-full flex overflow-hidden gap-6">
+    <!-- Left Panel: Target Selector -->
+    <div class="w-1/3 flex flex-col bg-surface/30 border border-white/10 rounded-xl overflow-hidden relative">
+        <div class="p-4 border-b border-white/10 bg-black/20">
+            <h2 class="text-primary font-mono text-sm flex items-center gap-2">
+                <span class="w-1 h-4 bg-primary block"></span>
+                TARGET SELECT
+            </h2>
+            <div class="text-[10px] text-gray-500 font-mono mt-1">
+                TODAY: {{ today_date }} ({{ weekday_jp }})
+            </div>
+        </div>
+
+        <!-- Target List -->
+        <div class="flex-1 overflow-y-auto p-2 space-y-2" id="targetList">
+            {% for target in todays_targets %}
+            <div class="target-item p-3 rounded flex items-center gap-3 cursor-pointer hover:bg-white/5 transition border border-transparent hover:border-primary/30 group"
+                data-id="{{ target.id }}" data-name="{{ target.nickname }}"
+                data-avatar="{% if target.avatar %}{{ target.avatar.url }}{% endif %}">
+                <div class="w-10 h-10 rounded bg-black border border-white/10 overflow-hidden flex-shrink-0 relative">
+                    {% if target.avatar %}
+                    <img src="{{ target.avatar.url }}" class="w-full h-full object-cover">
+                    {% else %}
+                    <div class="w-full h-full flex items-center justify-center text-xs text-gray-500">{{
+                        target.nickname|slice:":1" }}</div>
+                    {% endif %}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="text-sm text-white font-mono truncate group-hover:text-primary">{{ target.nickname }}
+                    </div>
+                    <div class="text-[10px] text-gray-500 truncate">{{ target.last_name }} {{ target.first_name }}</div>
+                </div>
+                <div class="w-2 h-2 rounded-full bg-gray-700 status-indicator"></div>
+            </div>
+            {% empty %}
+            <div class="text-center text-gray-500 text-xs py-10">
+                本日の予定ターゲットはいません
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Add Button -->
+        <div class="p-4 border-t border-white/10 bg-black/20">
+            <button id="openTargetSearch"
+                class="w-full py-2 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 rounded text-xs font-mono transition flex items-center justify-center gap-2">
+                <span>+</span> ADD TARGET
+            </button>
+        </div>
+    </div>
+
+    <!-- Right Panel: Dossier Input -->
+    <div class="flex-1 bg-surface/30 border border-white/10 rounded-xl overflow-hidden flex flex-col relative">
+        <!-- Overlay for No Selection -->
+        <div id="noSelectionOverlay"
+            class="absolute inset-0 z-10 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center text-gray-500">
+            <div class="text-4xl mb-4 opacity-50">⚡</div>
+            <div class="font-mono text-sm">SELECT TARGET FROM LEFT PANEL</div>
+        </div>
+
+        <!-- Header -->
+        <div class="p-4 border-b border-white/10 bg-black/20 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded bg-black border border-white/10 overflow-hidden" id="selectedAvatar">
+                    <!-- JS populated -->
+                </div>
+                <div>
+                    <h2 class="text-white font-mono text-sm" id="selectedName">--</h2>
+                    <div class="text-[10px] text-gray-500">DOSSIER ENTRY</div>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="contactFlag"
+                        class="rounded border-gray-600 text-primary bg-gray-900 w-4 h-4">
+                    <label for="contactFlag" class="text-xs text-gray-300 cursor-pointer">接触発生 (CONTACT)</label>
+                </div>
+                <input type="date" id="logDate" value="{{ today_date }}"
+                    class="bg-black/50 border border-white/10 rounded px-2 py-1 text-xs text-white">
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex border-b border-white/10">
+            <button class="flex-1 py-3 text-xs font-mono text-center border-b-2 border-primary text-white bg-white/5"
+                id="tabEvent">
+                出来事 (EVENT)
+            </button>
+            <button
+                class="flex-1 py-3 text-xs font-mono text-center border-b-2 border-transparent text-gray-500 hover:text-gray-300"
+                id="tabQuestion">
+                質問 (QUESTION)
+            </button>
+        </div>
+
+        <!-- Forms -->
+        <div class="flex-1 p-6 overflow-y-auto">
+            <!-- Event Form -->
+            <div id="formEvent" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-mono text-gray-400 mb-1">出来事・会話・観察内容</label>
+                    <textarea id="eventContent"
+                        class="w-full h-40 bg-black/20 border border-white/10 rounded p-3 text-sm text-white focus:border-primary focus:outline-none"
+                        placeholder="詳細を入力..."></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-mono text-gray-400 mb-1">タグ (カンマ区切り)</label>
+                    <input type="text" id="eventTags"
+                        class="w-full bg-black/20 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
+                        placeholder="例: 趣味, 仕事, 警戒">
+                </div>
+            </div>
+
+            <!-- Question Form -->
+            <div id="formQuestion" class="space-y-4 hidden">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-mono text-gray-400 mb-1">カテゴリ</label>
+                        <select id="qCategory"
+                            class="w-full bg-black/20 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-primary focus:outline-none">
+                            <option value="">カテゴリ選択</option>
+                            <!-- Unique Categories from Questions -->
+                            {% regroup questions by category as category_list %}
+                            {% for cat in category_list %}
+                            <option value="{{ cat.grouper }}">{{ cat.grouper }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-mono text-gray-400 mb-1">質問項目</label>
+                        <select id="qSelect"
+                            class="w-full bg-black/20 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
+                            disabled>
+                            <option value="">カテゴリを選択してください</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-mono text-gray-400 mb-1">回答・反応</label>
+                    <textarea id="qAnswer"
+                        class="w-full h-32 bg-black/20 border border-white/10 rounded p-3 text-sm text-white focus:border-primary focus:outline-none"
+                        placeholder="回答を入力..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="p-4 border-t border-white/10 bg-black/20 flex justify-end">
+            <button id="saveLogBtn"
+                class="px-6 py-2 bg-primary text-black font-bold font-mono text-sm rounded hover:bg-primary/90 transition shadow-[0_0_15px_rgba(34,197,94,0.3)]">
+                記録する (SAVE LOG)
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Search Modal -->
+<div id="searchModal"
+    class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-surface border border-white/20 rounded-xl p-6 w-full max-w-md shadow-2xl h-[500px] flex flex-col">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-mono text-white">ターゲット検索</h3>
+            <button id="closeSearch" class="text-gray-400 hover:text-white">✕</button>
+        </div>
+        <input type="text" id="searchInput" placeholder="Search by name..."
+            class="w-full bg-black/20 border border-white/10 rounded px-3 py-2 text-sm text-white mb-4 focus:border-primary">
+
+        <div class="flex-1 overflow-y-auto space-y-2 pr-1" id="searchList">
+            {% for t in all_targets %}
+            <div class="search-item p-2 rounded border border-white/5 hover:bg-white/5 cursor-pointer flex items-center gap-3"
+                data-id="{{ t.id }}" data-name="{{ t.nickname }}"
+                data-avatar="{% if t.avatar %}{{ t.avatar.url }}{% endif %}">
+                <!-- Avatar mini -->
+                <div
+                    class="w-8 h-8 rounded bg-gray-900 border border-white/10 flex items-center justify-center text-[10px] text-gray-500 overflow-hidden">
+                    {% if t.avatar %}<img src="{{ t.avatar.url }}" class="w-full h-full object-cover">{% else %}{{
+                    t.nickname|slice:":1" }}{% endif %}
+                </div>
+                <div class="text-sm text-white font-mono">{{ t.nickname }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Data for JS -->
+<script id="questionsData" type="application/json">
+[
+    {% for q in questions %}
+    {"id": "{{ q.id }}", "category": "{{ q.category }}", "text": "{{ q.text }}"}{% if not forloop.last %},{% endif %}
+    {% endfor %}
+]
+</script>
+
+<script>
+    // --- State ---
+    let currentTargetId = null;
+    let questionsData = JSON.parse(document.getElementById('questionsData').textContent);
+
+    // --- UI Elements ---
+    const targetList = document.getElementById('targetList');
+    const overlay = document.getElementById('noSelectionOverlay');
+    const selectedName = document.getElementById('selectedName');
+    const selectedAvatar = document.getElementById('selectedAvatar');
+    const tabEvent = document.getElementById('tabEvent');
+    const tabQuestion = document.getElementById('tabQuestion');
+    const formEvent = document.getElementById('formEvent');
+    const formQuestion = document.getElementById('formQuestion');
+    const qCategory = document.getElementById('qCategory');
+    const qSelect = document.getElementById('qSelect');
+    const saveBtn = document.getElementById('saveLogBtn');
+
+    // --- Target Selection ---
+    document.addEventListener('click', function (e) {
+        const item = e.target.closest('.target-item');
+        if (item) {
+            // Visualize Selection
+            document.querySelectorAll('.target-item').forEach(el => {
+                el.classList.remove('bg-white/10', 'border-primary');
+                el.querySelector('.status-indicator').classList.remove('bg-primary', 'shadow-[0_0_8px_rgba(34,197,94,0.8)]');
+                el.querySelector('.status-indicator').classList.add('bg-gray-700');
+            });
+            item.classList.add('bg-white/10', 'border-primary');
+            item.querySelector('.status-indicator').classList.remove('bg-gray-700');
+            item.querySelector('.status-indicator').classList.add('bg-primary', 'shadow-[0_0_8px_rgba(34,197,94,0.8)]');
+
+            // Set Data
+            currentTargetId = item.dataset.id;
+            selectedName.textContent = item.dataset.name;
+            const avatarUrl = item.dataset.avatar;
+            if (avatarUrl) {
+                selectedAvatar.innerHTML = `<img src="${avatarUrl}" class="w-full h-full object-cover">`;
+            } else {
+                selectedAvatar.innerHTML = `<div class="w-full h-full flex items-center justify-center text-xs text-gray-500">${item.dataset.name.charAt(0)}</div>`;
+            }
+
+            // Hide Overlay
+            overlay.classList.add('hidden');
+        }
+    });
+
+    // --- Tabs ---
+    tabEvent.addEventListener('click', () => {
+        tabEvent.classList.add('border-primary', 'bg-white/5', 'text-white');
+        tabEvent.classList.remove('border-transparent', 'text-gray-500');
+
+        tabQuestion.classList.remove('border-primary', 'bg-white/5', 'text-white');
+        tabQuestion.classList.add('border-transparent', 'text-gray-500');
+
+        formEvent.classList.remove('hidden');
+        formQuestion.classList.add('hidden');
+    });
+
+    tabQuestion.addEventListener('click', () => {
+        tabQuestion.classList.add('border-primary', 'bg-white/5', 'text-white');
+        tabQuestion.classList.remove('border-transparent', 'text-gray-500');
+
+        tabEvent.classList.remove('border-primary', 'bg-white/5', 'text-white');
+        tabEvent.classList.add('border-transparent', 'text-gray-500');
+
+        formQuestion.classList.remove('hidden');
+        formEvent.classList.add('hidden');
+    });
+
+    // --- Question Logic ---
+    qCategory.addEventListener('change', function () {
+        const cat = this.value;
+        qSelect.innerHTML = '<option value="">質問を選択...</option>';
+        if (!cat) {
+            qSelect.disabled = true;
+            return;
+        }
+
+        const filtered = questionsData.filter(q => q.category === cat);
+        filtered.forEach(q => {
+            const opt = document.createElement('option');
+            opt.value = q.text;
+            opt.textContent = q.text;
+            qSelect.appendChild(opt);
+        });
+        qSelect.disabled = false;
+    });
+
+
+    // --- Add Target Modal ---
+    const searchModal = document.getElementById('searchModal');
+    const openSearchBtn = document.getElementById('openTargetSearch');
+    const closeSearchBtn = document.getElementById('closeSearch');
+    const searchInput = document.getElementById('searchInput');
+    const searchListElements = document.querySelectorAll('.search-item');
+
+    openSearchBtn.addEventListener('click', () => searchModal.classList.remove('hidden'));
+    closeSearchBtn.addEventListener('click', () => searchModal.classList.add('hidden'));
+
+    searchInput.addEventListener('input', function () {
+        const term = this.value.toLowerCase();
+        searchListElements.forEach(el => {
+            const name = el.dataset.name.toLowerCase();
+            if (name.includes(term)) el.classList.remove('hidden');
+            else el.classList.add('hidden');
+        });
+    });
+
+    document.getElementById('searchList').addEventListener('click', function (e) {
+        const item = e.target.closest('.search-item');
+        if (item) {
+            const id = item.dataset.id;
+            const name = item.dataset.name;
+            const avatar = item.dataset.avatar;
+
+            // Check if already in list
+            let exists = false;
+            document.querySelectorAll('.target-item').forEach(el => {
+                if (el.dataset.id === id) exists = true;
+            });
+
+            if (!exists) {
+                const container = document.getElementById('targetList');
+                // Clear "No targets" message if present
+                const emptyMsg = container.querySelector('.text-center');
+                if (emptyMsg) emptyMsg.remove();
+
+                const div = document.createElement('div');
+                div.className = "target-item p-3 rounded flex items-center gap-3 cursor-pointer hover:bg-white/5 transition border border-transparent hover:border-primary/30 group";
+                div.dataset.id = id;
+                div.dataset.name = name;
+                div.dataset.avatar = avatar;
+
+                let avatarHtml = '';
+                if (avatar) avatarHtml = `<img src="${avatar}" class="w-full h-full object-cover">`;
+                else avatarHtml = `<div class="w-full h-full flex items-center justify-center text-xs text-gray-500">${name.charAt(0)}</div>`;
+
+                div.innerHTML = `
+                    <div class="w-10 h-10 rounded bg-black border border-white/10 overflow-hidden flex-shrink-0 relative">${avatarHtml}</div>
+                    <div class="flex-1 min-w-0">
+                        <div class="text-sm text-white font-mono truncate group-hover:text-primary">${name}</div>
+                        <div class="text-[10px] text-gray-500 truncate">Added Manually</div>
+                    </div>
+                    <div class="w-2 h-2 rounded-full bg-gray-700 status-indicator"></div>
+                 `;
+                container.prepend(div);
+            }
+            searchModal.classList.add('hidden');
+        }
+    });
+
+    // --- Save Logic ---
+    saveBtn.addEventListener('click', function () {
+        if (!currentTargetId) return;
+
+        const isEvent = !formEvent.classList.contains('hidden');
+        const payload = {
+            target_id: currentTargetId,
+            date: document.getElementById('logDate').value,
+            contact_made: document.getElementById('contactFlag').checked,
+            type: isEvent ? 'EVENT' : 'ANSWER'
+        };
+
+        if (isEvent) {
+            payload.content = document.getElementById('eventContent').value;
+            payload.tags = document.getElementById('eventTags').value;
+            if (!payload.content && !payload.contact_made) {
+                alert("内容を入力するか接触フラグをONにしてください");
+                return;
+            }
+        } else {
+            payload.category = qCategory.value;
+            payload.question_text = qSelect.value;
+            payload.answer = document.getElementById('qAnswer').value;
+            if (!payload.answer) {
+                alert("回答を入力してください");
+                return;
+            }
+        }
+
+        fetch('{% url "intelligence_log" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(payload)
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert("記録しました (Saved)");
+                    // Clear inputs
+                    document.getElementById('eventContent').value = '';
+                    document.getElementById('qAnswer').value = '';
+                    // Optional: visual feedback on the target item?
+                } else {
+                    alert("Error: " + data.error);
+                }
+            });
+    });
+
+</script>
+{% endblock %}

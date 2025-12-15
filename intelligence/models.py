@@ -21,6 +21,14 @@ class TargetGroup(models.Model):
     name = models.CharField(max_length=100) # Removed unique=True for multi-tenancy
     user = models.ForeignKey(User, on_delete=models.CASCADE, default=1)
     description = models.TextField(blank=True)
+    # Contact Frequency (Days of Week)
+    is_mon = models.BooleanField(default=False, verbose_name="月")
+    is_tue = models.BooleanField(default=False, verbose_name="火")
+    is_wed = models.BooleanField(default=False, verbose_name="水")
+    is_thu = models.BooleanField(default=False, verbose_name="木")
+    is_fri = models.BooleanField(default=False, verbose_name="金")
+    is_sat = models.BooleanField(default=False, verbose_name="土")
+    is_sun = models.BooleanField(default=False, verbose_name="日")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -87,10 +95,26 @@ class TimelineItem(models.Model):
     target = models.ForeignKey(Target, on_delete=models.CASCADE, related_name='timeline')
     type = models.CharField(max_length=10, choices=TYPE_CHOICES, default='EVENT')
     date = models.DateTimeField()
-    content = models.TextField()
+    content = models.TextField(blank=True) # Blank allowed if just contact check?
     related_quest = models.ForeignKey(Quest, on_delete=models.SET_NULL, null=True, blank=True)
     tags = models.ManyToManyField(Tag, blank=True)
     sentiment = models.CharField(max_length=10, choices=SENTIMENT_CHOICES, default='Neutral')
+    
+    # New Fields for Dossier Feature
+    contact_made = models.BooleanField(default=False)
+    
+    # Question specific
+    question_category = models.CharField(max_length=100, blank=True)
+    question_text = models.CharField(max_length=255, blank=True)
+    question_answer = models.TextField(blank=True)
 
     def __str__(self):
         return f"{self.target} - {self.type} ({self.date.strftime('%Y-%m-%d')})"
+
+class QuestionRegistry(models.Model):
+    category = models.CharField(max_length=100)
+    text = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"[{self.category}] {self.text}"

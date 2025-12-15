@@ -319,6 +319,32 @@
                 <label class="block text-xs font-mono text-gray-400 mb-1">説明</label>
                 {{ group_form.description }}
             </div>
+            <div class="mt-4">
+                <label class="block text-xs font-mono text-gray-400 mb-2">接触頻度 (Contact Frequency)</label>
+                <div class="flex flex-wrap gap-3">
+                    <label class="flex items-center gap-1 cursor-pointer">
+                        {{ group_form.is_mon }} <span class="text-xs text-gray-300">月</span>
+                    </label>
+                    <label class="flex items-center gap-1 cursor-pointer">
+                        {{ group_form.is_tue }} <span class="text-xs text-gray-300">火</span>
+                    </label>
+                    <label class="flex items-center gap-1 cursor-pointer">
+                        {{ group_form.is_wed }} <span class="text-xs text-gray-300">水</span>
+                    </label>
+                    <label class="flex items-center gap-1 cursor-pointer">
+                        {{ group_form.is_thu }} <span class="text-xs text-gray-300">木</span>
+                    </label>
+                    <label class="flex items-center gap-1 cursor-pointer">
+                        {{ group_form.is_fri }} <span class="text-xs text-gray-300">金</span>
+                    </label>
+                    <label class="flex items-center gap-1 cursor-pointer">
+                        {{ group_form.is_sat }} <span class="text-xs text-gray-300">土</span>
+                    </label>
+                    <label class="flex items-center gap-1 cursor-pointer">
+                        {{ group_form.is_sun }} <span class="text-xs text-gray-300">日</span>
+                    </label>
+                </div>
+            </div>
             <div class="flex justify-end gap-3 pt-4 border-t border-white/10">
                 <button type="button" id="closeGroupModal"
                     class="px-4 py-2 text-gray-400 hover:text-white text-sm">キャンセル</button>
@@ -585,7 +611,14 @@
         e.preventDefault();
         const formData = {
             name: this.querySelector('[name="name"]').value,
-            description: this.querySelector('[name="description"]').value
+            description: this.querySelector('[name="description"]').value,
+            is_mon: this.querySelector('[name="is_mon"]').checked,
+            is_tue: this.querySelector('[name="is_tue"]').checked,
+            is_wed: this.querySelector('[name="is_wed"]').checked,
+            is_thu: this.querySelector('[name="is_thu"]').checked,
+            is_fri: this.querySelector('[name="is_fri"]').checked,
+            is_sat: this.querySelector('[name="is_sat"]').checked,
+            is_sun: this.querySelector('[name="is_sun"]').checked
         };
 
         fetch('{% url "group_add" %}', {

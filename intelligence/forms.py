@@ -67,10 +67,18 @@ class TargetForm(forms.ModelForm):
 class TargetGroupForm(forms.ModelForm):
     class Meta:
         model = TargetGroup
-        fields = ['name', 'description']
+        fields = ['name', 'description', 
+                  'is_mon', 'is_tue', 'is_wed', 'is_thu', 'is_fri', 'is_sat', 'is_sun']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'w-full bg-surface border border-white/10 rounded px-4 py-2 text-white focus:border-primary', 'placeholder': 'グループ名'}),
             'description': forms.Textarea(attrs={'class': 'w-full bg-surface border border-white/10 rounded px-4 py-2 text-white focus:border-primary', 'rows': 2, 'placeholder': '説明'}),
+            'is_mon': forms.CheckboxInput(attrs={'class': 'rounded border-gray-600 text-primary bg-gray-900 w-4 h-4 mr-2'}),
+            'is_tue': forms.CheckboxInput(attrs={'class': 'rounded border-gray-600 text-primary bg-gray-900 w-4 h-4 mr-2'}),
+            'is_wed': forms.CheckboxInput(attrs={'class': 'rounded border-gray-600 text-primary bg-gray-900 w-4 h-4 mr-2'}),
+            'is_thu': forms.CheckboxInput(attrs={'class': 'rounded border-gray-600 text-primary bg-gray-900 w-4 h-4 mr-2'}),
+            'is_fri': forms.CheckboxInput(attrs={'class': 'rounded border-gray-600 text-primary bg-gray-900 w-4 h-4 mr-2'}),
+            'is_sat': forms.CheckboxInput(attrs={'class': 'rounded border-gray-600 text-primary bg-gray-900 w-4 h-4 mr-2'}),
+            'is_sun': forms.CheckboxInput(attrs={'class': 'rounded border-gray-600 text-primary bg-gray-900 w-4 h-4 mr-2'}),
         }
 
 class CustomAnniversaryForm(forms.ModelForm):
