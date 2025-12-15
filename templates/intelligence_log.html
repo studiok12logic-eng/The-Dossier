@@ -243,7 +243,7 @@
 <script id="questionsData" type="application/json">
 [
     {% for q in questions %}
-    {"id": "{{ q.id }}", "category": "{{ q.category }}", "text": "{{ q.text }}"}{% if not forloop.last %},{% endif %}
+    {"id": "{{ q.id }}", "category": "{{ q.category|default:'' }}", "text": "{{ q.title }}"}{% if not forloop.last %},{% endif %}
     {% endfor %}
 ]
 </script>
