@@ -878,7 +878,20 @@
     // --- Initialization: Handle URL Params for Pre-selection ---
     const urlParams = new URLSearchParams(window.location.search);
     const preQId = urlParams.get('question_id');
+    const preTargetId = urlParams.get('target_id');
     
+    // Auto-Select Target
+    if (preTargetId) {
+        const targetBtn = document.querySelector(`.target-item[data-id="${preTargetId}"]`);
+        if (targetBtn) {
+            targetBtn.click();
+            
+            // Scroll to it
+            targetBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+    
+    // Auto-Select Question
     if (preQId) {
         // Switch to Question Tab
         tabQuestion.click();
@@ -893,9 +906,6 @@
             // Set Question
             qSelect.value = preQ.id;
             qSelect.dispatchEvent(new Event('change'));
-            
-            // Highlight intent
-            console.log("Pre-selected Question:", preQ.text);
         }
     }
 </script>
