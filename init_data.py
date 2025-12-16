@@ -42,15 +42,20 @@ admin_user = User.objects.get(username='admin')
 # 1. Categories
 system_cat, _ = QuestionCategory.objects.get_or_create(user=admin_user, name="Basic Profile", description="Fundamental details")
 
-# 2. Questions
+# 2. Questions Configuration
+# title: 質問名（画面に表示される名前）
+# desc:  質問の説明・意図（入力時のヒントになります）
+# type:  回答形式 ('TEXT'=自由記述, 'SELECTION'=選択式)
+# choices: 選択肢（カンマ区切り文字列）。type='SELECTION'の場合に必須です。
+# order: 表示順（数字が小さい順に表示されます）
 default_questions = [
-    {"title": "現在の住所", "desc": "Current residence address", "type": "TEXT", "order": 1},
-    {"title": "職業", "desc": "Current occupation/role", "type": "TEXT", "order": 2},
-    {"title": "趣味", "desc": "Hobbies and interests", "type": "TEXT", "order": 3},
-    {"title": "弱点/苦手なもの", "desc": "Weaknesses or dislikes", "type": "TEXT", "order": 4},
-    {"title": "得意なこと", "desc": "Strengths or skills", "type": "TEXT", "order": 5},
-    {"title": "家族構成", "desc": "Family structure", "type": "TEXT", "order": 6},
-    {"title": "性格", "desc": "Personality traits", "type": "TEXT", "order": 7},
+    {"title": "現住所", "desc": "今現在住んでいる住所", "type": "TEXT", "order": 1},
+    {"title": "職業", "desc": "現在の職業や役職", "type": "TEXT", "order": 2},
+    {"title": "趣味", "desc": "趣味や興味のあること", "type": "TEXT", "order": 3},
+    {"title": "弱点/苦手なもの", "desc": "弱点や苦手なこと", "type": "TEXT", "order": 4},
+    {"title": "得意なこと", "desc": "得意なことや得意なスキル", "type": "TEXT", "order": 5},
+    {"title": "家族構成", "desc": "家族構成や関係", "type": "TEXT", "order": 6},
+    {"title": "性格", "desc": "性格や性格の特徴", "type": "SELECTION", "choices": "内向型,外向型,内向型,外向型,内向型,外向型", "order": 7},
 ]
 
 print("Initializing System Questions...")
@@ -62,7 +67,8 @@ for q_data in default_questions:
             "description": q_data["desc"],
             "category": system_cat,
             "answer_type": q_data["type"],
-            "is_shared": True, # Shared with all users
+            "choices": q_data.get("choices", ""), # Add choices here
+            "is_shared": True, 
             "order": q_data["order"]
         }
     )
