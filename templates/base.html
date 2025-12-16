@@ -19,6 +19,15 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.85; }
+        }
+        .animate-pulse-slow {
+            animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
 </head>
 
 <body
@@ -150,10 +159,11 @@
             <header
                 class="md:hidden flex items-center justify-between p-4 border-b border-white/10 bg-surface/50 backdrop-blur-md sticky top-0 z-40">
                 <span class="text-lg font-mono font-bold tracking-wider text-white">The Dossier</span>
-                <button class="text-gray-400">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
-                    </svg>
+                <button id="mobileThemeToggle" class="text-gray-400 hover:text-white transition-colors">
+                    <div class="w-6 h-6 flex items-center justify-center">
+                        <i class="fas fa-sun hidden dark:block"></i>
+                        <i class="fas fa-moon block dark:hidden"></i>
+                    </div>
                 </button>
             </header>
 
@@ -187,9 +197,12 @@
                 <!-- Intelligence Log (Center FAB) -->
                 <div class="relative -top-5">
                     <a href="{% url 'intelligence_log' %}"
-                        class="w-14 h-14 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/50 text-black">
-                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        class="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-2xl shadow-primary/60 text-black relative group animate-pulse-slow">
+                        <!-- Glow effect -->
+                        <div class="absolute inset-0 rounded-full bg-primary opacity-40 blur-xl group-hover:opacity-60 transition-opacity"></div>
+                        <!-- Icon -->
+                        <svg class="w-6 h-6 relative z-10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"></path>
                         </svg>
                     </a>
                 </div>
@@ -218,6 +231,20 @@
         const themeToggleBtn = document.getElementById('theme-toggle');
         if(themeToggleBtn){
             themeToggleBtn.addEventListener('click', () => {
+                if(document.documentElement.classList.contains('dark')){
+                    document.documentElement.classList.remove('dark');
+                    localStorage.theme = 'light';
+                } else {
+                    document.documentElement.classList.add('dark');
+                    localStorage.theme = 'dark';
+                }
+            });
+        }
+        
+        // Mobile theme toggle
+        const mobileThemeToggle = document.getElementById('mobileThemeToggle');
+        if(mobileThemeToggle){
+            mobileThemeToggle.addEventListener('click', () => {
                 if(document.documentElement.classList.contains('dark')){
                     document.documentElement.classList.remove('dark');
                     localStorage.theme = 'light';
