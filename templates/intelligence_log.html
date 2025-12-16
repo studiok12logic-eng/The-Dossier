@@ -850,5 +850,24 @@
         Promise.all(promises).then(() => location.reload());
     });
 
+    // --- Tab Switching Logic ---
+    tabEvent.addEventListener('click', () => {
+        formEvent.classList.remove('hidden');
+        formQuestion.classList.add('hidden');
+        tabEvent.classList.add('border-primary', 'text-white', 'bg-white/5');
+        tabEvent.classList.remove('border-transparent', 'text-gray-500');
+        tabQuestion.classList.add('border-transparent', 'text-gray-500');
+        tabQuestion.classList.remove('border-primary', 'text-white', 'bg-white/5');
+    });
+
+    tabQuestion.addEventListener('click', () => {
+        formQuestion.classList.remove('hidden');
+        formEvent.classList.add('hidden');
+        tabQuestion.classList.add('border-primary', 'text-white', 'bg-white/5');
+        tabQuestion.classList.remove('border-transparent', 'text-gray-500');
+        tabEvent.classList.add('border-transparent', 'text-gray-500');
+        tabEvent.classList.remove('border-primary', 'text-white', 'bg-white/5');
+    });
+
 </script>
 {% endblock %}
