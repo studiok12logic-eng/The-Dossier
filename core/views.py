@@ -458,8 +458,13 @@ class IntelligenceLogView(LoginRequiredMixin, View):
                 item_id = data.get('item_id')
                 if not item_id: return JsonResponse({'success': False, 'error': 'Item ID required'})
                 item = get_object_or_404(TimelineItem, pk=item_id, target__user=request.user)
+                target = item.target
+                date = item.date
                 item.delete()
-                return JsonResponse({'success': True})
+                
+                # Check if any entry remains for this date
+                has_entry_today = TimelineItem.objects.filter(target=target, date=date).exists()
+                return JsonResponse({'success': True, 'has_entry_today': has_entry_today, 'target_id': target.id})
 
             elif action == 'update':
                 item_id = data.get('item_id')
@@ -556,7 +561,11 @@ class IntelligenceLogView(LoginRequiredMixin, View):
                 item.target.last_contact = timezone.now()
                 item.target.save()
 
-            return JsonResponse({'success': True})
+            # Check has_entry_today (Always true for Create, maybe checked for Update if date changed?)
+            # For simplicity, just check.
+            has_entry_today = TimelineItem.objects.filter(target=item.target, date=item.date).exists()
+
+            return JsonResponse({'success': True, 'has_entry_today': has_entry_today, 'target_id': item.target.id})
             
         except Exception as e:
             import traceback
