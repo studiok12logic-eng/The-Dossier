@@ -661,10 +661,25 @@
         // border-white/5 -> border-border
 
         let content = '';
-        if (item.type === 'QUESTION') {
-            // New Design: Title in body first line
+        if (item.type.toUpperCase() === 'QUESTION') {
             const qTitle = item.question_title || 'Unknown Question';
-            content = `<div class="text-text-sub text-sm whitespace-pre-wrap"><span class="font-bold text-text-main">${qTitle}</span>\n${escapeHtml(item.question_answer || '')}</div>`;
+            let answerText = item.question_answer || '';
+            let choiceHtml = '';
+
+            // Extract Choice specific format "[選択: XYZ]"
+            const choiceMatch = answerText.match(/\[選択:\s*(.*?)\]/);
+            if (choiceMatch) {
+                const choiceVal = choiceMatch[1];
+                choiceHtml = `<div class="mt-1 mb-2"><span class="inline-block px-2 py-0.5 rounded-full border border-border text-[10px] text-text-sub bg-background">${escapeHtml(choiceVal)}</span></div>`;
+                answerText = answerText.replace(choiceMatch[0], '').trim();
+            }
+
+            // Title (small, left aligned) -> Choice -> Text
+            content = `
+                <div class="text-[10px] text-text-sub font-bold mb-1 ml-1">${escapeHtml(qTitle)}</div>
+                ${choiceHtml}
+                <div class="text-text-sub text-sm whitespace-pre-wrap">${escapeHtml(answerText)}</div>
+            `;
         } else {
             content = `<div class="text-text-sub text-sm whitespace-pre-wrap">${escapeHtml(item.description || '')}</div>`;
         }
@@ -806,9 +821,12 @@
             // Try to set Question Select
             // We need question_id. Backend didn't send it until I added it in Step 344.
             // item.question_id should exist now.
+        if (item.type.toUpperCase() === 'QUESTION') {
+            tabQuestion.click();
+            // Try to set Question Select
             if (item.question_id) {
                 // Find question in questionsData
-                const q = questionsData.find(q => q.id === item.question_id);
+                const q = questionsData.find(q => q.id == item.question_id); // loose equality for string/int
                 if (q) {
                     qCategory.value = q.category;
                     qCategory.dispatchEvent(new Event('change'));
@@ -816,7 +834,31 @@
                     qSelect.dispatchEvent(new Event('change'));
                 }
             }
-            document.getElementById('qAnswer').value = item.description || '';
+            
+            // Handle content and choice
+            let rawContent = item.description || '';
+            const choiceMatch = rawContent.match(/\[選択:\s*(.*?)\]/);
+            
+            // Reset choice selection
+            selectedChoices.clear();
+            document.querySelectorAll('.choice-btn').forEach(b => {
+                 b.classList.remove('bg-primary/20', 'border-primary', 'text-primary');
+                 b.classList.add('bg-background', 'border-border', 'text-text-sub');
+            });
+
+            if (choiceMatch) {
+                const prevChoice = choiceMatch[1];
+                selectedChoices.add(prevChoice);
+                 // Highlight button
+                const btn = Array.from(document.querySelectorAll('.choice-btn')).find(b => b.textContent.trim() === prevChoice.trim());
+                if(btn) {
+                    btn.click(); // simulate click to set styles and state
+                }
+                // Strip from content
+                rawContent = rawContent.replace(choiceMatch[0], '').trim();
+            }
+            
+            document.getElementById('qAnswer').value = rawContent;
         } else {
             tabEvent.click();
             document.getElementById('eventContent').value = item.description || '';
