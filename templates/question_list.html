@@ -115,13 +115,6 @@
                      </button>
                  </div>
             </div>
-            
-             <!-- Delete Button (Top Right) -->
-            {% if user.role == "MASTER" or not q.is_shared %}
-            <a href="{% url 'question_delete' q.pk %}" class="absolute top-2 right-2 p-1 text-gray-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition" title="Delete">
-                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </a>
-            {% endif %}
         </div>
         {% empty %}
         <div class="col-span-full text-center py-20">

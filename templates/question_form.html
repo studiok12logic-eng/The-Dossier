@@ -92,7 +92,14 @@
             </div>
 
             <!-- Submit -->
-            <div class="pt-4 flex justify-end">
+            <div class="pt-4 flex justify-end gap-3">
+                {% if form.instance.pk and user.role == "MASTER" or form.instance.pk and not form.instance.is_shared %}
+                <a href="{% url 'question_delete' form.instance.pk %}" 
+                   class="px-8 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 font-bold font-mono rounded border border-red-500/30 transition"
+                   onclick="return confirm('この質問を削除してもよろしいですか？')">
+                    DELETE
+                </a>
+                {% endif %}
                 <button type="submit" 
                     class="px-8 py-3 bg-primary text-black font-bold font-mono rounded hover:bg-primary/90 transition shadow-[0_0_20px_rgba(34,197,94,0.4)]">
                     {% if form.instance.pk %}UPDATE QUESTION{% else %}REGISTER QUESTION{% endif %}
