@@ -563,7 +563,7 @@ class TimelineListAPIView(LoginRequiredMixin, View):
                 queryset = queryset.filter(date__lt=before_date)
                 
             # Ordering: Newest first (for chat style bottom-up, usually we load newest first)
-            queryset = queryset.order_by('-date', '-created_at')
+            queryset = queryset.order_by('-date', '-id')
 
             # Limit
             limit = int(request.GET.get('limit', 20))
