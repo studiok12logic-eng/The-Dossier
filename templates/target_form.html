@@ -292,9 +292,16 @@
         </section>
 
         <!-- Submit -->
-        <div class="sticky bottom-4 z-40">
+        <!-- Submit Actions -->
+        <div class="sticky bottom-4 z-40 flex gap-4">
+            {% if is_edit %}
+            <a href="{% url 'target_delete' form.instance.pk %}"
+               class="flex-1 bg-red-500/10 text-red-500 font-bold py-4 rounded border border-red-500/30 hover:bg-red-500/20 transition font-mono flex items-center justify-center whitespace-nowrap">
+               削除 (DELETE)
+            </a>
+            {% endif %}
             <button type="submit"
-                class="w-full bg-primary text-black font-bold py-4 rounded shadow-[0_0_20px_rgba(34,197,94,0.3)] hover:shadow-[0_0_30px_rgba(34,197,94,0.5)] transition font-mono border border-green-400">
+                class="flex-[2] bg-primary text-black font-bold py-4 rounded shadow-[0_0_20px_rgba(34,197,94,0.3)] hover:shadow-[0_0_30px_rgba(34,197,94,0.5)] transition font-mono border border-green-400">
                 {% if is_edit %}更新を保存 (SAVE){% else %}登録する (REGISTER){% endif %}
             </button>
         </div>

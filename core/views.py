@@ -263,7 +263,10 @@ class IntelligenceLogView(LoginRequiredMixin, View):
         final_ids = final_ids - hidden_ids
         
         # Fetch Objects & Annotate for UI
-        targets = Target.objects.filter(id__in=final_ids).order_by('nickname')
+        from django.db.models import Max
+        targets = Target.objects.filter(id__in=final_ids).prefetch_related('groups').annotate(
+            real_last_contact=Max('timelineitem__date', filter=Q(timelineitem__contact_made=True))
+        ).order_by('nickname')
         
         target_list = []
         for t in targets:
@@ -276,7 +279,8 @@ class IntelligenceLogView(LoginRequiredMixin, View):
                 'has_entry': has_entry,
                 'is_anniversary': bool(labels),
                 'anniversary_label': ", ".join(labels),
-                'age': age
+                'age': age,
+                'last_contact_date': t.real_last_contact
             })
 
         # Questions & Tags

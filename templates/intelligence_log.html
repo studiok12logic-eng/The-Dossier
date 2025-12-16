@@ -35,43 +35,83 @@
                     data-id="{{ item.obj.id }}" data-name="{{ item.obj.nickname }}"
                     data-avatar="{% if item.obj.avatar %}{{ item.obj.avatar.url }}{% endif %}">
                     
-                    <!-- Avatar -->
-                    <div class="w-[50px] h-[50px] min-w-[50px] min-h-[50px] rounded-full bg-black border border-white/10 overflow-hidden flex-shrink-0 relative" style="width: 50px; height: 50px;">
-                        {% if item.obj.avatar %}
-                        <img src="{{ item.obj.avatar.url }}" class="w-full h-full object-cover">
-                        {% else %}
-                        <div class="w-full h-full flex items-center justify-center text-xs text-gray-500">{{ item.obj.nickname|slice:":1" }}</div>
-                        {% endif %}
-                    </div>
-                    
-                    <!-- Info -->
-                    <div class="flex-1 min-w-0 flex flex-col justify-center">
-                        <div class="flex items-center gap-2">
-                            <span class="text-sm text-white font-mono truncate group-hover:text-primary">{{ item.obj.nickname }}</span>
-                        </div>
-                        <div class="text-[10px] text-gray-400 truncate font-sans">
-                            {{ item.obj.last_name }} {{ item.obj.first_name }}{% if item.age %}({{ item.age }}){% endif %}
+                    <!-- Inner Content Wrapper to control alignment -->
+                    <div class="flex items-start gap-3 w-full">
+                        <!-- Left Column: Avatar & Buttons -->
+                        <div class="flex flex-col gap-2 items-center shrink-0 w-[50px]">
+                            <!-- Avatar -->
+                            <div class="w-[50px] h-[50px] rounded-full bg-black border border-white/10 overflow-hidden relative" style="width: 50px; height: 50px;">
+                                {% if item.obj.avatar %}
+                                <img src="{{ item.obj.avatar.url }}" class="w-full h-full object-cover">
+                                {% else %}
+                                <div class="w-full h-full flex items-center justify-center text-xs text-gray-500">{{ item.obj.nickname|slice:":1" }}</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Buttons (Beneath Avatar) -->
+                            <div class="flex flex-col gap-1 w-full">
+                                <button type="button" class="w-full py-0.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded text-[8px] text-gray-400 transition"
+                                    onclick="event.stopPropagation();">LEADME</button>
+                                <button type="button" class="w-full py-0.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded text-[8px] text-gray-400 transition"
+                                    onclick="event.stopPropagation(); window.location.href='?date={{ current_date|date:"Y-m-d" }}&target_id={{ item.obj.id }}';">LOG</button>
+                                <button type="button" class="w-full py-0.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded text-[8px] text-gray-400 transition edit-target-btn" 
+                                    data-id="{{ item.obj.id }}" onclick="event.stopPropagation();">EDIT</button>
+                            </div>
                         </div>
 
-                        <!-- Status Lines -->
-                        {% if not item.has_entry %}
-                        <div class="text-[10px] text-yellow-500/80 flex items-center gap-1 mt-0.5">
-                             <i class="fas fa-exclamation-circle text-[9px]"></i> NoLog
-                        </div>
-                        {% endif %}
-                        
-                        {% if item.is_anniversary %}
-                        <div class="text-[10px] text-red-400 flex items-center gap-1 mt-0.5 font-bold animate-pulse">
-                             <i class="fas fa-gift text-[9px]"></i> {{ item.anniversary_label }}
-                        </div>
-                        {% endif %}
-                    </div>
+                        <!-- Right Column: Detailed Info -->
+                        <div class="flex-1 min-w-0 flex flex-col gap-0.5">
+                            <!-- Line 1: Nickname, Name, Age, Last Contact -->
+                            <div class="flex items-baseline gap-1 flex-wrap leading-tight">
+                                <span class="text-sm text-white font-bold truncate">{{ item.obj.nickname }}</span>
+                                <span class="text-[10px] text-gray-400 ml-1">
+                                    {{ item.obj.last_name }} {{ item.obj.first_name }}
+                                    {% if item.age %}({{ item.age }}){% endif %}
+                                </span>
+                                <span class="ml-auto text-[9px] text-gray-500 font-mono">
+                                    {% if item.last_contact_date %}{{ item.last_contact_date|date:"Y/m/d" }}{% else %}-{% endif %}
+                                </span>
+                            </div>
 
-                    <!-- Minus Button (Hover Only) -->
-                    <button class="absolute top-2 right-2 text-gray-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity remove-target-btn z-10 p-1"
-                        data-id="{{ item.obj.id }}" title="リストから除外">
-                        <i class="fas fa-minus-circle"></i>
-                    </button>
+                            <!-- Line 2: Groups -->
+                            <div class="text-[10px] text-primary truncate">
+                                {% for group in item.obj.groups.all %}
+                                    {{ group.name }}{% if not forloop.last %}, {% endif %}
+                                {% empty %}
+                                    <span class="text-gray-600">-</span>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Line 3: Birth, Zodiac, Eto -->
+                            <div class="flex flex-wrap gap-x-2 gap-y-0.5 text-[9px] text-gray-400 leading-tight">
+                                <span>
+                                    {% if item.obj.birth_month %}{{ item.obj.birth_year }}/{{ item.obj.birth_month }}/{{ item.obj.birth_day }}{% else %}-{% endif %}
+                                </span>
+                                <span>{{ item.obj.zodiac_sign }}</span>
+                                <span>{{ item.obj.eto }}</span>
+                            </div>
+
+                            <!-- Line 4: Attributes -->
+                            <div class="flex flex-wrap gap-x-2 gap-y-0.5 text-[9px] text-gray-400 leading-tight">
+                                <span>{{ item.obj.get_gender_display|default:"-" }}</span>
+                                <span>{% if item.obj.blood_type %}{{ item.obj.blood_type }}型{% endif %}</span>
+                                <span>{{ item.obj.birthplace }}</span>
+                            </div>
+
+                            <!-- Line 5: Rank & Stats (Mock) -->
+                            <div class="mt-1 flex items-center gap-3 text-[10px] border-t border-white/5 pt-1">
+                                <span class="flex items-center gap-1 text-yellow-500 font-bold">
+                                    <i class="fas fa-crown text-[9px]"></i> ゴールド
+                                </span>
+                                <span class="flex items-center gap-1 text-gray-400">
+                                    <span class="text-white font-mono">30</span>pt
+                                </span>
+                                <span class="flex items-center gap-1 text-gray-400">
+                                    <i class="fas fa-comment text-[9px]"></i> <span class="text-white font-mono">3</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
                     
                     <div class="status-indicator w-1 h-full absolute left-0 top-0 bottom-0 bg-gray-700 transition-colors"></div>
                 </div>

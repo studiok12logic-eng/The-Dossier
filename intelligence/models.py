@@ -79,6 +79,12 @@ class Target(models.Model):
             return today.year - self.birth_year - ((today.month, today.day) < (self.birth_month or 1, self.birth_day or 1))
         return None
 
+    @property
+    def eto(self):
+        if not self.birth_year: return None
+        etos = ['申','酉','戌','亥','子','丑','寅','卯','辰','巳','午','未']
+        return etos[self.birth_year % 12]
+
 class DailyTargetState(models.Model):
     target = models.ForeignKey(Target, on_delete=models.CASCADE)
     date = models.DateField()
