@@ -395,6 +395,56 @@
 </script>
 
 <script>
+    // ===== MOBILE-SPECIFIC JAVASCRIPT =====
+    let mobileSelectedTargetId = null;
+    
+    function selectMobileTarget(id, name, avatar) {
+        mobileSelectedTargetId = id;
+        document.getElementById('mobileTargetName').textContent = name;
+        
+        const avatarEl = document.getElementById('mobileTargetAvatar');
+        if (avatar) {
+            avatarEl.innerHTML = `<img src="${avatar}" class="w-full h-full object-cover">`;
+        } else {
+            avatarEl.innerHTML = `<div class="w-full h-full flex items-center justify-center text-xs text-gray-500">${name.charAt(0)}</div>`;
+        }
+        
+        // Switch to log view
+        document.getElementById('mobileTargetsView').classList.add('hidden');
+        document.getElementById('mobileLogView').classList.remove('hidden');
+        document.getElementById('mobileTabTargets').classList.remove('bg-primary', 'text-black');
+        document.getElementById('mobileTabTargets').classList.add('bg-white/5', 'text-gray-400');
+        document.getElementById('mobileTabLog').classList.remove('bg-white/5', 'text-gray-400');
+        document.getElementById('mobileTabLog').classList.add('bg-primary', 'text-black');
+    }
+    
+    function showMobileTargets() {
+        document.getElementById('mobileLogView').classList.add('hidden');
+        document.getElementById('mobileTargetsView').classList.remove('hidden');
+        document.getElementById('mobileTabLog').classList.remove('bg-primary', 'text-black');
+        document.getElementById('mobileTabLog').classList.add('bg-white/5', 'text-gray-400');
+        document.getElementById('mobileTabTargets').classList.remove('bg-white/5', 'text-gray-400');
+        document.getElementById('mobileTabTargets').classList.add('bg-primary', 'text-black');
+    }
+    
+    // Mobile tab switching - set up after DOM loads
+    document.addEventListener('DOMContentLoaded', function() {
+        if (document.getElementById('mobileTabTargets')) {
+            document.getElementById('mobileTabTargets').addEventListener('click', showMobileTargets);
+            document.getElementById('mobileTabLog').addEventListener('click', () => {
+                if (mobileSelectedTargetId) {
+                    document.getElementById('mobileTargetsView').classList.add('hidden');
+                    document.getElementById('mobileLogView').classList.remove('hidden');
+                    document.getElementById('mobileTabTargets').classList.remove('bg-primary', 'text-black');
+                    document.getElementById('mobileTabTargets').classList.add('bg-white/5', 'text-gray-400');
+                    document.getElementById('mobileTabLog').classList.remove('bg-white/5', 'text-gray-400');
+                    document.getElementById('mobileTabLog').classList.add('bg-primary', 'text-black');
+                }
+            });
+        }
+    });
+    // ===== END MOBILE JAVASCRIPT =====
+
     // --- State ---
     let currentTargetId = null;
     let questionsData = JSON.parse(document.getElementById('questionsData').textContent);
@@ -997,59 +1047,5 @@
             qSelect.dispatchEvent(new Event('change'));
         }
     }
-
-<script>
-    // Mobile-specific JavaScript
-    let mobileSelectedTargetId = null;
-    
-    function selectMobileTarget(id, name, avatar) {
-        mobileSelectedTargetId = id;
-        document.getElementById('mobileTargetName').textContent = name;
-        
-        const avatarEl = document.getElementById('mobileTargetAvatar');
-        if (avatar) {
-            avatarEl.innerHTML = `<img src="${avatar}" class="w-full h-full object-cover">`;
-        } else {
-            avatarEl.innerHTML = `<div class="w-full h-full flex items-center justify-center text-xs text-gray-500">${name.charAt(0)}</div>`;
-        }
-        
-        // Switch to log view
-        document.getElementById('mobileTargetsView').classList.add('hidden');
-        document.getElementById('mobileLogView').classList.remove('hidden');
-        document.getElementById('mobileTabTargets').classList.remove('bg-primary', 'text-black');
-        document.getElementById('mobileTabTargets').classList.add('bg-white/5', 'text-gray-400');
-        document.getElementById('mobileTabLog').classList.remove('bg-white/5', 'text-gray-400');
-        document.getElementById('mobileTabLog').classList.add('bg-primary', 'text-black');
-        
-        // Load timeline for this target (reuse existing function if available)
-        if (typeof loadTimeline === 'function') {
-            loadTimeline();
-        }
-    }
-    
-    function showMobileTargets() {
-        document.getElementById('mobileLogView').classList.add('hidden');
-        document.getElementById('mobileTargetsView').classList.remove('hidden');
-        document.getElementById('mobileTabLog').classList.remove('bg-primary', 'text-black');
-        document.getElementById('mobileTabLog').classList.add('bg-white/5', 'text-gray-400');
-        document.getElementById('mobileTabTargets').classList.remove('bg-white/5', 'text-gray-400');
-        document.getElementById('mobileTabTargets').classList.add('bg-primary', 'text-black');
-    }
-    
-    // Mobile tab switching
-    if (document.getElementById('mobileTabTargets')) {
-        document.getElementById('mobileTabTargets').addEventListener('click', showMobileTargets);
-        document.getElementById('mobileTabLog').addEventListener('click', () => {
-            if (mobileSelectedTargetId) {
-                document.getElementById('mobileTargetsView').classList.add('hidden');
-                document.getElementById('mobileLogView').classList.remove('hidden');
-                document.getElementById('mobileTabTargets').classList.remove('bg-primary', 'text-black');
-                document.getElementById('mobileTabTargets').classList.add('bg-white/5', 'text-gray-400');
-                document.getElementById('mobileTabLog').classList.remove('bg-white/5', 'text-gray-400');
-                document.getElementById('mobileTabLog').classList.add('bg-primary', 'text-black');
-            }
-        });
-    }
-</script>
 
 {% endblock %}
