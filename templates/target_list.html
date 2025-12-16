@@ -86,41 +86,72 @@
                 </div>
 
                 <!-- Right Column: Detailed Info -->
-                <div class="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
-                    <!-- Line 1: Name (Small) -->
-                    <div class="text-[9px] text-text-sub leading-none mb-0.5">
-                        {{ target.last_name }} {{ target.first_name }} {% if target.age %}({{ target.age }}){% endif %}
+                <div class="flex-1 min-w-0 flex flex-col justify-between gap-1">
+                    <div>
+                        <!-- Line 1: Name (Small, No Age) -->
+                        <div class="text-[9px] text-text-sub leading-none mb-1">
+                            {{ target.last_name }} {{ target.first_name }}
+                        </div>
+
+                        <!-- Line 2: Nickname (Big, No Label) -->
+                        <div class="text-xl font-bold text-text-main font-mono truncate mb-2 leading-none tracking-tight">
+                            {{ target.nickname }}
+                        </div>
+
+                        <!-- Line 3: Group Badge (Friendly) -->
+                        <div class="flex flex-wrap gap-1 mb-3">
+                            {% for group in target.groups.all %}
+                            <span class="px-2 py-0.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-[10px] font-mono shadow-[0_0_5px_rgba(59,130,246,0.3)]">
+                                {{ group.name }}
+                            </span>
+                            {% empty %}
+                            <!-- No Group -->
+                            {% endfor %}
+                        </div>
                     </div>
 
-                    <!-- Line 2: Nickname (Big) -->
-                    <div class="text-lg font-bold text-text-main font-mono truncate mb-1 leading-none">
-                        {{ target.nickname }}
-                    </div>
+                    <!-- Line 4: Info Grid (2x2) -->
+                    <div class="grid grid-cols-2 gap-px bg-border border border-border rounded overflow-hidden">
+                        <!-- Box 1: BIRTH -->
+                        <div class="bg-background/80 p-1.5 flex flex-col justify-center">
+                            <div class="text-[9px] text-primary font-bold flex items-center gap-1 mb-0.5">
+                                <i class="fas fa-calendar-alt"></i> BIRTH:
+                            </div>
+                            <div class="text-[10px] text-text-main font-mono leading-none">
+                                {% if target.birth_month %}{{ target.birth_year }}/{{ target.birth_month }}/{{ target.birth_day }}{% else %}-{% endif %}
+                                {% if target.age %}({{ target.age }}){% endif %}
+                            </div>
+                        </div>
 
-                    <!-- Line 3: Groups (Pills) -->
-                    <div class="flex flex-wrap gap-1 mb-1.5">
-                        {% for group in target.groups.all %}
-                        <span class="px-1.5 py-px rounded bg-blue-500/10 text-blue-300 text-[8px] border border-blue-500/20 whitespace-nowrap">
-                            {{ group.name }}
-                        </span>
-                        {% empty %}
-                        <span class="text-text-sub text-[8px]">-</span>
-                        {% endfor %}
-                    </div>
+                        <!-- Box 2: SIGN -->
+                        <div class="bg-background/80 p-1.5 flex flex-col justify-center">
+                            <div class="text-[9px] text-primary font-bold flex items-center gap-1 mb-0.5">
+                                <i class="fas fa-star"></i> SIGN:
+                            </div>
+                            <div class="text-[10px] text-text-main font-mono leading-none">
+                                {{ target.zodiac_hiragana|default:"-" }} / {{ target.eto|default:"-" }}
+                            </div>
+                        </div>
 
-                    <!-- Line 4: Bio Data (Single Line Pipe Separated) -->
-                    <div class="text-[9px] text-text-sub font-mono leading-relaxed break-all">
-                        {% if target.birth_month %}{{ target.birth_year }}/{{ target.birth_month }}/{{ target.birth_day }}{% else %}-{% endif %}
-                        <span class="text-gray-600 mx-1">|</span>
-                        {{ target.eto|default:"-" }}
-                        <span class="text-gray-600 mx-1">|</span>
-                        {{ target.zodiac_hiragana|default:"-" }}
-                        <span class="text-gray-600 mx-1">|</span>
-                        {{ target.gender_symbol }}
-                        <span class="text-gray-600 mx-1">|</span>
-                        {% if target.blood_type %}{{ target.blood_type }}型{% else %}-{% endif %}
-                        <span class="text-gray-600 mx-1">|</span>
-                        {{ target.birthplace|default:"-" }}
+                        <!-- Box 3: BIO -->
+                        <div class="bg-background/80 p-1.5 flex flex-col justify-center">
+                            <div class="text-[9px] text-primary font-bold flex items-center gap-1 mb-0.5">
+                                <i class="fas fa-dna"></i> BIO:
+                            </div>
+                            <div class="text-[10px] text-text-main font-mono leading-none">
+                                {{ target.gender_symbol }} / {% if target.blood_type %}{{ target.blood_type }}型{% else %}Type-?{% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Box 4: ORIGIN -->
+                        <div class="bg-background/80 p-1.5 flex flex-col justify-center">
+                            <div class="text-[9px] text-primary font-bold flex items-center gap-1 mb-0.5">
+                                <i class="fas fa-map-marker-alt"></i> ORIGIN:
+                            </div>
+                            <div class="text-[10px] text-text-main font-mono leading-none truncate">
+                                {{ target.birthplace|default:"Unknown" }}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
