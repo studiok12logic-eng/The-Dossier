@@ -12,6 +12,8 @@ from intelligence.models import Target, TimelineItem, CustomAnniversary, TargetG
 from intelligence.forms import TargetForm, CustomAnniversaryForm, TargetGroupForm
 import json
 
+@login_required
+def dashboard(request):
     import datetime
     from django.db.models import Count, Sum, Q, F
     from django.utils import timezone
