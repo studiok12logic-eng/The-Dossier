@@ -11,7 +11,7 @@
         <div class="bg-surface border border-border rounded-xl overflow-hidden p-4">
             <h3 class="text-xs font-mono text-text-sub mb-2">DATE</h3>
             <form method="get" id="dateForm" class="mb-0">
-                <input type="date" name="date" value="{{ today_date }}" 
+                <input type="date" name="date" value="{{ today_date }}"
                     class="w-full bg-background border border-border rounded px-2 py-2 text-sm text-text-main focus:border-primary transition"
                     onchange="this.form.submit()">
             </form>
@@ -28,53 +28,60 @@
                 </h2>
                 <!-- Date Removed -->
             </div>
-    
+
             <!-- Target List -->
             <div class="flex-1 overflow-y-auto p-2 space-y-2" id="targetList">
                 {% for item in todays_targets %}
                 <div class="target-item p-3 rounded flex items-center gap-3 cursor-pointer hover:bg-text-main/5 transition border border-transparent hover:border-primary/30 group relative select-target-btn"
                     data-id="{{ item.obj.id }}" data-name="{{ item.obj.nickname }}"
                     data-avatar="{% if item.obj.avatar %}{{ item.obj.avatar.url }}{% endif %}">
-                    
+
                     <!-- Avatar -->
-                    <div class="w-[50px] h-[50px] min-w-[50px] min-h-[50px] rounded-full bg-background border border-border overflow-hidden flex-shrink-0 relative" style="width: 50px; height: 50px;">
+                    <div class="w-[50px] h-[50px] min-w-[50px] min-h-[50px] rounded-full bg-background border border-border overflow-hidden flex-shrink-0 relative"
+                        style="width: 50px; height: 50px;">
                         {% if item.obj.avatar %}
                         <img src="{{ item.obj.avatar.url }}" class="w-full h-full object-cover">
                         {% else %}
-                        <div class="w-full h-full flex items-center justify-center text-xs text-text-sub">{{ item.obj.nickname|slice:":1" }}</div>
+                        <div class="w-full h-full flex items-center justify-center text-xs text-text-sub">{{
+                            item.obj.nickname|slice:":1" }}</div>
                         {% endif %}
                     </div>
-                    
+
                     <!-- Info -->
                     <div class="flex-1 min-w-0 flex flex-col justify-center">
                         <div class="flex items-center gap-2">
-                            <span class="text-sm text-text-main font-mono truncate group-hover:text-primary">{{ item.obj.nickname }}</span>
+                            <span class="text-sm text-text-main font-mono truncate group-hover:text-primary">{{
+                                item.obj.nickname }}</span>
                         </div>
                         <div class="text-[10px] text-text-sub truncate font-sans">
-                            {{ item.obj.last_name }} {{ item.obj.first_name }}{% if item.age %}({{ item.age }}){% endif %}
+                            {{ item.obj.last_name }} {{ item.obj.first_name }}{% if item.age %}({{ item.age }}){% endif
+                            %}
                         </div>
 
                         <!-- Status Lines -->
                         {% if not item.has_entry %}
                         <div class="text-[10px] text-yellow-500/80 flex items-center gap-1 mt-0.5">
-                             <i class="fas fa-exclamation-circle text-[9px]"></i> NoLog
+                            <i class="fas fa-exclamation-circle text-[9px]"></i> NoLog
                         </div>
                         {% endif %}
-                        
+
                         {% if item.is_anniversary %}
                         <div class="text-[10px] text-red-400 flex items-center gap-1 mt-0.5 font-bold animate-pulse">
-                             <i class="fas fa-gift text-[9px]"></i> {{ item.anniversary_label }}
+                            <i class="fas fa-gift text-[9px]"></i> {{ item.anniversary_label }}
                         </div>
                         {% endif %}
                     </div>
 
                     <!-- Minus Button (Hover Only) -->
-                    <button class="absolute top-2 right-2 text-text-sub hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity remove-target-btn z-10 p-1"
+                    <button
+                        class="absolute top-2 right-2 text-text-sub hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity remove-target-btn z-10 p-1"
                         data-id="{{ item.obj.id }}" title="リストから除外">
                         <i class="fas fa-minus-circle"></i>
                     </button>
-                    
-                    <div class="status-indicator w-1 h-full absolute left-0 top-0 bottom-0 bg-text-sub/50 transition-colors"></div>
+
+                    <div
+                        class="status-indicator w-1 h-full absolute left-0 top-0 bottom-0 bg-text-sub/50 transition-colors">
+                    </div>
                 </div>
                 {% empty %}
                 <div class="text-center text-text-sub text-xs py-10">
@@ -82,7 +89,7 @@
                 </div>
                 {% endfor %}
             </div>
-    
+
             <!-- Buttons -->
             <div class="p-4 border-t border-border bg-surface space-y-2">
                 <button id="openTargetSearch"
@@ -98,7 +105,8 @@
     </div>
 
     <!-- Right Panel: Dossier Chat-style Input -->
-    <div class="flex-1 bg-surface border border-border rounded-xl overflow-hidden flex flex-col min-h-0 relative h-full">
+    <div
+        class="flex-1 bg-surface border border-border rounded-xl overflow-hidden flex flex-col min-h-0 relative h-full">
         <!-- Overlay for No Selection -->
         <div id="noSelectionOverlay"
             class="absolute inset-0 z-50 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center text-text-sub">
@@ -122,19 +130,26 @@
             <!-- Search & Filters -->
             <div class="flex items-center gap-2">
                 <!-- Encanto Filter Toggle -->
-                <button id="encantoFilterBtn" class="flex items-center gap-1 px-3 py-1.5 rounded-full border border-border text-text-sub hover:text-green-400 hover:border-green-400/50 transition font-mono text-xs" title="Show Encanto Only">
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <button id="encantoFilterBtn"
+                    class="flex items-center gap-1 px-3 py-1.5 rounded-full border border-border text-text-sub hover:text-green-400 hover:border-green-400/50 transition font-mono text-xs"
+                    title="Show Encanto Only">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-width="2"
+                            d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                        </path>
+                    </svg>
                     <span>ENCANTO</span>
                 </button>
 
-                <select id="timelineTypeFilter" class="bg-background border border-border rounded px-2 py-1 text-xs text-text-main focus:border-primary">
+                <select id="timelineTypeFilter"
+                    class="bg-background border border-border rounded px-2 py-1 text-xs text-text-main focus:border-primary">
                     <option value="">ALL</option>
                     <option value="EVENT">EVENT</option>
                     <option value="QUESTION">QUESTION</option>
                 </select>
 
                 <div class="relative group">
-                    <input type="text" id="timelineSearch" placeholder="Search..." 
+                    <input type="text" id="timelineSearch" placeholder="Search..."
                         class="bg-background border border-border rounded-full px-3 py-1 text-xs text-text-main focus:border-primary w-32 focus:w-48 transition-all">
                     <i class="fas fa-search absolute right-3 top-1.5 text-text-sub text-xs pointer-events-none"></i>
                 </div>
@@ -153,7 +168,8 @@
         <div class="bg-surface border-t border-border shrink-0 z-20 shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
             <!-- Tabs -->
             <div class="flex border-b border-border bg-surface">
-                <button class="flex-1 py-2 text-xs font-mono text-center border-b-2 border-primary text-text-main bg-text-main/5 transition-colors"
+                <button
+                    class="flex-1 py-2 text-xs font-mono text-center border-b-2 border-primary text-text-main bg-text-main/5 transition-colors"
                     id="tabEvent">
                     出来事 (EVENT)
                 </button>
@@ -165,57 +181,64 @@
             </div>
 
             <!-- Main Form Area -->
-            <div class="flex flex-col h-full" style="display: block;"> 
-                 <!-- Edit Mode Indicator -->
-                <div id="editModeBar" class="hidden bg-yellow-500/20 text-yellow-400 text-[10px] px-4 py-1 flex justify-between items-center">
+            <div class="flex flex-col h-full" style="display: block;">
+                <!-- Edit Mode Indicator -->
+                <div id="editModeBar"
+                    class="hidden bg-yellow-500/20 text-yellow-400 text-[10px] px-4 py-1 flex justify-between items-center">
                     <span>EDITING MODE</span>
                     <button id="cancelEditBtn" class="hover:text-white">✕ CANCEL</button>
                 </div>
-                
+
                 <div class="flex-1 p-4 max-h-[40vh] overflow-y-auto flex flex-col">
-                     <!-- Event Form -->
+                    <!-- Event Form -->
                     <div id="formEvent" class="space-y-3 flex-1 flex flex-col">
                         <textarea id="eventContent"
                             class="w-full h-20 bg-background border border-border rounded p-3 text-sm text-text-main focus:border-primary focus:outline-none resize-none flex-1 font-sans"
                             placeholder="出来事・会話・観察内容..."></textarea>
-                        
+
                         <!-- Tags -->
                         <div class="flex flex-wrap gap-1" id="tagSelectionArea">
                             {% for tag in tags %}
-                            <button type="button" 
+                            <button type="button"
                                 class="tag-append-btn px-2 py-0.5 rounded-full border border-border text-[10px] text-text-sub hover:border-primary hover:text-primary transition bg-background"
                                 data-name="{{ tag.name }}">
                                 {{ tag.name }}({{ tag.count }})
                             </button>
                             {% endfor %}
-                            <button type="button" id="moreTagsBtn" class="px-2 py-0.5 rounded-full border border-border text-[10px] text-text-sub hover:text-text-main transition">...</button>
+                            <button type="button" id="moreTagsBtn"
+                                class="px-2 py-0.5 rounded-full border border-border text-[10px] text-text-sub hover:text-text-main transition">...</button>
                         </div>
                     </div>
 
                     <!-- Question Form -->
                     <div id="formQuestion" class="space-y-3 hidden">
                         <div class="flex gap-2">
-                             <select id="qCategory" class="flex-1 bg-background border border-border rounded px-2 py-1 text-xs text-text-main focus:border-primary">
+                            <select id="qCategory"
+                                class="flex-1 bg-background border border-border rounded px-2 py-1 text-xs text-text-main focus:border-primary">
                                 <option value="">カテゴリ</option>
                                 {% regroup questions by category as category_list %}
                                 {% for cat in category_list %}
                                 <option value="{{ cat.grouper }}">{{ cat.grouper }}</option>
                                 {% endfor %}
                             </select>
-                            <select id="qSelect" class="flex-[2] bg-background border border-border rounded px-2 py-1 text-xs text-text-main focus:border-primary" disabled>
+                            <select id="qSelect"
+                                class="flex-[2] bg-background border border-border rounded px-2 py-1 text-xs text-text-main focus:border-primary"
+                                disabled>
                                 <option value="">質問選択...</option>
                             </select>
                         </div>
 
-                        <div id="qDetails" class="hidden bg-background border border-border rounded p-2 text-[10px] text-text-sub flex gap-4">
-                             <div>Rank: <span id="qRank" class="text-primary"></span></div>
-                             <div class="truncate flex-1">Intent: <span id="qDesc"></span></div>
-                             <div class="hidden">Ex: <span id="qEx"></span></div>
+                        <div id="qDetails"
+                            class="hidden bg-background border border-border rounded p-2 text-[10px] text-text-sub flex gap-4">
+                            <div>Rank: <span id="qRank" class="text-primary"></span></div>
+                            <div class="truncate flex-1">Intent: <span id="qDesc"></span></div>
+                            <div class="hidden">Ex: <span id="qEx"></span></div>
                         </div>
-                        
-                        <div id="qChoicesCheck" class="opacity-50 pointer-events-none transition-opacity bg-background border border-border rounded p-2 min-h-[40px] flex flex-col justify-center">
-                             <div id="qCheckPlaceholder" class="text-[10px] text-text-sub text-center">選択肢 (質問を選択)</div>
-                             <div id="qChoicesContainer" class="flex flex-wrap gap-1"></div>
+
+                        <div id="qChoicesCheck"
+                            class="opacity-50 pointer-events-none transition-opacity bg-background border border-border rounded p-2 min-h-[40px] flex flex-col justify-center">
+                            <div id="qCheckPlaceholder" class="text-[10px] text-text-sub text-center">選択肢 (質問を選択)</div>
+                            <div id="qChoicesContainer" class="flex flex-wrap gap-1"></div>
                         </div>
 
                         <textarea id="qAnswer"
@@ -228,19 +251,28 @@
                 <div class="flex items-center justify-between gap-3 p-4 border-t border-border bg-surface">
                     <!-- Date & Contact -->
                     <div class="flex items-center gap-3">
-                         <div class="relative">
-                            <input type="date" id="occurrenceDate" value="{{ today_date }}" class="bg-background border border-border rounded px-2 py-1 text-[10px] text-text-sub focus:outline-none focus:border-primary [color-scheme:dark]">
-                         </div>
+                        <div class="relative">
+                            <input type="date" id="occurrenceDate" value="{{ today_date }}"
+                                class="bg-background border border-border rounded px-2 py-1 text-[10px] text-text-sub focus:outline-none focus:border-primary [color-scheme:dark]">
+                        </div>
 
                         <div class="flex items-center gap-2 cursor-pointer group">
-                             <input type="checkbox" id="contactFlag" class="rounded border-border text-primary bg-background w-4 h-4 cursor-pointer">
-                             <label for="contactFlag" class="text-[10px] text-text-sub group-hover:text-text-main cursor-pointer leading-tight">接触</label>
+                            <input type="checkbox" id="contactFlag"
+                                class="rounded border-border text-primary bg-background w-4 h-4 cursor-pointer">
+                            <label for="contactFlag"
+                                class="text-[10px] text-text-sub group-hover:text-text-main cursor-pointer leading-tight">接触</label>
                         </div>
                     </div>
 
                     <!-- Save Button -->
-                    <button id="saveLogBtn" class="bg-primary text-black font-bold py-0 px-[1em] rounded hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 flex items-center gap-2" style="padding-left: 0.5em; padding-right: 0.5em;">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                    <button id="saveLogBtn"
+                        class="bg-primary text-black font-bold py-0 px-[1em] rounded hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 flex items-center gap-2"
+                        style="padding-left: 0.5em; padding-right: 0.5em;">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-width="2"
+                                d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4">
+                            </path>
+                        </svg>
                         <span id="saveBtnText">SAVE</span>
                     </button>
                     <!-- Hidden ID for Editing -->
@@ -259,7 +291,7 @@
         <form method="get" class="flex items-center gap-3">
             <div class="flex-1">
                 <label class="text-xs text-gray-400 mb-1 block">日付</label>
-                <input type="date" name="date" value="{{ today_date }}" 
+                <input type="date" name="date" value="{{ today_date }}"
                     class="w-full bg-background border border-white/20 rounded px-3 py-2 text-sm text-white"
                     onchange="this.form.submit()">
             </div>
@@ -280,12 +312,13 @@
     <div id="mobileTargetsView" class="flex-1 overflow-y-auto space-y-2">
         {% for item in todays_targets %}
         <div class="bg-surface border border-white/10 rounded-xl p-4 flex items-center gap-3 active:bg-white/5"
-             onclick="selectMobileTarget('{{ item.obj.id }}', '{{ item.obj.nickname }}', '{% if item.obj.avatar %}{{ item.obj.avatar.url }}{% endif %}')">
+            onclick="selectMobileTarget('{{ item.obj.id }}', '{{ item.obj.nickname }}', '{% if item.obj.avatar %}{{ item.obj.avatar.url }}{% endif %}')">
             <div class="w-12 h-12 rounded-full bg-background border border-white/10 overflow-hidden flex-shrink-0">
                 {% if item.obj.avatar %}
                 <img src="{{ item.obj.avatar.url }}" class="w-full h-full object-cover">
                 {% else %}
-                <div class="w-full h-full flex items-center justify-center text-xs text-gray-500">{{ item.obj.nickname|slice:":1" }}</div>
+                <div class="w-full h-full flex items-center justify-center text-xs text-gray-500">{{
+                    item.obj.nickname|slice:":1" }}</div>
                 {% endif %}
             </div>
             <div class="flex-1">
@@ -302,13 +335,15 @@
     <!-- Mobile Log View (hidden by default) -->
     <div id="mobileLogView" class="hidden flex-1 flex flex-col overflow-hidden">
         <!-- Selected Target Header -->
-        <div id="mobileSelectedTarget" class="bg-surface border border-white/10 rounded-xl p-4 mb-4 flex items-center gap-3">
+        <div id="mobileSelectedTarget"
+            class="bg-surface border border-white/10 rounded-xl p-4 mb-4 flex items-center gap-3">
             <button onclick="showMobileTargets()" class="text-gray-400">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                 </svg>
             </button>
-            <div class="w-10 h-10 rounded-full bg-background border border-white/10 overflow-hidden" id="mobileTargetAvatar">
+            <div class="w-10 h-10 rounded-full bg-background border border-white/10 overflow-hidden"
+                id="mobileTargetAvatar">
                 <div class="w-full h-full flex items-center justify-center text-xs text-gray-500">?</div>
             </div>
             <div class="flex-1">
@@ -323,7 +358,7 @@
 
         <!-- Mobile Input (Fixed at bottom) -->
         <div class="bg-surface border border-white/10 rounded-xl p-4">
-            <textarea id="mobileLogInput" rows="3" 
+            <textarea id="mobileLogInput" rows="3"
                 class="w-full bg-background border border-white/20 rounded px-3 py-2 text-sm text-white resize-none mb-3"
                 placeholder="ログを入力..."></textarea>
             <div class="flex items-center justify-between">
@@ -340,7 +375,8 @@
 </div>
 
 <!-- Search Modal -->
-<div id="searchModal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+<div id="searchModal"
+    class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
     <div class="bg-surface border border-border rounded-xl p-6 w-full max-w-md shadow-2xl h-[500px] flex flex-col">
         <div class="flex justify-between items-center mb-4">
             <h3 class="text-lg font-mono text-text-main">ターゲット検索</h3>
@@ -353,8 +389,10 @@
             <div class="search-item p-2 rounded border border-border hover:bg-text-main/5 cursor-pointer flex items-center gap-3"
                 data-id="{{ t.id }}" data-name="{{ t.nickname }}"
                 data-avatar="{% if t.avatar %}{{ t.avatar.url }}{% endif %}">
-                <div class="w-8 h-8 rounded bg-background border border-border flex items-center justify-center text-[10px] text-text-sub overflow-hidden">
-                    {% if t.avatar %}<img src="{{ t.avatar.url }}" class="w-full h-full object-cover">{% else %}{{ t.nickname|slice:":1" }}{% endif %}
+                <div
+                    class="w-8 h-8 rounded bg-background border border-border flex items-center justify-center text-[10px] text-text-sub overflow-hidden">
+                    {% if t.avatar %}<img src="{{ t.avatar.url }}" class="w-full h-full object-cover">{% else %}{{
+                    t.nickname|slice:":1" }}{% endif %}
                 </div>
                 <div class="text-sm text-text-main font-mono">{{ t.nickname }}</div>
             </div>
@@ -397,18 +435,18 @@
 <script>
     // ===== MOBILE-SPECIFIC JAVASCRIPT =====
     let mobileSelectedTargetId = null;
-    
+
     function selectMobileTarget(id, name, avatar) {
         mobileSelectedTargetId = id;
         document.getElementById('mobileTargetName').textContent = name;
-        
+
         const avatarEl = document.getElementById('mobileTargetAvatar');
         if (avatar) {
             avatarEl.innerHTML = `<img src="${avatar}" class="w-full h-full object-cover">`;
         } else {
             avatarEl.innerHTML = `<div class="w-full h-full flex items-center justify-center text-xs text-text-sub">${name.charAt(0)}</div>`; // Fixed color class
         }
-        
+
         // Switch to log view
         document.getElementById('mobileTargetsView').classList.add('hidden');
         document.getElementById('mobileLogView').classList.remove('hidden');
@@ -422,7 +460,7 @@
         resetTimeline();
         fetchTimeline();
     }
-    
+
     function showMobileTargets() {
         document.getElementById('mobileLogView').classList.add('hidden');
         document.getElementById('mobileTargetsView').classList.remove('hidden');
@@ -431,9 +469,9 @@
         document.getElementById('mobileTabTargets').classList.remove('bg-white/5', 'text-gray-400');
         document.getElementById('mobileTabTargets').classList.add('bg-primary', 'text-black');
     }
-    
+
     // Mobile tab switching - set up after DOM loads
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         if (document.getElementById('mobileTabTargets')) {
             document.getElementById('mobileTabTargets').addEventListener('click', showMobileTargets);
             document.getElementById('mobileTabLog').addEventListener('click', () => {
@@ -472,7 +510,7 @@
     const editingItemIdInput = document.getElementById('editingItemId');
     const editModeBar = document.getElementById('editModeBar');
     const cancelEditBtn = document.getElementById('cancelEditBtn');
-    
+
     // Encanto Filter
     const encantoFilterBtn = document.getElementById('encantoFilterBtn');
     let isEncantoFilterActive = false;
@@ -484,19 +522,19 @@
     const timelineLoading = document.getElementById('timelineLoading');
     const timelineSearch = document.getElementById('timelineSearch');
     const timelineTypeFilter = document.getElementById('timelineTypeFilter');
-    
+
     let isFetching = false;
     let hasMore = true;
     let timelineCursorDate = null;
 
     // --- Target Selection ---
-    targetList.addEventListener('click', function(e) {
+    targetList.addEventListener('click', function (e) {
         const removeBtn = e.target.closest('.remove-target-btn');
         if (removeBtn) {
             e.stopPropagation();
             const id = removeBtn.dataset.id;
             const date = document.querySelector('input[name="date"]').value;
-            if(confirm('このターゲットを本日のリストから除外しますか？')) {
+            if (confirm('このターゲットを本日のリストから除外しますか？')) {
                 toggleTargetState(id, date, 'hide', () => location.reload());
             }
             return;
@@ -516,8 +554,8 @@
             currentTargetId = item.dataset.id;
             selectedName.textContent = item.dataset.name;
             const avatarUrl = item.dataset.avatar;
-            selectedAvatar.innerHTML = avatarUrl 
-                ? `<img src="${avatarUrl}" class="w-full h-full object-cover">` 
+            selectedAvatar.innerHTML = avatarUrl
+                ? `<img src="${avatarUrl}" class="w-full h-full object-cover">`
                 : `<div class="w-full h-full flex items-center justify-center text-xs text-text-sub">${item.dataset.name.slice(0, 1)}</div>`;
 
             document.getElementById('noSelectionOverlay').classList.add('hidden');
@@ -531,14 +569,14 @@
     function resetTimeline() {
         timelineContent.innerHTML = '';
         if (mobileTimelineContent) mobileTimelineContent.innerHTML = '';
-        console.log("Clearing timeline"); 
+        console.log("Clearing timeline");
         timelineCursorDate = null;
         hasMore = true;
     }
 
     function fetchTimeline(append = false) {
         if (!currentTargetId || isFetching || (!hasMore && append)) return;
-        
+
         isFetching = true;
         if (append) timelineLoading.classList.remove('hidden');
 
@@ -553,7 +591,7 @@
             .then(data => {
                 isFetching = false;
                 timelineLoading.classList.add('hidden');
-                
+
                 if (data.success) {
                     if (data.data.length < 20) hasMore = false;
                     if (data.data.length > 0) {
@@ -572,7 +610,7 @@
         // Items are created_at DESC (Newest First) from API.
         // We want reversed (Old -> New) for chat style at bottom.
         const orderedItems = [...items].reverse();
-        
+
         // Render for Desktop
         const fragment = document.createDocumentFragment();
         orderedItems.forEach(item => fragment.appendChild(createTimelineElement(item)));
@@ -588,7 +626,7 @@
         }
 
         // Render for Mobile
-        if(mobileTimelineContent) {
+        if (mobileTimelineContent) {
             const fragmentMobile = document.createDocumentFragment();
             orderedItems.forEach(item => fragmentMobile.appendChild(createTimelineElement(item))); // Create fresh elements with listeners
 
@@ -606,23 +644,23 @@
 
     function createTimelineElement(item) {
         const typeBadge = item.type === 'EVENT' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400';
-        
+
         // JS generated HTML also needs semantic classes
         // bg-white/5 -> bg-text-main/5
         // text-white -> text-text-main
         // text-gray-400 -> text-text-sub
         // border-white/5 -> border-border
-        
+
         let content = '';
-        if (item.type === 'QUESTION') { 
-                content = `
+        if (item.type === 'QUESTION') {
+            content = `
                     <div class="text-xs font-bold text-text-main mb-1">Q. ${item.question_title || 'Unknown Question'}</div>
                     <div class="text-text-sub">${escapeHtml(item.question_answer || '')}</div>
                 `;
-            } else {
-                content = `<div class="text-text-sub text-sm whitespace-pre-wrap">${escapeHtml(item.description || '')}</div>`;
-            }
-        
+        } else {
+            content = `<div class="text-text-sub text-sm whitespace-pre-wrap">${escapeHtml(item.description || '')}</div>`;
+        }
+
         let tagsHtml = '';
         if (item.tags && item.tags.length > 0) {
             const tags = item.tags.map(t => `<span class="text-[10px] text-text-sub mr-1">#${escapeHtml(t.name)}</span>`).join('');
@@ -631,7 +669,7 @@
 
         let encantoBadge = '';
         if (item.contact_made) {
-             encantoBadge = `<span class="flex items-center gap-1 text-[10px] px-1.5 rounded bg-green-500/20 text-green-400 border border-border mr-2">
+            encantoBadge = `<span class="flex items-center gap-1 text-[10px] px-1.5 rounded bg-green-500/20 text-green-400 border border-border mr-2">
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 Encanto
              </span>`;
@@ -664,14 +702,14 @@
             <div class="text-text-sub leading-relaxed break-words line-clamp-20">${content}</div>
             ${tagsHtml}
         `;
-        
+
         // Handlers
         div.querySelector('.delete-btn').onclick = () => deleteLog(item.id);
         div.querySelector('.edit-btn').onclick = () => editLog(item);
 
         return div;
     }
-    
+
     function escapeHtml(text) {
         if (!text) return '';
         return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
@@ -686,18 +724,18 @@
             if (mobileTimelineContent.scrollTop === 0 && hasMore && !isFetching) fetchTimeline(true);
         });
     }
-    
+
     let searchDebounce;
     timelineSearch.addEventListener('input', () => {
         clearTimeout(searchDebounce);
         searchDebounce = setTimeout(() => { resetTimeline(); fetchTimeline(); }, 500);
     });
     timelineTypeFilter.addEventListener('change', () => { resetTimeline(); fetchTimeline(); });
-    
+
     // Encanto Filter
     encantoFilterBtn.addEventListener('click', () => {
         isEncantoFilterActive = !isEncantoFilterActive;
-        
+
         if (isEncantoFilterActive) {
             encantoFilterBtn.classList.remove('text-text-sub', 'border-border', 'bg-transparent');
             encantoFilterBtn.classList.add('bg-green-500', 'text-black', 'border-green-500', 'font-bold');
@@ -713,8 +751,8 @@
     // --- Action Functions ---
     // --- Action Functions ---
     function deleteLog(itemId) {
-        if(!confirm("ログを削除しますか？この操作は取り消せません。")) return;
-        
+        if (!confirm("ログを削除しますか？この操作は取り消せません。")) return;
+
         fetch('{% url "intelligence_log" %}', {
             method: 'POST',
             headers: {
@@ -749,11 +787,11 @@
         saveBtnText.textContent = "UPDATE";
         saveBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-400');
         saveBtn.classList.remove('bg-primary', 'hover:bg-primary/90');
-        
+
         // Populate Data
         occurrenceDateInput.value = item.date;
         contactFlagCheckbox.checked = item.contact_made;
-        
+
         if (item.type === 'QUESTION') {
             tabQuestion.click();
             // Try to set Question Select
@@ -782,19 +820,19 @@
         saveBtnText.textContent = "SAVE";
         saveBtn.classList.add('bg-primary', 'hover:bg-primary/90');
         saveBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-400');
-        
+
         document.getElementById('eventContent').value = "";
         document.getElementById('qAnswer').value = "";
         contactFlagCheckbox.checked = false;
         // reset date? keep today or last selected
     }
-    
+
     cancelEditBtn.addEventListener('click', cancelEditMode);
 
     // --- Tag Click Append ---
     // Top 10
     document.querySelector('#formEvent #tagSelectionArea').addEventListener('click', (e) => {
-        if(e.target.classList.contains('tag-append-btn')) {
+        if (e.target.classList.contains('tag-append-btn')) {
             const tagName = e.target.dataset.name;
             appendTagToActive(tagName);
         }
@@ -806,25 +844,25 @@
         const val = targetEl.value;
         // Append on new line if content exists? User said "bottom line".
         if (val.length > 0 && !val.endsWith('\n')) {
-             targetEl.value = val + "\n#" + tagName + " ";
+            targetEl.value = val + "\n#" + tagName + " ";
         } else {
-             targetEl.value = val + "#" + tagName + " ";
+            targetEl.value = val + "#" + tagName + " ";
         }
     }
-    
+
     // Tag Modal Logic
     const tagModal = document.getElementById('tagModal');
     const moreTagsBtn = document.getElementById('moreTagsBtn');
     const closeTagModal = document.getElementById('closeTagModal');
     const allTagsContainer = document.getElementById('allTagsContainer');
-    
+
     moreTagsBtn.addEventListener('click', () => {
         tagModal.classList.remove('hidden');
         // Fetch
         fetch('{% url "tag_list_api" %}')
             .then(res => res.json())
             .then(data => {
-                if(data.success) {
+                if (data.success) {
                     allTagsContainer.innerHTML = '';
                     data.tags.forEach(tag => {
                         const btn = document.createElement('button');
@@ -832,7 +870,7 @@
                         btn.textContent = `${tag.name} (${tag.count})`;
                         btn.onclick = () => {
                             appendTagToActive(tag.name);
-                             tagModal.classList.add('hidden');
+                            tagModal.classList.add('hidden');
                         };
                         allTagsContainer.appendChild(btn);
                     });
@@ -862,8 +900,8 @@
             // We are appending to content. So regex will catch it.
         };
 
-        if (isEventTab) { 
-            payload.description = document.getElementById('eventContent').value; 
+        if (isEventTab) {
+            payload.description = document.getElementById('eventContent').value;
             payload.contact_made = contactFlagCheckbox.checked;
 
             if (!payload.description && !payload.contact_made && !editingId) { // Check edit too
@@ -875,24 +913,24 @@
             const qId = qSelect.value;
             let ans = document.getElementById('qAnswer').value;
             if (!qId && !editingId) { // Allow update without re-selecting Q? Backend doesn't support changing Q yet if not sent.
-                 alert('質問を選択してください');
-                 return;
+                alert('質問を選択してください');
+                return;
             }
-            if(qId) payload.question_id = qId;
-            
+            if (qId) payload.question_id = qId;
+
             // Single Select Answer
             if (currentQuestion && currentQuestion.answer_type === 'SELECTION' && selectedChoices.size > 0) {
-                 const choice = Array.from(selectedChoices)[0];
-                 ans = `[選択: ${choice}]\n${ans}`;
+                const choice = Array.from(selectedChoices)[0];
+                ans = `[選択: ${choice}]\n${ans}`;
             }
-            
+
             if (!ans.trim() && selectedChoices.size === 0 && !editingId) {
-                 alert('回答を入力または選択してください');
-                 return;
+                alert('回答を入力または選択してください');
+                return;
             }
             payload.description = ans;
         }
-        
+
         // Send
         fetch('{% url "intelligence_log" %}', {
             method: 'POST',
@@ -904,7 +942,7 @@
         }).then(res => res.json()).then(data => {
             if (data.success) {
                 // Clear Form or Reset Edit
-                if(editingId) cancelEditMode(); 
+                if (editingId) cancelEditMode();
                 else {
                     document.getElementById('eventContent').value = '';
                     document.getElementById('qAnswer').value = '';
@@ -923,33 +961,33 @@
     function toggleTargetState(targetId, date, action, callback) {
         return fetch('{% url "target_state_toggle" %}', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value},
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value },
             body: JSON.stringify({ target_id: targetId, date: date, action: action })
         }).then(res => res.json()).then(data => {
-            if(data.success && callback) callback();
+            if (data.success && callback) callback();
             return data;
         });
     }
-    
+
     // Search Modal (Target)
     const searchModal = document.getElementById('searchModal');
     document.getElementById('openTargetSearch').addEventListener('click', () => searchModal.classList.remove('hidden'));
     document.getElementById('closeSearch').addEventListener('click', () => searchModal.classList.add('hidden'));
-    document.getElementById('searchInput').addEventListener('input', function() {
+    document.getElementById('searchInput').addEventListener('input', function () {
         const term = this.value.toLowerCase();
         document.querySelectorAll('.search-item').forEach(el => {
             el.classList.toggle('hidden', !el.dataset.name.toLowerCase().includes(term));
         });
     });
-    document.getElementById('searchList').addEventListener('click', function(e) {
+    document.getElementById('searchList').addEventListener('click', function (e) {
         const item = e.target.closest('.search-item');
         if (item) {
-             const id = item.dataset.id;
-             let exists = false;
-             document.querySelectorAll('.target-item').forEach(el => { if(el.dataset.id === id) exists=true; });
-             if(!exists) toggleTargetState(id, document.querySelector('input[name="date"]').value, 'add', () => location.reload());
-             else alert('すでにリストに追加されています');
-             searchModal.classList.add('hidden');
+            const id = item.dataset.id;
+            let exists = false;
+            document.querySelectorAll('.target-item').forEach(el => { if (el.dataset.id === id) exists = true; });
+            if (!exists) toggleTargetState(id, document.querySelector('input[name="date"]').value, 'add', () => location.reload());
+            else alert('すでにリストに追加されています');
+            searchModal.classList.add('hidden');
         }
     });
 
@@ -969,7 +1007,7 @@
         qChoicesContainer.innerHTML = '';
         qChoicesCheck.classList.add('opacity-50', 'pointer-events-none');
         selectedChoices.clear(); currentQuestion = null;
-        if(cat) questionsData.filter(q => q.category === cat).forEach(q => qSelect.add(new Option(q.text, q.id)));
+        if (cat) questionsData.filter(q => q.category === cat).forEach(q => qSelect.add(new Option(q.text, q.id)));
     });
 
     qSelect.addEventListener('change', (e) => {
@@ -977,49 +1015,49 @@
         const q = questionsData.find(item => item.id === qId);
         currentQuestion = q;
         selectedChoices.clear();
-        if(q) {
-             document.getElementById('qRank').textContent = q.rank || '-';
-             document.getElementById('qDesc').textContent = q.description || '-';
-             document.getElementById('qEx').textContent = q.example || '-';
-             qDetails.classList.remove('hidden');
-             
-             qChoicesContainer.innerHTML = '';
-             if (q.answer_type === 'SELECTION' && q.choices) {
-                 qChoicesCheck.classList.remove('opacity-50', 'pointer-events-none');
-                 if(qCheckPlaceholder) qCheckPlaceholder.classList.add('hidden');
-                 q.choices.split(',').map(c => c.trim()).filter(c=>c).forEach(c => {
-                     const btn = document.createElement('button');
-                     btn.className = 'choice-btn px-2 py-1 rounded-full border border-border text-[10px] text-text-sub hover:border-primary hover:text-primary transition bg-background';
-                     btn.textContent = c;
-                     btn.onclick = () => {
-                         selectedChoices.clear();
-                         selectedChoices.add(c);
-                         document.querySelectorAll('.choice-btn').forEach(b => {
-                             b.classList.remove('bg-primary/20', 'border-primary', 'text-primary');
-                             b.classList.add('bg-background', 'border-border', 'text-text-sub');
-                         });
-                         btn.classList.add('bg-primary/20', 'border-primary', 'text-primary');
-                         btn.classList.remove('bg-background', 'border-border', 'text-text-sub');
-                     };
-                     qChoicesContainer.appendChild(btn);
-                 });
-             } else {
-                 qChoicesCheck.classList.add('opacity-50', 'pointer-events-none');
-                 if(qCheckPlaceholder) qCheckPlaceholder.classList.remove('hidden');
-             }
+        if (q) {
+            document.getElementById('qRank').textContent = q.rank || '-';
+            document.getElementById('qDesc').textContent = q.description || '-';
+            document.getElementById('qEx').textContent = q.example || '-';
+            qDetails.classList.remove('hidden');
+
+            qChoicesContainer.innerHTML = '';
+            if (q.answer_type === 'SELECTION' && q.choices) {
+                qChoicesCheck.classList.remove('opacity-50', 'pointer-events-none');
+                if (qCheckPlaceholder) qCheckPlaceholder.classList.add('hidden');
+                q.choices.split(',').map(c => c.trim()).filter(c => c).forEach(c => {
+                    const btn = document.createElement('button');
+                    btn.className = 'choice-btn px-2 py-1 rounded-full border border-border text-[10px] text-text-sub hover:border-primary hover:text-primary transition bg-background';
+                    btn.textContent = c;
+                    btn.onclick = () => {
+                        selectedChoices.clear();
+                        selectedChoices.add(c);
+                        document.querySelectorAll('.choice-btn').forEach(b => {
+                            b.classList.remove('bg-primary/20', 'border-primary', 'text-primary');
+                            b.classList.add('bg-background', 'border-border', 'text-text-sub');
+                        });
+                        btn.classList.add('bg-primary/20', 'border-primary', 'text-primary');
+                        btn.classList.remove('bg-background', 'border-border', 'text-text-sub');
+                    };
+                    qChoicesContainer.appendChild(btn);
+                });
+            } else {
+                qChoicesCheck.classList.add('opacity-50', 'pointer-events-none');
+                if (qCheckPlaceholder) qCheckPlaceholder.classList.remove('hidden');
+            }
         } else {
-             qDetails.classList.add('hidden');
-             qChoicesCheck.classList.add('opacity-50', 'pointer-events-none');
+            qDetails.classList.add('hidden');
+            qChoicesCheck.classList.add('opacity-50', 'pointer-events-none');
         }
     });
 
     const removeUnfilledBtn = document.getElementById('removeUnfilledBtn');
-    removeUnfilledBtn.addEventListener('click', function() {
-        if(!confirm('未記入のターゲットを一括で除外しますか？')) return;
+    removeUnfilledBtn.addEventListener('click', function () {
+        if (!confirm('未記入のターゲットを一括で除外しますか？')) return;
         const date = document.querySelector('input[name="date"]').value;
         let promises = [];
         document.querySelectorAll('.target-item').forEach(item => {
-            if (item.querySelector('.fa-exclamation-circle')) { 
+            if (item.querySelector('.fa-exclamation-circle')) {
                 promises.push(toggleTargetState(item.dataset.id, date, 'hide'));
             }
         });
@@ -1049,34 +1087,35 @@
     const urlParams = new URLSearchParams(window.location.search);
     const preQId = urlParams.get('question_id');
     const preTargetId = urlParams.get('target_id');
-    
+
     // Auto-Select Target
     if (preTargetId) {
         const targetBtn = document.querySelector(`.target-item[data-id="${preTargetId}"]`);
         if (targetBtn) {
             targetBtn.click();
-            
+
             // Scroll to it
             targetBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     }
-    
+
     // Auto-Select Question
     if (preQId) {
         // Switch to Question Tab
         tabQuestion.click();
-        
+
         // Find question data
         const preQ = questionsData.find(q => q.id === preQId);
         if (preQ) {
             // Set Category
             qCategory.value = preQ.category;
             qCategory.dispatchEvent(new Event('change'));
-            
+
             // Set Question
             qSelect.value = preQ.id;
             qSelect.dispatchEvent(new Event('change'));
         }
     }
 
+</script>
 {% endblock %}
