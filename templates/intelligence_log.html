@@ -31,6 +31,7 @@
 
             <!-- Target List -->
             <div class="flex-1 overflow-y-auto p-2 space-y-2" id="targetList">
+                {% if todays_targets %}
                 {% for item in todays_targets %}
                 <div class="target-item p-3 rounded flex items-center gap-3 cursor-pointer hover:bg-text-main/5 transition border border-transparent hover:border-primary/30 group relative select-target-btn"
                     data-id="{{ item.obj.id }}" data-name="{{ item.obj.nickname }}"
@@ -42,20 +43,17 @@
                         {% if item.obj.avatar %}
                         <img src="{{ item.obj.avatar.url }}" class="w-full h-full object-cover">
                         {% else %}
-                        <div class="w-full h-full flex items-center justify-center text-xs text-text-sub">{{
-                            item.obj.nickname|slice:":1" }}</div>
+                        <div class="w-full h-full flex items-center justify-center text-xs text-text-sub">{{ item.obj.nickname|slice:":1" }}</div>
                         {% endif %}
                     </div>
 
                     <!-- Info -->
                     <div class="flex-1 min-w-0 flex flex-col justify-center">
                         <div class="flex items-center gap-2">
-                            <span class="text-sm text-text-main font-mono truncate group-hover:text-primary">{{
-                                item.obj.nickname }}</span>
+                            <span class="text-sm text-text-main font-mono truncate group-hover:text-primary">{{ item.obj.nickname }}</span>
                         </div>
                         <div class="text-[10px] text-text-sub truncate font-sans">
-                            {{ item.obj.last_name }} {{ item.obj.first_name }}{% if item.age %}({{ item.age }}){% endif
-                            %}
+                            {{ item.obj.last_name }} {{ item.obj.first_name }}{% if item.age %}({{ item.age }}){% endif %}
                         </div>
 
                         <!-- Status Lines -->
@@ -83,11 +81,12 @@
                         class="status-indicator w-1 h-full absolute left-0 top-0 bottom-0 bg-text-sub/50 transition-colors">
                     </div>
                 </div>
-                {% empty %}
+                {% endfor %}
+                {% else %}
                 <div class="text-center text-text-sub text-xs py-10">
                     本日の予定ターゲットはいません
                 </div>
-                {% endfor %} {# Syntax Fix #}
+                {% endif %}
             </div>
 
             <!-- Buttons -->
