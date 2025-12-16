@@ -48,24 +48,28 @@ system_cat, _ = QuestionCategory.objects.get_or_create(user=admin_user, name="Ba
 # type:  回答形式 ('TEXT'=自由記述, 'SELECTION'=選択式)
 # choices: 選択肢（カンマ区切り文字列）。type='SELECTION'の場合に必須です。
 # order: 表示順（数字が小さい順に表示されます）
+# category: カテゴリ名（指定しない場合は "Basic Profile" になります）
 default_questions = [
-    {"title": "現住所", "desc": "今現在住んでいる住所", "type": "TEXT", "order": 1},
-    {"title": "職業", "desc": "現在の職業や役職", "type": "TEXT", "order": 2},
-    {"title": "趣味", "desc": "趣味や興味のあること", "type": "TEXT", "order": 3},
-    {"title": "弱点/苦手なもの", "desc": "弱点や苦手なこと", "type": "TEXT", "order": 4},
-    {"title": "得意なこと", "desc": "得意なことや得意なスキル", "type": "TEXT", "order": 5},
-    {"title": "家族構成", "desc": "家族構成や関係", "type": "TEXT", "order": 6},
-    {"title": "性格", "desc": "性格や性格の特徴", "type": "SELECTION", "choices": "内向型,外向型,内向型,外向型,内向型,外向型", "order": 7},
+    {"title": "現住所", "desc": "今現在住んでいる住所", "type": "TEXT", "order": 1, "category": "基本情報"},
+    {"title": "職業", "desc": "現在の職業や役職", "type": "TEXT", "order": 2, "category": "基本情報"},
+    {"title": "趣味", "desc": "趣味や興味のあること", "type": "TEXT", "order": 3, "category": "パーソナリティ"},
+    {"title": "弱点/苦手なもの", "desc": "弱点や苦手なこと", "type": "TEXT", "order": 4, "category": "パーソナリティ"},
+    {"title": "得意なこと", "desc": "得意なことや得意なスキル", "type": "TEXT", "order": 5, "category": "パーソナリティ"},
+    {"title": "家族構成", "desc": "家族構成や関係", "type": "TEXT", "order": 6, "category": "基本情報"},
+    {"title": "性格", "desc": "性格や性格の特徴", "type": "SELECTION", "choices": "内向型,外向型,内向型,外向型,内向型,外向型", "order": 7, "category": "パーソナリティ"},
 ]
 
 print("Initializing System Questions...")
 for q_data in default_questions:
+    cat_name = q_data.get("category", "Basic Profile")
+    cat_obj, _ = QuestionCategory.objects.get_or_create(user=admin_user, name=cat_name)
+
     q, created = Question.objects.get_or_create(
         user=admin_user,
         title=q_data["title"],
         defaults={
             "description": q_data["desc"],
-            "category": system_cat,
+            "category": cat_obj,
             "answer_type": q_data["type"],
             "choices": q_data.get("choices", ""), # Add choices here
             "is_shared": True, 

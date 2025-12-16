@@ -127,6 +127,11 @@ class QuestionForm(forms.ModelForm):
         if user:
             self.fields['category'].queryset = QuestionCategory.objects.filter(user=user)
             self.fields['rank'].queryset = QuestionRank.objects.filter(user=user)
+            
+            # Staff Only: is_shared
+            if not user.is_staff:
+                if 'is_shared' in self.fields:
+                    del self.fields['is_shared']
         else:
              self.fields['category'].queryset = QuestionCategory.objects.none()
              self.fields['rank'].queryset = QuestionRank.objects.none()

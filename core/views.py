@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 
-from intelligence.models import Target, TimelineItem, CustomAnniversary, TargetGroup, Quest, DailyTargetState
+from intelligence.models import Target, TimelineItem, CustomAnniversary, TargetGroup, DailyTargetState
 from intelligence.forms import TargetForm, CustomAnniversaryForm, TargetGroupForm
 import json
 
@@ -549,7 +549,7 @@ class IntelligenceLogView(LoginRequiredMixin, View):
             for tag_name in hashtags:
                 clean_tag = tag_name.split()[0]
                 if clean_tag:
-                    tag_obj, _ = Tag.objects.get_or_create(name=clean_tag)
+                    tag_obj, _ = Tag.objects.get_or_create(name=clean_tag, user=request.user)
                     item.tags.add(tag_obj)
             
             if item.contact_made:
@@ -798,9 +798,9 @@ class TagListAPIView(LoginRequiredMixin, View):
             from django.db.models import Count
             from intelligence.models import Tag
             
-            # Get all tags used by the user, ordered by count
+            # Get all tags OWNED by the user, ordered by count
             tags = Tag.objects.filter(
-                timelineitem__target__user=request.user
+                user=request.user
             ).annotate(count=Count('timelineitem')).order_by('-count')
             
             data = [{'id': t.id, 'name': t.name, 'count': t.count} for t in tags]

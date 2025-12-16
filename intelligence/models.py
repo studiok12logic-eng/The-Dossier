@@ -3,19 +3,11 @@ from django.conf import settings
 import uuid
 
 class Tag(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, default=1)
     name = models.CharField(max_length=50)
 
     def __str__(self):
         return self.name
-
-class Quest(models.Model):
-    text = models.CharField(max_length=200)
-    category = models.CharField(max_length=50)
-    difficulty = models.IntegerField(default=1)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
-
-    def __str__(self):
-        return self.text
 
 class TargetGroup(models.Model):
     name = models.CharField(max_length=100) # Removed unique=True for multi-tenancy
@@ -126,7 +118,6 @@ class CustomAnniversary(models.Model):
 class TimelineItem(models.Model):
     TYPE_CHOICES = [
         ('Contact', 'Contact'),
-        ('Quest', 'Quest'),
         ('Note', 'Note'),
         ('Event', 'Event'),      # New: Events/Happenings
         ('Question', 'Question') # New: Questions asked/answered
@@ -142,7 +133,6 @@ class TimelineItem(models.Model):
     type = models.CharField(max_length=20, choices=TYPE_CHOICES)
     title = models.CharField(max_length=200, blank=True, null=True, default='')
     content = models.TextField(blank=True, null=True, default='') 
-    related_quest = models.ForeignKey(Quest, on_delete=models.SET_NULL, null=True, blank=True)
     tags = models.ManyToManyField(Tag, blank=True)
     sentiment = models.CharField(max_length=10, choices=SENTIMENT_CHOICES, default='Neutral')
     
@@ -194,7 +184,7 @@ class Question(models.Model):
     answer_type = models.CharField(max_length=20, choices=ANSWER_TYPES, default='TEXT', verbose_name="回答形式")
     choices = models.TextField(blank=True, verbose_name="選択肢 (カンマ区切り)")
     
-    is_shared = models.BooleanField(default=False, verbose_name="共通/個別") # True=Shared, False=Individual
+    is_shared = models.BooleanField(default=False, verbose_name="共通") # True=Common (System), False=Individual
     order = models.IntegerField(default=0, verbose_name="表示順")
     
     created_at = models.DateTimeField(auto_now_add=True)
