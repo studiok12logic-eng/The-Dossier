@@ -90,14 +90,14 @@ class CustomAnniversaryForm(forms.ModelForm):
 
 # --- QUESTION MANAGEMENT ---
 from .models import Question, QuestionCategory, QuestionRank
+from django.contrib.auth import get_user_model
 
 class QuestionCategoryForm(forms.ModelForm):
     class Meta:
         model = QuestionCategory
-        fields = ['name', 'description']
+        fields = ['name'] # Description removed
         widgets = {
             'name': forms.TextInput(attrs={'class': 'w-full bg-surface border border-white/10 rounded px-3 py-2 text-white', 'placeholder': 'カテゴリー名'}),
-            'description': forms.Textarea(attrs={'class': 'w-full bg-surface border border-white/10 rounded px-3 py-2 text-white h-20', 'placeholder': '説明'}),
         }
 
 class QuestionRankForm(forms.ModelForm):
@@ -128,8 +128,13 @@ class QuestionForm(forms.ModelForm):
             self.fields['category'].queryset = QuestionCategory.objects.filter(user=user)
             self.fields['rank'].queryset = QuestionRank.objects.filter(user=user)
             
-            # Staff Only: is_shared
-            if not user.is_staff:
+            # Permission: Only 'MASTER' or 'Admin' role can set is_shared
+            # Assuming 'MASTER' is the value stored in DB.
+            is_master = False
+            if hasattr(user, 'role') and user.role == 'MASTER':
+                is_master = True
+            
+            if not is_master:
                 if 'is_shared' in self.fields:
                     del self.fields['is_shared']
         else:

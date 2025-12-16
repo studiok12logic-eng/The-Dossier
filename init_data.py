@@ -38,6 +38,11 @@ from intelligence.models import Question, QuestionCategory
 
 # Ensure Admin User
 admin_user = User.objects.get(username='admin')
+# Ensure Admin has MASTER role
+if hasattr(admin_user, 'role') and admin_user.role != 'MASTER':
+    admin_user.role = 'MASTER'
+    admin_user.save()
+    print("Admin role updated to MASTER.")
 
 # 1. Categories
 system_cat, _ = QuestionCategory.objects.get_or_create(user=admin_user, name="その他", description="Fundamental details")

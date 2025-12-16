@@ -105,8 +105,7 @@
 <div id="catModal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center backdrop-blur-sm">
     <div class="bg-surface border border-white/20 p-6 rounded-xl w-96">
         <h3 class="text-white font-mono mb-4">NEW CATEGORY</h3>
-        <input id="newCatName" type="text" placeholder="Name" class="w-full bg-black/20 border border-white/10 rounded px-3 py-2 text-white mb-2">
-        <textarea id="newCatDesc" placeholder="Description" class="w-full bg-black/20 border border-white/10 rounded px-3 py-2 text-white mb-4"></textarea>
+        <input id="newCatName" type="text" placeholder="Name" class="w-full bg-black/20 border border-white/10 rounded px-3 py-2 text-white mb-4">
         <div class="flex justify-end gap-2">
             <button type="button" onclick="document.getElementById('catModal').classList.add('hidden')" class="px-3 py-1 text-gray-400 text-sm">Cancel</button>
             <button type="button" id="saveCatBtn" class="px-3 py-1 bg-primary text-black text-sm rounded">Save</button>
@@ -152,12 +151,11 @@
 
     document.getElementById('saveCatBtn').addEventListener('click', () => {
         const name = document.getElementById('newCatName').value;
-        const desc = document.getElementById('newCatDesc').value;
         if(!name) return;
 
         fetch('{% url "category_add" %}', {
             method: 'POST',
-            body: JSON.stringify({name, description: desc}),
+            body: JSON.stringify({name}),
             headers: {'X-CSRFToken': '{{ csrf_token }}'}
         })
         .then(res => res.json())
