@@ -1066,11 +1066,12 @@
                          }
                      }
                 }
-                     }
-                }
             } else {
                 alert('保存に失敗しました: ' + (data.error || 'Unknown error'));
             }
+        }).catch(err => {
+             console.error(err);
+             alert('保存処理中にエラーが発生しました'); 
         });
     });
 
