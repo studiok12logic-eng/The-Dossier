@@ -74,12 +74,16 @@
 
                     <!-- Action Buttons -->
                     <div class="flex gap-1.5 w-full justify-center mt-1">
+                        <a href="{% url 'target_detail' target.pk %}" 
+                           class="flex-1 py-0.5 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 border border-purple-500/30 rounded text-[9px] font-bold transition text-center flex items-center justify-center gap-1 shadow-sm leading-tight">
+                           <i class="fas fa-chart-bar text-[8px]"></i> DETAIL
+                        </a>
                         <a href="{% url 'intelligence_log' %}?target_id={{ target.pk }}" 
-                           class="flex-1 py-0.5 bg-text-main hover:opacity-90 text-background rounded text-[9px] font-bold transition text-center flex items-center justify-center gap-1 shadow-sm leading-tight">
+                           class="flex-1 py-0.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30 rounded text-[9px] font-bold transition text-center flex items-center justify-center gap-1 shadow-sm leading-tight">
                            <i class="fas fa-file-alt text-[8px]"></i> LOG
                         </a>
                         <a href="{% url 'target_edit' target.pk %}" 
-                           class="flex-1 py-0.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-[9px] font-bold transition text-center flex items-center justify-center gap-1 shadow-sm leading-tight">
+                           class="flex-1 py-0.5 bg-white/5 hover:bg-white/10 text-gray-400 border border-white/10 rounded text-[9px] font-bold transition text-center flex items-center justify-center gap-1 shadow-sm leading-tight">
                            <i class="fas fa-pencil-alt text-[8px]"></i> EDIT
                         </a>
                     </div>

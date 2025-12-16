@@ -5,10 +5,11 @@ from . import views
 
 urlpatterns = [
     path('', views.dashboard, name='dashboard'),
-    path('targets/', views.target_list, name='target_list'),
-    path('targets/add/', views.TargetCreateView.as_view(), name='target_add'),
-    path('targets/<uuid:pk>/edit/', views.TargetUpdateView.as_view(), name='target_edit'), # Edit route
-    path('targets/<uuid:pk>/delete/', views.TargetDeleteView.as_view(), name='target_delete'), # Delete route
+    path('target/', views.target_list, name='target_list'),
+    path('target/add/', views.TargetCreateView.as_view(), name='target_add'),
+    path('target/<uuid:pk>/', views.TargetDetailView.as_view(), name='target_detail'), # Detail route
+    path('target/<uuid:pk>/edit/', views.TargetUpdateView.as_view(), name='target_edit'), # Edit route
+    path('target/<uuid:pk>/delete/', views.TargetDeleteView.as_view(), name='target_delete'), # Delete route
     path('api/groups/create/', views.TargetGroupCreateView.as_view(), name='group_add'), # Group API
     path('api/groups/<int:pk>/edit/', views.TargetGroupUpdateView.as_view(), name='group_edit'),
     path('api/groups/<int:pk>/delete/', views.TargetGroupDeleteView.as_view(), name='group_delete'),

@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="h-full flex flex-col gap-6 overflow-y-auto pb-10">
+    <!-- Header: Breadcrumbs & Basic Info -->
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+            <nav class="flex text-xs text-gray-500 mb-2 font-mono">
+                <a href="{% url 'target_list' %}" class="hover:text-white transition">TARGETS</a>
+                <span class="mx-2">/</span>
+                <span class="text-white">DETAIL</span>
+            </nav>
+            <h1 class="text-3xl font-mono font-bold text-white flex items-center gap-3">
+                <span class="w-2 h-10 bg-primary block"></span>
+                {{ target.nickname }}
+                <span class="text-sm font-sans font-normal text-gray-400 self-end mb-1">
+                    {{ target.last_name }} {{ target.first_name }}
+                </span>
+            </h1>
+        </div>
+        
+        <div class="flex items-center gap-2">
+            <span class="text-xs text-text-sub font-mono">Last Contact:</span>
+            <span class="text-sm font-mono text-white">{% if target.last_contact %}{{ target.last_contact|date:"Y-m-d" }}{% else %}-{% endif %}</span>
+            <a href="{% url 'target_edit' target.pk %}" class="ml-4 px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 rounded text-xs text-gray-300 transition">
+                <i class="fas fa-pencil-alt mr-1"></i> EDIT PROFILE
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <!-- Log Count -->
+        <div class="bg-surface border border-white/5 rounded-lg p-4 flex flex-col items-center justify-center">
+            <span class="text-[10px] text-gray-400 font-mono mb-1">TOTAL LOGS</span>
+            <span class="text-2xl font-bold text-white font-mono">{{ log_count }}</span>
+        </div>
+        <!-- Contact Count -->
+        <div class="bg-surface border border-white/5 rounded-lg p-4 flex flex-col items-center justify-center">
+            <span class="text-[10px] text-gray-400 font-mono mb-1">CONTACT DAYS</span>
+            <span class="text-2xl font-bold text-emerald-400 font-mono">{{ contact_count }}</span>
+        </div>
+        <!-- Group -->
+        <div class="bg-surface border border-white/5 rounded-lg p-4 flex flex-col items-center justify-center">
+            <span class="text-[10px] text-gray-400 font-mono mb-1">GROUPS</span>
+            <div class="flex flex-wrap gap-1 justify-center">
+                {% for g in target.groups.all %}
+                <span class="text-[10px] px-2 py-0.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400">{{ g.name }}</span>
+                {% empty %}
+                <span class="text-gray-600">-</span>
+                {% endfor %}
+            </div>
+        </div>
+        <!-- Bio -->
+        <div class="bg-surface border border-white/5 rounded-lg p-4 flex flex-col items-center justify-center">
+            <span class="text-[10px] text-gray-400 font-mono mb-1">BIO</span>
+            <div class="text-xs text-gray-300 font-mono">
+                {% if target.age %}{{ target.age }}yo / {% endif %}
+                {{ target.gender_symbol }} / {{ target.blood_type }}
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Left Column: Q&A List -->
+        <div class="lg:col-span-2 space-y-6">
+            <h2 class="text-lg font-mono font-bold text-primary border-b border-white/10 pb-2">INTELLIGENCE (Q&A)</h2>
+            
+            <div class="flex justify-end mb-2">
+                 <label class="flex items-center gap-2 text-xs text-gray-400 cursor-pointer select-none">
+                     <input type="checkbox" id="hideUnanswered" class="form-checkbox bg-black/50 border-white/20 rounded text-primary focus:ring-0 w-3 h-3">
+                     <span>Hide Unanswered</span>
+                 </label>
+            </div>
+
+            <div class="space-y-4" id="qaContainer">
+                {% for cat_data in qa_data %}
+                <div class="bg-surface border border-white/10 rounded-xl overflow-hidden qa-category-group" data-total="{{ cat_data.total_count }}" data-answered="{{ cat_data.answered_count }}">
+                    <!-- Category Header -->
+                    <div class="bg-black/20 p-3 flex justify-between items-center cursor-pointer hover:bg-black/30 transition toggle-cat" data-cat-id="{{ cat_data.category.id }}">
+                        <div class="flex items-center gap-3">
+                            <span class="text-white font-bold font-mono">{{ cat_data.category.name }}</span>
+                            <span class="text-[10px] text-gray-500">{{ cat_data.answered_count }} / {{ cat_data.total_count }}</span>
+                        </div>
+                        <i class="fas fa-chevron-down text-gray-500 transform transition-transform duration-200"></i>
+                    </div>
+                    
+                    <!-- Progress Bar -->
+                    <div class="h-1 w-full bg-white/5">
+                        <div class="h-full bg-primary/50" style="width: {% widthratio cat_data.answered_count cat_data.total_count 100 %}%;"></div>
+                    </div>
+
+                    <!-- Questions List -->
+                    <div class="p-4 space-y-4 {% if forloop.first %}block{% else %}hidden{% endif %} cat-content" id="cat-{{ cat_data.category.id }}">
+                        {% for item in cat_data.questions %}
+                        <div class="qa-item {% if item.is_answered %}is-answered{% else %}is-unanswered{% endif %}">
+                            <div class="flex items-start gap-4">
+                                <div class="mt-1 w-1.5 h-1.5 rounded-full {% if item.is_answered %}bg-primary shadow-[0_0_5px_rgba(34,197,94,0.5)]{% else %}bg-gray-700{% endif %} shrink-0"></div>
+                                <div class="flex-1">
+                                    <div class="text-sm text-gray-300 font-bold mb-1">{{ item.question.title }}</div>
+                                    {% if item.is_answered %}
+                                        <div class="bg-black/30 p-3 rounded border border-white/5 relative group">
+                                            <!-- Answer Content -->
+                                             {% with ans=item.answer %}
+                                                {% if "選択:" in ans %}
+                                                    <!-- Parse Selection -->
+                                                    <div class="mb-1">
+                                                        <span class="inline-block px-2 py-0.5 rounded-full border border-primary/30 text-[10px] text-primary bg-primary/10">
+                                                            {{ ans|slice:"4:"|cut:"]"|linebreaksbr|truncatewords:5 }} <!-- Simple hack, JS might be better but Jinja is fast -->
+                                                            <!-- Regex in template is hard, let's just dump raw or use JS to format on load? -->
+                                                            <!-- Let's just output raw for now and let the style handle pre-wrap -->
+                                                         </span>
+                                                    </div>
+                                                    <div class="text-xs text-white whitespace-pre-wrap leading-relaxed">{{ ans }}</div>
+                                                {% else %}
+                                                    <div class="text-xs text-white whitespace-pre-wrap leading-relaxed">{{ ans }}</div>
+                                                {% endif %}
+                                             {% endwith %}
+                                            
+                                            <div class="mt-2 flex justify-between items-center border-t border-white/5 pt-1">
+                                                <span class="text-[10px] text-gray-600 font-mono">{{ item.answer_date|date:"Y-m-d" }}</span>
+                                                <a href="{% url 'intelligence_log' %}?target_id={{ target.pk }}&question_id={{ item.question.id }}" class="text-[10px] text-primary hover:underline opacity-0 group-hover:opacity-100 transition-opacity">UPDATE</a>
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <div class="flex items-center gap-2 mt-1">
+                                            <span class="text-[10px] text-gray-600">Not Answered Yet</span>
+                                            <a href="{% url 'intelligence_log' %}?target_id={{ target.pk }}&question_id={{ item.question.id }}" 
+                                               class="px-2 py-0.5 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white rounded text-[10px] transition border border-white/5">
+                                               ANSWER
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-gray-500 py-10">No questions configured.</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Right Column: Recent Activity & Tags -->
+        <div class="space-y-6">
+            <!-- Used Tags -->
+            <div>
+                <h2 class="text-lg font-mono font-bold text-white border-b border-white/10 pb-2 mb-4">USED TAGS</h2>
+                <div class="flex flex-wrap gap-2">
+                    {% for tag in tags %}
+                    <span class="px-2 py-1 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-gray-300 transition cursor-default">
+                        #{{ tag.name }} <span class="text-gray-600 ml-1 text-[10px]">{{ tag.count }}</span>
+                    </span>
+                    {% empty %}
+                    <div class="text-xs text-gray-600 italic">No tags used yet.</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Recent Events -->
+            <div>
+                <h2 class="text-lg font-mono font-bold text-white border-b border-white/10 pb-2 mb-4">RECENT EVENTS</h2>
+                <div class="space-y-4 relative">
+                    <!-- Vertical Line -->
+                    <div class="absolute left-1.5 top-2 bottom-2 w-px bg-white/10"></div>
+                    
+                    {% for event in events %}
+                    <div class="relative pl-6 group">
+                        <!-- Dot -->
+                        <div class="absolute left-0 top-1.5 w-3 h-3 rounded-full bg-background border-2 {% if event.contact_made %}border-green-500{% else %}border-blue-500{% endif %} z-10"></div>
+                        
+                        <div class="text-[10px] text-gray-500 font-mono mb-0.5 flex justify-between">
+                            <span>{{ event.date|date:"Y-m-d" }}</span>
+                            <span class="text-[9px] border border-white/10 px-1 rounded">{{ event.type }}</span>
+                        </div>
+                        <div class="text-xs text-gray-300 leading-relaxed whitespace-pre-wrap line-clamp-3 group-hover:line-clamp-none transition-all duration-300 bg-surface/50 p-2 rounded border border-transparent group-hover:border-white/10">
+                            {{ event.description }}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-xs text-gray-600 italic pl-6">No recent events.</div>
+                    {% endfor %}
+                    
+                    {% if log_count > 0 %}
+                    <div class="pl-6 pt-2">
+                         <a href="{% url 'intelligence_log' %}?target_id={{ target.pk }}" class="text-xs text-primary hover:underline">View All Logs</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Accordion Logic
+    document.querySelectorAll('.toggle-cat').forEach(header => {
+        header.addEventListener('click', () => {
+            const catId = header.dataset.catId;
+            const content = document.getElementById(`cat-${catId}`);
+            // Toggle
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                header.querySelector('.fa-chevron-down').classList.add('rotate-180');
+            } else {
+                content.classList.add('hidden');
+                header.querySelector('.fa-chevron-down').classList.remove('rotate-180');
+            }
+        });
+    });
+
+    // Hide Unanswered Filter
+    const checkbox = document.getElementById('hideUnanswered');
+    checkbox.addEventListener('change', (e) => {
+        const hide = e.target.checked;
+        document.querySelectorAll('.qa-item.is-unanswered').forEach(el => {
+            if (hide) el.classList.add('hidden');
+            else el.classList.remove('hidden');
+        });
+        
+        // Also hide categories that become empty?
+        // Optional polish
+    });
+</script>
+{% endblock %}

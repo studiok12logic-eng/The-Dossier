@@ -186,6 +186,75 @@ AnniversaryFormSet = inlineformset_factory(
     extra=0, can_delete=True
 )
 
+class TargetDetailView(LoginRequiredMixin, DetailView):
+    model = Target
+    template_name = 'target_detail.html'
+    context_object_name = 'target'
+
+    def get_queryset(self):
+        return Target.objects.filter(user=self.request.user)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        target = self.object
+        
+        # 1. Stats
+        # Total Log Count
+        context['log_count'] = TimelineItem.objects.filter(target=target).count()
+        # Contact Count
+        context['contact_count'] = TimelineItem.objects.filter(target=target, contact_made=True).count()
+        
+        # 2. Q&A
+        from intelligence.models import Question, QuestionCategory
+        # Get all categories
+        categories = QuestionCategory.objects.filter(user=self.request.user)
+        qa_data = []
+        
+        for cat in categories:
+            questions = Question.objects.filter(category=cat).order_by('order', 'title')
+            cat_data = {
+                'category': cat,
+                'questions': [],
+                'answered_count': 0,
+                'total_count': questions.count()
+            }
+            
+            for q in questions:
+                # Find latest answer
+                # Optimized: could use Subquery/Prefetch, but loop is okay for low volume
+                answer_item = TimelineItem.objects.filter(
+                    target=target, 
+                    type='Question', 
+                    question=q
+                ).order_by('-date', '-created_at').first()
+                
+                q_info = {
+                    'question': q,
+                    'answer': answer_item.description if answer_item else None, # Use description as answer
+                    'answer_date': answer_item.date if answer_item else None,
+                    'is_answered': bool(answer_item)
+                }
+                if answer_item: cat_data['answered_count'] += 1
+                cat_data['questions'].append(q_info)
+                
+            qa_data.append(cat_data)
+            
+        context['qa_data'] = qa_data
+        
+        # 3. Events / Timeline (Recent 20)
+        context['events'] = TimelineItem.objects.filter(
+            target=target
+        ).exclude(type='Question').order_by('-date', '-created_at')[:20]
+        
+        # 4. Tags
+        from django.db.models import Count
+        from intelligence.models import Tag
+        context['tags'] = Tag.objects.filter(
+            timelineitem__target=target
+        ).annotate(count=Count('timelineitem')).order_by('-count')
+        
+        return context
+
 class TargetCreateView(LoginRequiredMixin, CreateView):
     model = Target
     form_class = TargetForm
