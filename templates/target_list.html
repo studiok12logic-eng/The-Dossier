@@ -36,23 +36,23 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 overflow-y-auto pb-4 pr-2">
         {% for target in targets %}
         <div
-            class="bg-surface/50 border border-white/10 rounded-xl p-4 hover:border-primary/50 transition-all group relative overflow-hidden">
+            class="bg-surface border border-border rounded-xl p-4 hover:border-primary/50 transition-all group relative overflow-hidden">
             <!-- Header Bar (Rank & Last Contact) -->
-            <div class="flex justify-between items-center bg-black/40 -mx-4 -mt-4 mb-4 px-4 py-2 border-b border-white/5">
+            <div class="flex justify-between items-center bg-background/40 -mx-4 -mt-4 mb-4 px-4 py-2 border-b border-border">
                 <!-- Left: Rank & Stats -->
                 <div class="flex items-center gap-3 text-[10px] font-mono">
                     <span class="text-yellow-500 font-bold flex items-center gap-1">
                         <i class="fas fa-crown"></i> ゴールド
                     </span>
-                    <span class="text-gray-400 flex items-center gap-1">
+                    <span class="text-text-sub flex items-center gap-1">
                         <i class="fas fa-star text-gray-600"></i> 30pt
                     </span>
-                    <span class="text-gray-400 flex items-center gap-1">
+                    <span class="text-text-sub flex items-center gap-1">
                         <i class="fas fa-comment text-gray-600"></i> 3
                     </span>
                 </div>
                 <!-- Right: Last Contact -->
-                <div class="flex items-center gap-2 text-[10px] font-mono text-gray-400">
+                <div class="flex items-center gap-2 text-[10px] font-mono text-text-sub">
                     <i class="fas fa-history text-emerald-500"></i>
                     <span>{% if target.last_contact %}{{ target.last_contact|date:"Y-m-d" }}{% else %}-{% endif %}</span>
                 </div>
@@ -63,19 +63,19 @@
                 <!-- Left Column: Avatar & Buttons -->
                 <div class="flex flex-col gap-2 items-center shrink-0" style="width: 100px;">
                     <!-- Avatar (Fixed 100px) -->
-                    <div class="rounded-full bg-black border border-white/20 overflow-hidden relative shadow-lg shrink-0" 
+                    <div class="rounded-full bg-background border border-border overflow-hidden relative shadow-lg shrink-0" 
                          style="width: 100px; height: 100px; min-width: 100px; min-height: 100px;">
                         {% if target.avatar %}
                         <img src="{{ target.avatar.url }}" class="w-full h-full object-cover">
                         {% else %}
-                        <div class="w-full h-full flex items-center justify-center text-xl text-gray-500">{{ target.nickname|slice:":1" }}</div>
+                        <div class="w-full h-full flex items-center justify-center text-xl text-text-sub">{{ target.nickname|slice:":1" }}</div>
                         {% endif %}
                     </div>
 
                     <!-- Action Buttons -->
                     <div class="flex gap-1.5 w-full justify-center mt-1">
                         <a href="{% url 'intelligence_log' %}?target_id={{ target.pk }}" 
-                           class="flex-1 py-0.5 bg-white hover:bg-gray-200 text-black rounded text-[9px] font-bold transition text-center flex items-center justify-center gap-1 shadow-sm leading-tight">
+                           class="flex-1 py-0.5 bg-text-main hover:opacity-90 text-background rounded text-[9px] font-bold transition text-center flex items-center justify-center gap-1 shadow-sm leading-tight">
                            <i class="fas fa-file-alt text-[8px]"></i> LOG
                         </a>
                         <a href="{% url 'target_edit' target.pk %}" 
@@ -88,12 +88,12 @@
                 <!-- Right Column: Detailed Info -->
                 <div class="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
                     <!-- Line 1: Name (Small) -->
-                    <div class="text-[9px] text-gray-400 leading-none mb-0.5">
+                    <div class="text-[9px] text-text-sub leading-none mb-0.5">
                         {{ target.last_name }} {{ target.first_name }} {% if target.age %}({{ target.age }}){% endif %}
                     </div>
 
                     <!-- Line 2: Nickname (Big) -->
-                    <div class="text-lg font-bold text-white font-mono truncate mb-1 leading-none">
+                    <div class="text-lg font-bold text-text-main font-mono truncate mb-1 leading-none">
                         {{ target.nickname }}
                     </div>
 
@@ -104,12 +104,12 @@
                             {{ group.name }}
                         </span>
                         {% empty %}
-                        <span class="text-gray-600 text-[8px]">-</span>
+                        <span class="text-text-sub text-[8px]">-</span>
                         {% endfor %}
                     </div>
 
                     <!-- Line 4: Bio Data (Single Line Pipe Separated) -->
-                    <div class="text-[9px] text-gray-400 font-mono leading-relaxed break-all">
+                    <div class="text-[9px] text-text-sub font-mono leading-relaxed break-all">
                         {% if target.birth_month %}{{ target.birth_year }}/{{ target.birth_month }}/{{ target.birth_day }}{% else %}-{% endif %}
                         <span class="text-gray-600 mx-1">|</span>
                         {{ target.eto|default:"-" }}

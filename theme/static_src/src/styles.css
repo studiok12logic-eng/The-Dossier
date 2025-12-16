@@ -4,12 +4,43 @@
 
 @theme {
   --color-primary: #10b981;
-  --color-background: #050505;
-  --color-surface: #0f1110;
-  --color-text-main: #ecfdf5;
+  
+  /* Link utilities to CSS variables */
+  --color-background: var(--bg-base);
+  --color-surface: var(--bg-surface);
+  --color-text-main: var(--text-main);
+  --color-text-sub: var(--text-sub);
+  --color-border: var(--border-color);
+
+  /* Semantic Colors */
+  --color-accent: #eab308;
+  --color-danger: #ef4444;
 
   --font-mono: "Courier New", "Roboto Mono", monospace;
   --font-sans: "Inter", "Helvetica", sans-serif;
+}
+
+/* Theme Variables */
+:root {
+  /* Default (Light) - will be overridden by dark class if default is Dark, 
+     but user Base is Dark, so maybe make Dark default? 
+     Base.html has class="dark". So I will define Light first then Dark overrides. */
+  
+  /* Light Mode */
+  --bg-base: #ffffff;
+  --bg-surface: #f3f4f6;
+  --text-main: #000000;
+  --text-sub: #4b5563;
+  --border-color: #e5e7eb;
+}
+
+:root.dark {
+  /* Dark Mode (Black/Green/Yellow) */
+  --bg-base: #000000;      /* Pure Black */
+  --bg-surface: #121212;   /* Dark Surface */
+  --text-main: #ffffff;
+  --text-sub: #9ca3af;
+  --border-color: #27272a;
 }
 
 @utility avatar-noise {

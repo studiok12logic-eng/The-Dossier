@@ -7,11 +7,11 @@
     <!-- Left Panel: Target Selector -->
     <div class="w-1/3 flex flex-col gap-4">
         <!-- Date Picker Module -->
-        <div class="bg-surface/30 border border-white/10 rounded-xl overflow-hidden p-4">
-            <h3 class="text-xs font-mono text-gray-400 mb-2">DATE</h3>
+        <div class="bg-surface border border-border rounded-xl overflow-hidden p-4">
+            <h3 class="text-xs font-mono text-text-sub mb-2">DATE</h3>
             <form method="get" id="dateForm" class="mb-0">
                 <input type="date" name="date" value="{{ today_date }}" 
-                    class="w-full bg-black/50 border border-white/10 rounded px-2 py-2 text-sm text-white focus:border-primary transition"
+                    class="w-full bg-background border border-border rounded px-2 py-2 text-sm text-text-main focus:border-primary transition"
                     onchange="this.form.submit()">
             </form>
             <!-- Hidden CSRF for JS -->
@@ -19,8 +19,8 @@
         </div>
 
         <!-- Target List Module -->
-        <div class="bg-surface/30 border border-white/10 rounded-xl overflow-hidden flex-1 flex flex-col relative">
-            <div class="p-4 border-b border-white/10 bg-black/20">
+        <div class="bg-surface border border-border rounded-xl overflow-hidden flex-1 flex flex-col relative">
+            <div class="p-4 border-b border-border bg-surface">
                 <h2 class="text-primary font-mono text-sm flex items-center gap-2">
                     <span class="w-1 h-4 bg-primary block"></span>
                     TARGET SELECT
@@ -31,25 +31,25 @@
             <!-- Target List -->
             <div class="flex-1 overflow-y-auto p-2 space-y-2" id="targetList">
                 {% for item in todays_targets %}
-                <div class="target-item p-3 rounded flex items-center gap-3 cursor-pointer hover:bg-white/5 transition border border-transparent hover:border-primary/30 group relative select-target-btn"
+                <div class="target-item p-3 rounded flex items-center gap-3 cursor-pointer hover:bg-text-main/5 transition border border-transparent hover:border-primary/30 group relative select-target-btn"
                     data-id="{{ item.obj.id }}" data-name="{{ item.obj.nickname }}"
                     data-avatar="{% if item.obj.avatar %}{{ item.obj.avatar.url }}{% endif %}">
                     
                     <!-- Avatar -->
-                    <div class="w-[50px] h-[50px] min-w-[50px] min-h-[50px] rounded-full bg-black border border-white/10 overflow-hidden flex-shrink-0 relative" style="width: 50px; height: 50px;">
+                    <div class="w-[50px] h-[50px] min-w-[50px] min-h-[50px] rounded-full bg-background border border-border overflow-hidden flex-shrink-0 relative" style="width: 50px; height: 50px;">
                         {% if item.obj.avatar %}
                         <img src="{{ item.obj.avatar.url }}" class="w-full h-full object-cover">
                         {% else %}
-                        <div class="w-full h-full flex items-center justify-center text-xs text-gray-500">{{ item.obj.nickname|slice:":1" }}</div>
+                        <div class="w-full h-full flex items-center justify-center text-xs text-text-sub">{{ item.obj.nickname|slice:":1" }}</div>
                         {% endif %}
                     </div>
                     
                     <!-- Info -->
                     <div class="flex-1 min-w-0 flex flex-col justify-center">
                         <div class="flex items-center gap-2">
-                            <span class="text-sm text-white font-mono truncate group-hover:text-primary">{{ item.obj.nickname }}</span>
+                            <span class="text-sm text-text-main font-mono truncate group-hover:text-primary">{{ item.obj.nickname }}</span>
                         </div>
-                        <div class="text-[10px] text-gray-400 truncate font-sans">
+                        <div class="text-[10px] text-text-sub truncate font-sans">
                             {{ item.obj.last_name }} {{ item.obj.first_name }}{% if item.age %}({{ item.age }}){% endif %}
                         </div>
 
@@ -68,22 +68,22 @@
                     </div>
 
                     <!-- Minus Button (Hover Only) -->
-                    <button class="absolute top-2 right-2 text-gray-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity remove-target-btn z-10 p-1"
+                    <button class="absolute top-2 right-2 text-text-sub hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity remove-target-btn z-10 p-1"
                         data-id="{{ item.obj.id }}" title="リストから除外">
                         <i class="fas fa-minus-circle"></i>
                     </button>
                     
-                    <div class="status-indicator w-1 h-full absolute left-0 top-0 bottom-0 bg-gray-700 transition-colors"></div>
+                    <div class="status-indicator w-1 h-full absolute left-0 top-0 bottom-0 bg-text-sub/50 transition-colors"></div>
                 </div>
                 {% empty %}
-                <div class="text-center text-gray-500 text-xs py-10">
+                <div class="text-center text-text-sub text-xs py-10">
                     本日の予定ターゲットはいません
                 </div>
                 {% endfor %}
             </div>
     
             <!-- Buttons -->
-            <div class="p-4 border-t border-white/10 bg-black/20 space-y-2">
+            <div class="p-4 border-t border-border bg-surface space-y-2">
                 <button id="openTargetSearch"
                     class="w-full py-2 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 rounded text-xs font-mono transition flex items-center justify-center gap-2">
                     <span>+</span> ADD TARGET
@@ -97,36 +97,36 @@
     </div>
 
     <!-- Right Panel: Dossier Chat-style Input -->
-    <div class="flex-1 bg-surface/30 border border-white/10 rounded-xl overflow-hidden flex flex-col min-h-0 relative h-full">
+    <div class="flex-1 bg-surface border border-border rounded-xl overflow-hidden flex flex-col min-h-0 relative h-full">
         <!-- Overlay for No Selection -->
         <div id="noSelectionOverlay"
-            class="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center text-gray-500">
+            class="absolute inset-0 z-50 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center text-text-sub">
             <div class="text-4xl mb-4 opacity-50">⚡</div>
             <div class="font-mono text-sm">SELECT TARGET FROM LEFT PANEL</div>
         </div>
 
         <!-- 1. HEADER: Target Info & Timeline Search -->
-        <div class="p-4 border-b border-white/10 bg-black/20 flex justify-between items-center shrink-0 z-10 shadow-md">
+        <div class="p-4 border-b border-border bg-surface flex justify-between items-center shrink-0 z-10 shadow-md">
             <!-- Target Info -->
             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded bg-black border border-white/10 overflow-hidden" id="selectedAvatar">
+                <div class="w-8 h-8 rounded bg-background border border-border overflow-hidden" id="selectedAvatar">
                     <!-- JS populated -->
                 </div>
                 <div>
-                    <h2 class="text-white font-mono text-sm" id="selectedName">--</h2>
-                    <div class="text-[10px] text-gray-500">DOSSIER ENTRY</div>
+                    <h2 class="text-text-main font-mono text-sm" id="selectedName">--</h2>
+                    <div class="text-[10px] text-text-sub">DOSSIER ENTRY</div>
                 </div>
             </div>
 
             <!-- Search & Filters -->
             <div class="flex items-center gap-2">
                 <!-- Encanto Filter Toggle -->
-                <button id="encantoFilterBtn" class="flex items-center gap-1 px-3 py-1.5 rounded-full border border-white/10 text-gray-500 hover:text-green-400 hover:border-green-400/50 transition font-mono text-xs" title="Show Encanto Only">
+                <button id="encantoFilterBtn" class="flex items-center gap-1 px-3 py-1.5 rounded-full border border-border text-text-sub hover:text-green-400 hover:border-green-400/50 transition font-mono text-xs" title="Show Encanto Only">
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     <span>ENCANTO</span>
                 </button>
 
-                <select id="timelineTypeFilter" class="bg-black/50 border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-primary">
+                <select id="timelineTypeFilter" class="bg-background border border-border rounded px-2 py-1 text-xs text-text-main focus:border-primary">
                     <option value="">ALL</option>
                     <option value="EVENT">EVENT</option>
                     <option value="QUESTION">QUESTION</option>
@@ -134,30 +134,30 @@
 
                 <div class="relative group">
                     <input type="text" id="timelineSearch" placeholder="Search..." 
-                        class="bg-black/50 border border-white/10 rounded-full px-3 py-1 text-xs text-white focus:border-primary w-32 focus:w-48 transition-all">
-                    <i class="fas fa-search absolute right-3 top-1.5 text-gray-500 text-xs pointer-events-none"></i>
+                        class="bg-background border border-border rounded-full px-3 py-1 text-xs text-text-main focus:border-primary w-32 focus:w-48 transition-all">
+                    <i class="fas fa-search absolute right-3 top-1.5 text-text-sub text-xs pointer-events-none"></i>
                 </div>
             </div>
         </div>
 
         <!-- 2. TIMELINE: Infinite Scroll Area -->
-        <div id="timelineContainer" class="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth bg-black/20">
-            <div id="timelineLoading" class="hidden text-center py-2 text-gray-500 text-xs">
+        <div id="timelineContainer" class="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth bg-surface/50">
+            <div id="timelineLoading" class="hidden text-center py-2 text-text-sub text-xs">
                 <i class="fas fa-spinner fa-spin"></i> Loading context...
             </div>
             <div id="timelineContent" class="space-y-4 flex flex-col justify-end min-h-0"></div>
         </div>
 
         <!-- 3. FOOTER: Input Area (Fixed) -->
-        <div class="bg-surface border-t border-white/10 shrink-0 z-20 shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
+        <div class="bg-surface border-t border-border shrink-0 z-20 shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
             <!-- Tabs -->
-            <div class="flex border-b border-white/10 bg-black/20">
-                <button class="flex-1 py-2 text-xs font-mono text-center border-b-2 border-primary text-white bg-white/5 transition-colors"
+            <div class="flex border-b border-border bg-surface">
+                <button class="flex-1 py-2 text-xs font-mono text-center border-b-2 border-primary text-text-main bg-text-main/5 transition-colors"
                     id="tabEvent">
                     出来事 (EVENT)
                 </button>
                 <button
-                    class="flex-1 py-2 text-xs font-mono text-center border-b-2 border-transparent text-gray-500 hover:text-gray-300 transition-colors"
+                    class="flex-1 py-2 text-xs font-mono text-center border-b-2 border-transparent text-text-sub hover:text-text-main transition-colors"
                     id="tabQuestion">
                     質問 (QUESTION)
                 </button>
@@ -175,65 +175,65 @@
                      <!-- Event Form -->
                     <div id="formEvent" class="space-y-3 flex-1 flex flex-col">
                         <textarea id="eventContent"
-                            class="w-full h-20 bg-black/20 border border-white/10 rounded p-3 text-sm text-white focus:border-primary focus:outline-none resize-none flex-1 font-sans"
+                            class="w-full h-20 bg-background border border-border rounded p-3 text-sm text-text-main focus:border-primary focus:outline-none resize-none flex-1 font-sans"
                             placeholder="出来事・会話・観察内容..."></textarea>
                         
                         <!-- Tags -->
                         <div class="flex flex-wrap gap-1" id="tagSelectionArea">
                             {% for tag in tags %}
                             <button type="button" 
-                                class="tag-append-btn px-2 py-0.5 rounded-full border border-white/20 text-[10px] text-gray-400 hover:border-primary hover:text-primary transition bg-black/40"
+                                class="tag-append-btn px-2 py-0.5 rounded-full border border-border text-[10px] text-text-sub hover:border-primary hover:text-primary transition bg-background"
                                 data-name="{{ tag.name }}">
                                 {{ tag.name }}({{ tag.count }})
                             </button>
                             {% endfor %}
-                            <button type="button" id="moreTagsBtn" class="px-2 py-0.5 rounded-full border border-white/10 text-[10px] text-gray-500 hover:text-white transition">...</button>
+                            <button type="button" id="moreTagsBtn" class="px-2 py-0.5 rounded-full border border-border text-[10px] text-text-sub hover:text-text-main transition">...</button>
                         </div>
                     </div>
 
                     <!-- Question Form -->
                     <div id="formQuestion" class="space-y-3 hidden">
                         <div class="flex gap-2">
-                             <select id="qCategory" class="flex-1 bg-black/20 border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-primary">
+                             <select id="qCategory" class="flex-1 bg-background border border-border rounded px-2 py-1 text-xs text-text-main focus:border-primary">
                                 <option value="">カテゴリ</option>
                                 {% regroup questions by category as category_list %}
                                 {% for cat in category_list %}
                                 <option value="{{ cat.grouper }}">{{ cat.grouper }}</option>
                                 {% endfor %}
                             </select>
-                            <select id="qSelect" class="flex-[2] bg-black/20 border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-primary" disabled>
+                            <select id="qSelect" class="flex-[2] bg-background border border-border rounded px-2 py-1 text-xs text-text-main focus:border-primary" disabled>
                                 <option value="">質問選択...</option>
                             </select>
                         </div>
 
-                        <div id="qDetails" class="hidden bg-black/20 border border-white/5 rounded p-2 text-[10px] text-gray-400 flex gap-4">
+                        <div id="qDetails" class="hidden bg-background border border-border rounded p-2 text-[10px] text-text-sub flex gap-4">
                              <div>Rank: <span id="qRank" class="text-primary"></span></div>
                              <div class="truncate flex-1">Intent: <span id="qDesc"></span></div>
                              <div class="hidden">Ex: <span id="qEx"></span></div>
                         </div>
                         
-                        <div id="qChoicesCheck" class="opacity-50 pointer-events-none transition-opacity bg-black/20 border border-white/5 rounded p-2 min-h-[40px] flex flex-col justify-center">
-                             <div id="qCheckPlaceholder" class="text-[10px] text-gray-500 text-center">選択肢 (質問を選択)</div>
+                        <div id="qChoicesCheck" class="opacity-50 pointer-events-none transition-opacity bg-background border border-border rounded p-2 min-h-[40px] flex flex-col justify-center">
+                             <div id="qCheckPlaceholder" class="text-[10px] text-text-sub text-center">選択肢 (質問を選択)</div>
                              <div id="qChoicesContainer" class="flex flex-wrap gap-1"></div>
                         </div>
 
                         <textarea id="qAnswer"
-                            class="w-full h-16 bg-black/20 border border-white/10 rounded p-3 text-sm text-white focus:border-primary focus:outline-none resize-none font-sans"
+                            class="w-full h-16 bg-background border border-border rounded p-3 text-sm text-text-main focus:border-primary focus:outline-none resize-none font-sans"
                             placeholder="回答・反応..."></textarea>
                     </div>
                 </div>
 
                 <!-- Controls Area -->
-                <div class="flex items-center justify-between gap-3 p-4 border-t border-white/10 bg-black/20">
+                <div class="flex items-center justify-between gap-3 p-4 border-t border-border bg-surface">
                     <!-- Date & Contact -->
                     <div class="flex items-center gap-3">
                          <div class="relative">
-                            <input type="date" id="occurrenceDate" value="{{ today_date }}" class="bg-black/50 border border-white/10 rounded px-2 py-1 text-[10px] text-gray-400 focus:outline-none focus:border-primary [color-scheme:dark]">
+                            <input type="date" id="occurrenceDate" value="{{ today_date }}" class="bg-background border border-border rounded px-2 py-1 text-[10px] text-text-sub focus:outline-none focus:border-primary [color-scheme:dark]">
                          </div>
 
                         <div class="flex items-center gap-2 cursor-pointer group">
-                             <input type="checkbox" id="contactFlag" class="rounded border-gray-600 text-primary bg-gray-900 w-4 h-4 cursor-pointer">
-                             <label for="contactFlag" class="text-[10px] text-gray-400 group-hover:text-white cursor-pointer leading-tight">接触</label>
+                             <input type="checkbox" id="contactFlag" class="rounded border-border text-primary bg-background w-4 h-4 cursor-pointer">
+                             <label for="contactFlag" class="text-[10px] text-text-sub group-hover:text-text-main cursor-pointer leading-tight">接触</label>
                         </div>
                     </div>
 
@@ -252,22 +252,22 @@
 
 <!-- Search Modal -->
 <div id="searchModal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
-    <div class="bg-surface border border-white/20 rounded-xl p-6 w-full max-w-md shadow-2xl h-[500px] flex flex-col">
+    <div class="bg-surface border border-border rounded-xl p-6 w-full max-w-md shadow-2xl h-[500px] flex flex-col">
         <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-mono text-white">ターゲット検索</h3>
-            <button id="closeSearch" class="text-gray-400 hover:text-white">✕</button>
+            <h3 class="text-lg font-mono text-text-main">ターゲット検索</h3>
+            <button id="closeSearch" class="text-text-sub hover:text-text-main">✕</button>
         </div>
         <input type="text" id="searchInput" placeholder="Search by name..."
-            class="w-full bg-black/20 border border-white/10 rounded px-3 py-2 text-sm text-white mb-4 focus:border-primary">
+            class="w-full bg-background border border-border rounded px-3 py-2 text-sm text-text-main mb-4 focus:border-primary">
         <div class="flex-1 overflow-y-auto space-y-2 pr-1" id="searchList">
             {% for t in all_targets %}
-            <div class="search-item p-2 rounded border border-white/5 hover:bg-white/5 cursor-pointer flex items-center gap-3"
+            <div class="search-item p-2 rounded border border-border hover:bg-text-main/5 cursor-pointer flex items-center gap-3"
                 data-id="{{ t.id }}" data-name="{{ t.nickname }}"
                 data-avatar="{% if t.avatar %}{{ t.avatar.url }}{% endif %}">
-                <div class="w-8 h-8 rounded bg-gray-900 border border-white/10 flex items-center justify-center text-[10px] text-gray-500 overflow-hidden">
+                <div class="w-8 h-8 rounded bg-background border border-border flex items-center justify-center text-[10px] text-text-sub overflow-hidden">
                     {% if t.avatar %}<img src="{{ t.avatar.url }}" class="w-full h-full object-cover">{% else %}{{ t.nickname|slice:":1" }}{% endif %}
                 </div>
-                <div class="text-sm text-white font-mono">{{ t.nickname }}</div>
+                <div class="text-sm text-text-main font-mono">{{ t.nickname }}</div>
             </div>
             {% endfor %}
         </div>
@@ -276,14 +276,14 @@
 
 <!-- Tag Modal -->
 <div id="tagModal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
-    <div class="bg-surface border border-white/20 rounded-xl p-6 w-full max-w-lg shadow-2xl max-h-[80vh] flex flex-col">
+    <div class="bg-surface border border-border rounded-xl p-6 w-full max-w-lg shadow-2xl max-h-[80vh] flex flex-col">
         <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-mono text-white">ALL TAGS</h3>
-            <button id="closeTagModal" class="text-gray-400 hover:text-white">✕</button>
+            <h3 class="text-lg font-mono text-text-main">ALL TAGS</h3>
+            <button id="closeTagModal" class="text-text-sub hover:text-text-main">✕</button>
         </div>
         <div class="flex-1 overflow-y-auto p-2" id="allTagsContainer">
             <!-- Loaded via JS -->
-            <div class="text-center text-gray-500 text-xs">Loading tags...</div>
+            <div class="text-center text-text-sub text-xs">Loading tags...</div>
         </div>
     </div>
 </div>
@@ -360,12 +360,12 @@
         const item = e.target.closest('.target-item');
         if (item) {
             document.querySelectorAll('.target-item').forEach(el => {
-                el.classList.remove('bg-white/10', 'border-primary');
+                el.classList.remove('bg-text-main/10', 'border-primary');
                 el.querySelector('.status-indicator').classList.remove('bg-primary', 'shadow-[0_0_8px_rgba(34,197,94,0.8)]');
-                el.querySelector('.status-indicator').classList.add('bg-gray-700');
+                el.querySelector('.status-indicator').classList.add('bg-text-sub/50');
             });
-            item.classList.add('bg-white/10', 'border-primary');
-            item.querySelector('.status-indicator').classList.remove('bg-gray-700');
+            item.classList.add('bg-text-main/10', 'border-primary');
+            item.querySelector('.status-indicator').classList.remove('bg-text-sub/50');
             item.querySelector('.status-indicator').classList.add('bg-primary', 'shadow-[0_0_8px_rgba(34,197,94,0.8)]');
 
             currentTargetId = item.dataset.id;
@@ -373,7 +373,7 @@
             const avatarUrl = item.dataset.avatar;
             selectedAvatar.innerHTML = avatarUrl 
                 ? `<img src="${avatarUrl}" class="w-full h-full object-cover">` 
-                : `<div class="w-full h-full flex items-center justify-center text-xs text-gray-500">${item.dataset.name.slice(0, 1)}</div>`;
+                : `<div class="w-full h-full flex items-center justify-center text-xs text-text-sub">${item.dataset.name.slice(0, 1)}</div>`;
 
             document.getElementById('noSelectionOverlay').classList.add('hidden');
             resetTimeline();
@@ -443,55 +443,61 @@
     function createTimelineElement(item) {
         const typeBadge = item.type === 'EVENT' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400';
         
+        // JS generated HTML also needs semantic classes
+        // bg-white/5 -> bg-text-main/5
+        // text-white -> text-text-main
+        // text-gray-400 -> text-text-sub
+        // border-white/5 -> border-border
+        
         let content = '';
         if (item.type === 'QUESTION') { 
                 content = `
-                    <div class="text-xs font-bold text-white mb-1">Q. ${item.question_title || 'Unknown Question'}</div>
-                    <div class="text-gray-400">${escapeHtml(item.question_answer || '')}</div>
+                    <div class="text-xs font-bold text-text-main mb-1">Q. ${item.question_title || 'Unknown Question'}</div>
+                    <div class="text-text-sub">${escapeHtml(item.question_answer || '')}</div>
                 `;
             } else {
-                content = `<div class="text-gray-300 text-sm whitespace-pre-wrap">${escapeHtml(item.description || '')}</div>`;
+                content = `<div class="text-text-sub text-sm whitespace-pre-wrap">${escapeHtml(item.description || '')}</div>`;
             }
         
         let tagsHtml = '';
         if (item.tags && item.tags.length > 0) {
-            const tags = item.tags.map(t => `<span class="text-[10px] text-gray-500 mr-1">#${escapeHtml(t.name)}</span>`).join('');
-            tagsHtml = `<div class="mt-2 pt-2 border-t border-white/5">${tags}</div>`;
+            const tags = item.tags.map(t => `<span class="text-[10px] text-text-sub mr-1">#${escapeHtml(t.name)}</span>`).join('');
+            tagsHtml = `<div class="mt-2 pt-2 border-t border-border">${tags}</div>`;
         }
 
         let encantoBadge = '';
         if (item.contact_made) {
-             encantoBadge = `<span class="flex items-center gap-1 text-[10px] px-1.5 rounded bg-green-500/20 text-green-400 border border-white/10 mr-2">
+             encantoBadge = `<span class="flex items-center gap-1 text-[10px] px-1.5 rounded bg-green-500/20 text-green-400 border border-border mr-2">
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 Encanto
              </span>`;
         }
 
         const div = document.createElement('div');
-        div.className = "bg-white/5 border border-white/5 rounded p-3 text-sm hover:bg-white/10 transition-colors group relative";
+        div.className = "bg-text-main/5 border border-border rounded p-3 text-sm hover:bg-text-main/10 transition-colors group relative";
         div.innerHTML = `
             <div class="flex justify-between items-start mb-1">
                  <div class="flex items-center gap-2">
                     ${encantoBadge}
-                    <span class="text-[10px] px-1.5 rounded ${typeBadge} border border-white/10">${item.type}</span>
+                    <span class="text-[10px] px-1.5 rounded ${typeBadge} border border-border">${item.type}</span>
                  </div>
                  <div class="flex items-center gap-3">
                      <!-- Buttons -->
                     <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button class="text-gray-500 hover:text-white edit-btn" title="Edit">
+                        <button class="text-text-sub hover:text-text-main edit-btn" title="Edit">
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                         </button>
-                        <button class="text-gray-500 hover:text-red-500 delete-btn" title="Delete">
+                        <button class="text-text-sub hover:text-red-500 delete-btn" title="Delete">
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                         </button>
                     </div>
-                    <div class="text-[10px] text-gray-500 font-mono text-right">
+                    <div class="text-[10px] text-text-sub font-mono text-right">
                         <div>${item.created_at || ''}</div>
                         <div class="opacity-75">Occurred: ${item.date}</div>
                     </div>
                  </div>
             </div>
-            <div class="text-gray-300 leading-relaxed break-words line-clamp-20">${content}</div>
+            <div class="text-text-sub leading-relaxed break-words line-clamp-20">${content}</div>
             ${tagsHtml}
         `;
         
@@ -523,10 +529,10 @@
         isEncantoFilterActive = !isEncantoFilterActive;
         
         if (isEncantoFilterActive) {
-            encantoFilterBtn.classList.remove('text-gray-500', 'border-white/10', 'bg-transparent');
+            encantoFilterBtn.classList.remove('text-text-sub', 'border-border', 'bg-transparent');
             encantoFilterBtn.classList.add('bg-green-500', 'text-black', 'border-green-500', 'font-bold');
         } else {
-            encantoFilterBtn.classList.add('text-gray-500', 'border-white/10', 'bg-transparent');
+            encantoFilterBtn.classList.add('text-text-sub', 'border-border', 'bg-transparent');
             encantoFilterBtn.classList.remove('bg-green-500', 'text-black', 'border-green-500', 'font-bold');
         }
 
@@ -652,7 +658,7 @@
                     allTagsContainer.innerHTML = '';
                     data.tags.forEach(tag => {
                         const btn = document.createElement('button');
-                        btn.className = "px-3 py-1 m-1 rounded-full border border-white/20 text-xs text-gray-300 hover:border-primary hover:text-primary transition bg-black/40";
+                        btn.className = "px-3 py-1 m-1 rounded-full border border-border text-xs text-text-sub hover:border-primary hover:text-primary transition bg-background";
                         btn.textContent = `${tag.name} (${tag.count})`;
                         btn.onclick = () => {
                             appendTagToActive(tag.name);
@@ -813,17 +819,17 @@
                  if(qCheckPlaceholder) qCheckPlaceholder.classList.add('hidden');
                  q.choices.split(',').map(c => c.trim()).filter(c=>c).forEach(c => {
                      const btn = document.createElement('button');
-                     btn.className = 'choice-btn px-2 py-1 rounded-full border border-white/20 text-[10px] text-gray-300 hover:border-primary hover:text-primary transition bg-black/40';
+                     btn.className = 'choice-btn px-2 py-1 rounded-full border border-border text-[10px] text-text-sub hover:border-primary hover:text-primary transition bg-background';
                      btn.textContent = c;
                      btn.onclick = () => {
                          selectedChoices.clear();
                          selectedChoices.add(c);
                          document.querySelectorAll('.choice-btn').forEach(b => {
                              b.classList.remove('bg-primary/20', 'border-primary', 'text-primary');
-                             b.classList.add('bg-black/40', 'border-white/20', 'text-gray-300');
+                             b.classList.add('bg-background', 'border-border', 'text-text-sub');
                          });
                          btn.classList.add('bg-primary/20', 'border-primary', 'text-primary');
-                         btn.classList.remove('bg-black/40', 'border-white/20', 'text-gray-300');
+                         btn.classList.remove('bg-background', 'border-border', 'text-text-sub');
                      };
                      qChoicesContainer.appendChild(btn);
                  });
@@ -854,19 +860,19 @@
     tabEvent.addEventListener('click', () => {
         formEvent.classList.remove('hidden');
         formQuestion.classList.add('hidden');
-        tabEvent.classList.add('border-primary', 'text-white', 'bg-white/5');
-        tabEvent.classList.remove('border-transparent', 'text-gray-500');
-        tabQuestion.classList.add('border-transparent', 'text-gray-500');
-        tabQuestion.classList.remove('border-primary', 'text-white', 'bg-white/5');
+        tabEvent.classList.add('border-primary', 'text-text-main', 'bg-text-main/5');
+        tabEvent.classList.remove('border-transparent', 'text-text-sub');
+        tabQuestion.classList.add('border-transparent', 'text-text-sub');
+        tabQuestion.classList.remove('border-primary', 'text-text-main', 'bg-text-main/5');
     });
 
     tabQuestion.addEventListener('click', () => {
         formQuestion.classList.remove('hidden');
         formEvent.classList.add('hidden');
-        tabQuestion.classList.add('border-primary', 'text-white', 'bg-white/5');
-        tabQuestion.classList.remove('border-transparent', 'text-gray-500');
-        tabEvent.classList.add('border-transparent', 'text-gray-500');
-        tabEvent.classList.remove('border-primary', 'text-white', 'bg-white/5');
+        tabQuestion.classList.add('border-primary', 'text-text-main', 'bg-text-main/5');
+        tabQuestion.classList.remove('border-transparent', 'text-text-sub');
+        tabEvent.classList.add('border-transparent', 'text-text-sub');
+        tabEvent.classList.remove('border-primary', 'text-text-main', 'bg-text-main/5');
     });
 
 </script>
