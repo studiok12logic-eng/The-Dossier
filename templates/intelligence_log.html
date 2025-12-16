@@ -661,33 +661,59 @@
         // border-white/5 -> border-border
 
         let content = '';
+        let footerInfoHtml = ''; 
+        
+        // Tags or Choice Area
+        let tagsOrChoiceHtml = '';
+
         if (item.type.toUpperCase() === 'QUESTION') {
             const qTitle = item.question_title || 'Unknown Question';
-            let answerText = item.question_answer || '';
-            let choiceHtml = '';
+            // Use description for answer text
+            let answerText = item.description || '';
+            let choiceVal = null;
 
             // Extract Choice specific format "[選択: XYZ]"
             const choiceMatch = answerText.match(/\[選択:\s*(.*?)\]/);
             if (choiceMatch) {
-                const choiceVal = choiceMatch[1];
-                choiceHtml = `<div class="mt-1 mb-2"><span class="inline-block px-2 py-0.5 rounded-full border border-border text-[10px] text-text-sub bg-background">${escapeHtml(choiceVal)}</span></div>`;
+                choiceVal = choiceMatch[1];
+                // Strip from content text
                 answerText = answerText.replace(choiceMatch[0], '').trim();
             }
 
-            // Title (small, left aligned) -> Choice -> Text
+            // Body: Title + Answer
             content = `
                 <div class="text-[10px] text-text-sub font-bold mb-1 ml-1">${escapeHtml(qTitle)}</div>
-                ${choiceHtml}
                 <div class="text-text-sub text-sm whitespace-pre-wrap">${escapeHtml(answerText)}</div>
             `;
-        } else {
-            content = `<div class="text-text-sub text-sm whitespace-pre-wrap">${escapeHtml(item.description || '')}</div>`;
-        }
 
-        let tagsHtml = '';
-        if (item.tags && item.tags.length > 0) {
-            const tags = item.tags.map(t => `<span class="text-[10px] text-text-sub mr-1">#${escapeHtml(t.name)}</span>`).join('');
-            tagsHtml = `<div class="mt-2 pt-2 border-t border-border">${tags}</div>`;
+            // Footer: Choice (if exists)
+            if (choiceVal) {
+                tagsOrChoiceHtml = `<div class="mt-2 pt-2 border-t border-border">
+                    <span class="inline-block px-2 py-0.5 rounded-full border border-border text-[10px] text-text-sub bg-background">
+                        ${escapeHtml(choiceVal)}
+                    </span>
+                </div>`;
+            } else {
+                 // Fallback or empty if no choice? User said "Question case selected choice". 
+                 // If no choice selected, show nothing or tags? 
+                 // Let's show tags if no choice (fallback) or just nothing?
+                 // Safer to show tags if they exist and no choice? 
+                 // User said "distinguish". Let's assume if no choice, maybe show tags if any.
+                 if (item.tags && item.tags.length > 0) {
+                     const tags = item.tags.map(t => `<span class="text-[10px] text-text-sub mr-1">#${escapeHtml(t.name)}</span>`).join('');
+                     tagsOrChoiceHtml = `<div class="mt-2 pt-2 border-t border-border">${tags}</div>`;
+                 }
+            }
+
+        } else {
+            // EVENT
+            content = `<div class="text-text-sub text-sm whitespace-pre-wrap">${escapeHtml(item.description || '')}</div>`;
+            
+            // Footer: Tags
+            if (item.tags && item.tags.length > 0) {
+                const tags = item.tags.map(t => `<span class="text-[10px] text-text-sub mr-1">#${escapeHtml(t.name)}</span>`).join('');
+                tagsOrChoiceHtml = `<div class="mt-2 pt-2 border-t border-border">${tags}</div>`;
+            }
         }
 
         let encantoBadge = '';
@@ -712,7 +738,7 @@
             </div>
             
             <div class="text-text-sub leading-relaxed break-words line-clamp-20 mb-2">${content}</div>
-            ${tagsHtml}
+            ${tagsOrChoiceHtml}
 
             <!-- Footer: Created At & Edit Link -->
              <div class="flex justify-end items-center gap-3 mt-2 pt-2 border-t border-white/5">
@@ -722,7 +748,6 @@
         `;
 
         // Handlers
-        // div.querySelector('.delete-btn').onclick = () => deleteLog(item.id); // Old delete btn removed
         div.querySelector('.edit-link-btn').onclick = () => editLog(item);
 
         return div;
