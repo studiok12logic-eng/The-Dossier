@@ -269,6 +269,11 @@
                     </div>
 
                     <!-- Save Button -->
+                    <div class="flex items-center gap-2">
+                     <button id="deleteLogBtn"
+                         class="hidden bg-red-500/10 hover:bg-red-500/20 text-red-500 font-bold py-2 px-3 rounded transition-all border border-red-500/30">
+                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                     </button>
                     <button id="saveLogBtn"
                         class="bg-primary text-black font-bold py-0 px-[1em] rounded hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 flex items-center gap-2"
                         style="padding-left: 0.5em; padding-right: 0.5em;">
@@ -657,9 +662,9 @@
 
         let content = '';
         if (item.type === 'QUESTION') {
+            // New Design: Title in body first line
             const qTitle = item.question_title || 'Unknown Question';
-            // Title is now in header, so content is just answer
-            content = `<div class="text-text-sub text-sm whitespace-pre-wrap">${escapeHtml(item.question_answer || '')}</div>`;
+            content = `<div class="text-text-sub text-sm whitespace-pre-wrap"><span class="font-bold text-text-main">${qTitle}</span>\n${escapeHtml(item.question_answer || '')}</div>`;
         } else {
             content = `<div class="text-text-sub text-sm whitespace-pre-wrap">${escapeHtml(item.description || '')}</div>`;
         }
@@ -672,7 +677,7 @@
 
         let encantoBadge = '';
         if (item.contact_made) {
-            encantoBadge = `<span class="flex items-center gap-1 text-[10px] px-1.5 rounded bg-green-500/20 text-green-400 border border-border mr-2">
+            encantoBadge = `<span class="flex items-center gap-1 text-[10px] items-center px-1.5 rounded bg-green-500/20 text-green-400 border border-border mr-2 h-[20px]">
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 Encanto
              </span>`;
@@ -681,34 +686,29 @@
         const div = document.createElement('div');
         div.className = "bg-text-main/5 border border-border rounded p-3 text-sm hover:bg-text-main/10 transition-colors group relative";
         div.innerHTML = `
-            <div class="flex justify-between items-start mb-1">
+            <div class="flex justify-between items-center mb-2">
+                 <div class="flex items-center gap-2">
                     ${encantoBadge}
                     <span class="text-[10px] px-1.5 rounded ${typeBadge} border border-border flex-shrink-0">${item.type}</span>
-                    ${item.type === 'QUESTION' ? `<span class="text-[10px] font-bold text-green-400 border border-green-500/30 bg-green-500/10 px-1.5 rounded truncate max-w-[150px] md:max-w-[200px]">Q. ${item.question_title || '?'}</span>` : ''}
                  </div>
-                 <div class="flex items-center gap-3">
-                     <!-- Buttons -->
-                    <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button class="text-text-sub hover:text-text-main edit-btn" title="Edit">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                        </button>
-                        <button class="text-text-sub hover:text-red-500 delete-btn" title="Delete">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                        </button>
-                    </div>
-                    <div class="text-[10px] text-text-sub font-mono text-right">
-                        <div>${item.created_at || ''}</div>
-                        <div class="opacity-75">Occurred: ${item.date}</div>
-                    </div>
+                 <div class="text-[10px] text-text-sub font-mono">
+                    Occurred: <span class="text-text-main">${item.date}</span>
                  </div>
             </div>
-            <div class="text-text-sub leading-relaxed break-words line-clamp-20">${content}</div>
+            
+            <div class="text-text-sub leading-relaxed break-words line-clamp-20 mb-2">${content}</div>
             ${tagsHtml}
+
+            <!-- Footer: Created At & Edit Link -->
+             <div class="flex justify-end items-center gap-3 mt-2 pt-2 border-t border-white/5">
+                <div class="text-[10px] text-text-sub font-mono">${item.created_at || ''}</div>
+                <button class="text-[10px] text-primary hover:text-primary/80 underline edit-link-btn">編集</button>
+             </div>
         `;
 
         // Handlers
-        div.querySelector('.delete-btn').onclick = () => deleteLog(item.id);
-        div.querySelector('.edit-btn').onclick = () => editLog(item);
+        // div.querySelector('.delete-btn').onclick = () => deleteLog(item.id); // Old delete btn removed
+        div.querySelector('.edit-link-btn').onclick = () => editLog(item);
 
         return div;
     }
@@ -783,6 +783,11 @@
         });
     }
 
+    const deleteBtn = document.getElementById('deleteLogBtn');
+    deleteBtn.addEventListener('click', () => {
+        if(editingItemIdInput.value) deleteLog(editingItemIdInput.value);
+    });
+
     function editLog(item) {
         // Mode Set
         editingItemIdInput.value = item.id;
@@ -790,6 +795,7 @@
         saveBtnText.textContent = "UPDATE";
         saveBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-400');
         saveBtn.classList.remove('bg-primary', 'hover:bg-primary/90');
+        deleteBtn.classList.remove('hidden'); // Show Delete Button
 
         // Populate Data
         occurrenceDateInput.value = item.date;
@@ -823,6 +829,7 @@
         saveBtnText.textContent = "SAVE";
         saveBtn.classList.add('bg-primary', 'hover:bg-primary/90');
         saveBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-400');
+        deleteBtn.classList.add('hidden'); // Hide Delete Button
 
         document.getElementById('eventContent').value = "";
         document.getElementById('qAnswer').value = "";
