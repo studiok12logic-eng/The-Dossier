@@ -33,6 +33,11 @@ class TargetForm(forms.ModelForm):
         else:
              self.fields['groups'].queryset = TargetGroup.objects.none()
 
+        if self.instance and self.instance.pk:
+            self.fields['birth_year'].initial = self.instance.birth_year
+            self.fields['birth_month'].initial = self.instance.birth_month
+            self.fields['birth_day'].initial = self.instance.birth_day
+
     class Meta:
         model = Target
         fields = ['nickname', 'last_name', 'first_name', 'last_name_kana', 'first_name_kana', 
@@ -49,15 +54,9 @@ class TargetForm(forms.ModelForm):
     def save(self, commit=True):
         instance = super().save(commit=False)
         # Combine birth fields
-        year = self.cleaned_data.get('birth_year')
-        month = self.cleaned_data.get('birth_month')
-        day = self.cleaned_data.get('birth_day')
-        
-        if year and month and day:
-            try:
-                instance.birthdate = datetime.date(year, month, day)
-            except ValueError:
-                pass # Invalid date
+        instance.birth_year = self.cleaned_data.get('birth_year')
+        instance.birth_month = self.cleaned_data.get('birth_month')
+        instance.birth_day = self.cleaned_data.get('birth_day')
         
         if commit:
             instance.save()
