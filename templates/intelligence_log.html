@@ -4,9 +4,9 @@
 
 {% block content %}
 <!-- Unified Responsive Layout -->
-<div class="flex flex-1 min-h-0 relative md:gap-6">
+<div class="flex flex-1 min-h-0 relative" id="splitPaneContainer">
     <!-- Left Panel: Target Selector -->
-    <div id="leftPanel" class="flex flex-col gap-4 w-full md:w-1/3 h-full">
+    <div id="leftPanel" class="flex flex-col gap-4 w-full md:w-[30%] h-full min-w-[250px] max-w-[50vw]">
         <!-- Date Picker Module -->
         <div class="bg-surface border border-border rounded-xl overflow-hidden p-4 shrink-0">
             <h3 class="text-xs font-mono text-text-sub mb-2">DATE</h3>
@@ -100,6 +100,11 @@
                 </button>
             </div>
         </div>
+    </div>
+
+    <!-- Resizer Handle (Desktop Only) -->
+    <div id="resizer" class="hidden md:flex w-2 hover:w-2 bg-transparent hover:bg-primary/30 cursor-col-resize z-40 items-center justify-center group flex-shrink-0 transition-all active:bg-primary/50">
+        <div class="w-0.5 h-8 bg-border group-hover:bg-primary rounded transition-colors pointer-events-none"></div>
     </div>
 
     <!-- Right Panel: Dossier Chat-style Input -->
@@ -423,6 +428,41 @@
 
     if (mobileBackBtn) {
         mobileBackBtn.addEventListener('click', showListView);
+    }
+
+    // --- Resizer Logic ---
+    const resizer = document.getElementById('resizer');
+    const splitPaneContainer = document.getElementById('splitPaneContainer');
+
+    if (resizer) {
+        let isResizing = false;
+
+        resizer.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            document.body.style.cursor = 'col-resize';
+            document.body.classList.add('select-none'); // Prevent selection during drag
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+            const containerRect = splitPaneContainer.getBoundingClientRect();
+            // Calculate width in percent
+            let newWidthInfo = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+            
+            // Constrain
+            if (newWidthInfo < 20) newWidthInfo = 20;
+            if (newWidthInfo > 60) newWidthInfo = 60; // Max 60%
+
+            leftPanel.style.width = `${newWidthInfo}%`;
+        });
+
+        document.addEventListener('mouseup', () => {
+             if(isResizing) {
+                isResizing = false;
+                document.body.style.cursor = '';
+                document.body.classList.remove('select-none');
+            }
+        });
     }
 
     // --- Target Selection ---
