@@ -519,72 +519,74 @@ class RankCreateView(LoginRequiredMixin, View):
 # --- TIMELINE API ---
 class TimelineListAPIView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
-        target_id = request.GET.get('target_id')
-        if not target_id:
-            return JsonResponse({'success': False, 'error': 'Target ID required'}, status=400)
-            
         try:
-            target = Target.objects.get(pk=target_id, user=request.user)
-        except Target.DoesNotExist:
-             return JsonResponse({'success': False, 'error': 'Target not found'}, status=404)
+            target_id = request.GET.get('target_id')
+            if not target_id:
+                return JsonResponse({'success': False, 'error': 'Target ID required'}, status=400)
+                
+            try:
+                target = Target.objects.get(pk=target_id, user=request.user)
+            except Target.DoesNotExist:
+                 return JsonResponse({'success': False, 'error': 'Target not found'}, status=404)
 
-        # Base Query
-        queryset = TimelineItem.objects.filter(target=target).select_related('question')
-        
-        # Filtering
-        import datetime
-        from django.db.models import Q
-        
-        # Type
-        event_type = request.GET.get('type') # 'EVENT' or 'QUESTION'
-        if event_type:
-            # Check capitalization. Frontend sends 'EVENT'/'QUESTION'. Model 'type' choices are 'Event', 'Question', 'Contact' etc.
-            # Convert to Title Case to match model?
-            # Model choices: 'Contact', 'Quest', 'Note', 'Event', 'Question'
-            # If frontend sends 'EVENT', we need to match 'Event'.
-            if event_type == 'EVENT':
-                queryset = queryset.filter(Q(type='Event') | Q(type='Note'))
-            elif event_type == 'QUESTION':
-                queryset = queryset.filter(type='Question')
-
-        # Search Query
-        query = request.GET.get('search')
-        if query:
-            queryset = queryset.filter(
-                Q(content__icontains=query) | 
-                Q(question__title__icontains=query)
-            )
-
-        # Tags (list of IDs)
-        tags = request.GET.getlist('tags[]')
-        if tags:
-            queryset = queryset.filter(tags__id__in=tags).distinct()
-
-        # Pagination (Cursor) - simple date based for now
-        before_date = request.GET.get('before_date')
-        if before_date:
-            queryset = queryset.filter(date__lt=before_date)
+            # Base Query
+            queryset = TimelineItem.objects.filter(target=target).select_related('question')
             
-        # Ordering: Newest first (for chat style bottom-up, usually we load newest first)
-        queryset = queryset.order_by('-date', '-created_at')
-
-        # Limit
-        limit = int(request.GET.get('limit', 20))
-        queryset = queryset[:limit]
-        
-        # Serialize
-        data = []
-        for item in queryset:
-            data.append({
-                'id': item.id,
-                'date': item.date.strftime('%Y-%m-%d'),
-                'type': item.type, # Model has 'type', view uses 'event_type' filter but model field is 'type'
-                'description': item.content, # Model has 'content', mapped to 'description' for frontend
-                'question_title': item.question.title if item.question else item.question_text, # Fallback
-                'question_category': item.question.category.name if item.question and item.question.category else item.question_category,
-                'contact_made': item.contact_made,
-                'tags': [{'id': t.id, 'name': t.name} for t in item.tags.all()],
-            })
+            # Filtering
+            import datetime
+            from django.db.models import Q
             
-        return JsonResponse({'success': True, 'data': data})
+            # Type
+            event_type = request.GET.get('type') # 'EVENT' or 'QUESTION'
+            if event_type:
+                if event_type == 'EVENT':
+                    queryset = queryset.filter(Q(type='Event') | Q(type='Note'))
+                elif event_type == 'QUESTION':
+                    queryset = queryset.filter(type='Question')
+
+            # Search Query
+            query = request.GET.get('search')
+            if query:
+                queryset = queryset.filter(
+                    Q(content__icontains=query) | 
+                    Q(question__title__icontains=query)
+                )
+
+            # Tags (list of IDs)
+            tags = request.GET.getlist('tags[]')
+            if tags:
+                queryset = queryset.filter(tags__id__in=tags).distinct()
+
+            # Pagination (Cursor) - simple date based for now
+            before_date = request.GET.get('before_date')
+            if before_date:
+                queryset = queryset.filter(date__lt=before_date)
+                
+            # Ordering: Newest first (for chat style bottom-up, usually we load newest first)
+            queryset = queryset.order_by('-date', '-created_at')
+
+            # Limit
+            limit = int(request.GET.get('limit', 20))
+            queryset = queryset[:limit]
+            
+            # Serialize
+            data = []
+            for item in queryset:
+                data.append({
+                    'id': item.id,
+                    'date': item.date.strftime('%Y-%m-%d'),
+                    'type': item.type, # Model has 'type', view uses 'event_type' filter but model field is 'type'
+                    'description': item.content, # Model has 'content', mapped to 'description' for frontend
+                    # Safety checks for question relation
+                    'question_title': (item.question.title if item.question else item.question_text) or '',
+                    'question_category': (item.question.category.name if item.question and item.question.category else item.question_category) or '',
+                    'contact_made': item.contact_made,
+                    'tags': [{'id': t.id, 'name': t.name} for t in item.tags.all()],
+                })
+                
+            return JsonResponse({'success': True, 'data': data})
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
