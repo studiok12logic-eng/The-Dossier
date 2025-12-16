@@ -12,17 +12,173 @@ from intelligence.models import Target, TimelineItem, CustomAnniversary, TargetG
 from intelligence.forms import TargetForm, CustomAnniversaryForm, TargetGroupForm
 import json
 
-@login_required
-def dashboard(request):
-    # Pick the first target owned by the user
-    active_target = Target.objects.filter(user=request.user).first()
-    timeline = []
-    if active_target:
-        timeline = TimelineItem.objects.filter(target=active_target).order_by('-date')[:10]
+    import datetime
+    from django.db.models import Count, Sum, Q, F
+    from django.utils import timezone
+    from intelligence.models import QuestionRank, Tag
+
+    today = datetime.date.today()
+    user = request.user
     
+    # 1. Stats
+    # Question Answers Count (Unique per Target/Question combination)
+    # Exclude duplicates (same target, same question, multiple logs? User said "exclude duplicates")
+    # We count distinct (target, question) pairs in TimelineItems of type Question
+    qa_count = TimelineItem.objects.filter(
+        target__user=user, type='Question', question__isnull=False
+    ).values('target', 'question').distinct().count()
+
+    # Total Points
+    # Sum of QuestionRank points for all answered questions
+    # Note: If a question is answered multiple times, do we sum points multiple times? 
+    # User said "Answer count excludes duplicates". Points likely follow? 
+    # "Total Answered Question Points". If I answer Q1 (10pt) twice, is it 20pt? 
+    # Usually stats implied "Score". If I improved my dossier, I get points. 
+    # I will sum unique answers' rank points.
+    
+    # Efficient way: Get all unique answered questions -> sum their ranks
+    # But filtering unique in Django then summing related model field is tricky.
+    # Logic: Get unique questions per target -> get their ranks -> sum.
+    # We can fetch the list of q_ids and sum manually or subquery.
+    answered_q_ids = TimelineItem.objects.filter(
+        target__user=user, type='Question', question__isnull=False
+    ).values_list('question__rank__points', flat=True) # This includes duplicates!
+    
+    # To get unique (target, question), we need more complex query.
+    # Simplified: Sum all VALID answers points. 
+    # "Duplicate answers" usually means correcting an answer. 
+    # I will stick to: Count of Unique Answers * Avg Point? No.
+    # Let's count distinct pairs first.
+    unique_pairs = TimelineItem.objects.filter(
+        target__user=user, type='Question', question__isnull=False
+    ).values('question__rank__points').distinct() 
+    # distinct() on values('question')? NO. TimelineItem doesn't track "latest".
+    # User requirement: "Same target same question duplicate count not included"
+    # So we want to Sum points for the Unique Set.
+    # We can do this in Python for now as dataset isn't huge.
+    unique_answers = TimelineItem.objects.filter(
+        target__user=user, type='Question', question__isnull=False
+    ).values('target_id', 'question__rank__points').distinct()
+    
+    total_points = sum(item['question__rank__points'] or 0 for item in unique_answers)
+    
+    total_logs = TimelineItem.objects.filter(target__user=user).count()
+
+    # 2. Anniversaries (Range: Today-2 to Today+21)
+    start_date = today - datetime.timedelta(days=2)
+    end_date = today + datetime.timedelta(days=21)
+    
+    # We need to fetch Targets (birthdays) and CustomAnniversaries
+    # Birthdays are tricky because year doesn't matter, only month/day.
+    # We scan the range day by day or using complex Q.
+    # Given range is small (23 days), we can iterate dates? No.
+    # We can filter targets where (month=M1 and day>=D1) OR (month=M2 and day<=D2).
+    # Since range might span months.
+    
+    anniv_list = []
+    
+    # Helper to check range
+    date_curs = start_date
+    while date_curs <= end_date:
+        # Birthdays
+        b_targets = Target.objects.filter(
+            user=user, birth_month=date_curs.month, birth_day=date_curs.day
+        )
+        for t in b_targets:
+            anniv_list.append({
+                'date': date_curs,
+                'name': '誕生日',
+                'target': t,
+                'is_past': date_curs < today
+            })
+            
+        # Custom
+        c_annivs = CustomAnniversary.objects.filter(
+            target__user=user, date__month=date_curs.month, date__day=date_curs.day
+        ).select_related('target')
+        for ca in c_annivs:
+            anniv_list.append({
+                'date': date_curs,
+                'name': ca.label,
+                'target': ca.target,
+                'is_past': date_curs < today
+            })
+            
+        date_curs += datetime.timedelta(days=1)
+        
+    anniv_list.sort(key=lambda x: x['date']) # Sort by date
+
+    # 3. Calendar Data (Current Month)
+    # Aggregated counts per day: { '2025-12-01': {count: 5, logs: [{nick: 'A', id: 1}, ...]}, ... }
+    # User wants: "Log count total", "Person who input log (Green)", "Person with Anniversary (Yellow)"
+    # Nickname click -> Open Log for that date/target.
+    
+    # Range: 1st to End of Month
+    c_year, c_month = today.year, today.month
+    import calendar
+    _, last_day = calendar.monthrange(c_year, c_month)
+    month_start = datetime.date(c_year, c_month, 1)
+    month_end = datetime.date(c_year, c_month, last_day)
+    
+    # Fetch Logs
+    month_logs = TimelineItem.objects.filter(
+        target__user=user, date__range=(month_start, month_end)
+    ).select_related('target').order_by('date')
+    
+    cal_data = {}
+    for log in month_logs:
+        d_str = log.date.strftime('%Y-%m-%d')
+        if d_str not in cal_data: cal_data[d_str] = {'date': log.date, 'count': 0, 'loggers': set(), 'annivs': set()}
+        cal_data[d_str]['count'] += 1
+        cal_data[d_str]['loggers'].add(log.target) # Store target obj for nickname/ID
+
+    # Fetch Anniversaries for Calendar (reuse logic or query)
+    # Optimize: reuse iteration? 
+    # Just query for month
+    month_birthdays = Target.objects.filter(user=user, birth_month=c_month)
+    for t in month_birthdays:
+        # Year irrelevant, map to this year
+        # Watch out for Feb 29
+        try:
+            d = datetime.date(c_year, c_month, t.birth_day)
+            d_str = d.strftime('%Y-%m-%d')
+            if d_str not in cal_data: cal_data[d_str] = {'date': d, 'count': 0, 'loggers': set(), 'annivs': set()}
+            cal_data[d_str]['annivs'].add(t)
+        except ValueError: pass
+
+    month_custom = CustomAnniversary.objects.filter(target__user=user, date__month=c_month).select_related('target')
+    for ca in month_custom:
+         d = datetime.date(c_year, c_month, ca.date.day) # Map to current year view? Or strictly date? 
+         # CustomAnniversary has a specific YEAR usually? Or is it recurring? 
+         # Model CustomAnniversary has 'date' field (DateField). 
+         # If it's a "Memorial", it might be specific (Wedding 2020). 
+         # Assuming we treat day/month as recurring for display, or strict? 
+         # User said "Anniversary List" -> usually recurring. 
+         # I will treat as recurring for Calendar.
+         d_str = d.strftime('%Y-%m-%d')
+         if d_str not in cal_data: cal_data[d_str] = {'date': d, 'count': 0, 'loggers': set(), 'annivs': set()}
+         cal_data[d_str]['annivs'].add(ca.target)
+
+    # Convert Sets to Lists for Template
+    for k, v in cal_data.items():
+        v['loggers'] = list(v['loggers'])
+        v['annivs'] = list(v['annivs'])
+
+    # Filters Support (Groups, Tags)
+    groups = TargetGroup.objects.filter(user=user)
+    top_tags = Tag.objects.filter(timelineitem__target__user=user).annotate(c=Count('timelineitem')).order_by('-c')[:20]
+
     context = {
-        'active_target': active_target,
-        'timeline': timeline,
+        'stats': {
+            'qa_count': qa_count,
+            'total_points': total_points,
+            'total_logs': total_logs
+        },
+        'anniversaries': anniv_list,
+        'calendar_data': cal_data, 
+        'calendar_month': today.strftime('%Y-%m'),
+        'groups': groups,
+        'tags': top_tags,
     }
     return render(request, 'dashboard.html', context)
 
@@ -560,21 +716,27 @@ class TimelineListAPIView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         try:
             target_id = request.GET.get('target_id')
-            if not target_id:
-                return JsonResponse({'success': False, 'error': 'Target ID required'}, status=400)
-                
-            try:
-                target = Target.objects.get(pk=target_id, user=request.user)
-            except Target.DoesNotExist:
-                 return JsonResponse({'success': False, 'error': 'Target not found'}, status=404)
-
-            # Base Query
-            queryset = TimelineItem.objects.filter(target=target).select_related('question')
             
+            # Base Query
+            if target_id:
+                try:
+                    target = Target.objects.get(pk=target_id, user=request.user)
+                    queryset = TimelineItem.objects.filter(target=target).select_related('question')
+                except Target.DoesNotExist:
+                     return JsonResponse({'success': False, 'error': 'Target not found'}, status=404)
+            else:
+                # Global Feed
+                queryset = TimelineItem.objects.filter(target__user=request.user).select_related('target', 'question')
+
             # Filtering
             import datetime
             from django.db.models import Q
             
+            # Group Filter
+            group_id = request.GET.get('group_id')
+            if group_id:
+                queryset = queryset.filter(target__groups__id=group_id)
+
             # Type
             event_type = request.GET.get('type') # 'EVENT' or 'QUESTION'
             if event_type:
@@ -602,12 +764,18 @@ class TimelineListAPIView(LoginRequiredMixin, View):
                 queryset = queryset.filter(tags__id__in=tags).distinct()
 
             # Pagination (Cursor) - simple date based for now
-            before_date = request.GET.get('before_date')
-            if before_date:
-                queryset = queryset.filter(date__lt=before_date)
+            # Note: For Global Feed, simple date based cursor on 'date' field might be ambiguous if many logs same date.
+            # But 'created_at' is safer. 
+            # Current frontend uses 'date' for sorting? 
+            # User wants "Sort by Occurrence Date (Newest) AND Input Date (Newest) default".
+            # Order By: `-date`, `-created_at`.
+            
+            before_timestamp = request.GET.get('before_timestamp') # Changed from before_date for precision
+            if before_timestamp:
+                queryset = queryset.filter(created_at__lt=before_timestamp)
                 
-            # Ordering: Input Order (Created At) Descending
-            queryset = queryset.order_by('-created_at')
+            # Ordering: Date Desc, Created At Desc
+            queryset = queryset.order_by('-date', '-created_at')
 
             # Limit
             limit = int(request.GET.get('limit', 20))
@@ -628,6 +796,13 @@ class TimelineListAPIView(LoginRequiredMixin, View):
                     'question_category': (item.question.category.name if item.question and item.question.category else item.question_category) or '',
                     'contact_made': item.contact_made,
                     'tags': [{'id': t.id, 'name': t.name} for t in item.tags.all()],
+                    'target': {
+                        'id': item.target.id,
+                        'nickname': item.target.nickname,
+                        'avatar': item.target.avatar.url if item.target.avatar else None,
+                        'first_name': item.target.first_name,
+                        'last_name': item.target.last_name
+                    }
                 })
                 
             return JsonResponse({'success': True, 'data': data})
