@@ -3,12 +3,12 @@
 {% block content_wrapper_class %}flex-1 flex flex-col min-h-0 overflow-hidden p-4 pb-32 md:p-8 md:pb-12{% endblock %}
 
 {% block content %}
-<!-- DESKTOP VERSION (hidden on mobile) -->
-<div class="hidden md:flex flex-1 min-h-0 overflow-hidden gap-6">
+<!-- Unified Responsive Layout -->
+<div class="flex flex-1 min-h-0 relative md:gap-6">
     <!-- Left Panel: Target Selector -->
-    <div class="w-1/3 flex flex-col gap-4">
+    <div id="leftPanel" class="flex flex-col gap-4 w-full md:w-1/3 h-full">
         <!-- Date Picker Module -->
-        <div class="bg-surface border border-border rounded-xl overflow-hidden p-4">
+        <div class="bg-surface border border-border rounded-xl overflow-hidden p-4 shrink-0">
             <h3 class="text-xs font-mono text-text-sub mb-2">DATE</h3>
             <form method="get" id="dateForm" class="mb-0">
                 <input type="date" name="date" value="{{ today_date }}"
@@ -20,13 +20,12 @@
         </div>
 
         <!-- Target List Module -->
-        <div class="bg-surface border border-border rounded-xl overflow-hidden flex-1 flex flex-col relative">
-            <div class="p-4 border-b border-border bg-surface">
+        <div class="bg-surface border border-border rounded-xl overflow-hidden flex-1 flex flex-col relative h-full min-h-0">
+            <div class="p-4 border-b border-border bg-surface shrink-0">
                 <h2 class="text-primary font-mono text-sm flex items-center gap-2">
                     <span class="w-1 h-4 bg-primary block"></span>
                     TARGET SELECT
                 </h2>
-                <!-- Date Removed -->
             </div>
 
             <!-- Target List -->
@@ -38,7 +37,7 @@
                     data-avatar="{% if item.obj.avatar %}{{ item.obj.avatar.url }}{% endif %}">
 
                     <!-- Avatar -->
-                    <div class="w-[50px] h-[50px] min-w-[50px] min-h-[50px] rounded-full bg-background border border-border overflow-hidden flex-shrink-0 relative"
+                    <div class="w-[50px] h-[50px] min-w-[50px] min-h-[50px] rounded-full bg-background border border-border overflow-hidden flex-shrink-0 relative pointer-events-none"
                         style="width: 50px; height: 50px;">
                         {% if item.obj.avatar %}
                         <img src="{{ item.obj.avatar.url }}" class="w-full h-full object-cover">
@@ -48,7 +47,7 @@
                     </div>
 
                     <!-- Info -->
-                    <div class="flex-1 min-w-0 flex flex-col justify-center">
+                    <div class="flex-1 min-w-0 flex flex-col justify-center pointer-events-none">
                         <div class="flex items-center gap-2">
                             <span class="text-sm text-text-main font-mono truncate group-hover:text-primary">{{ item.obj.nickname }}</span>
                         </div>
@@ -90,7 +89,7 @@
             </div>
 
             <!-- Buttons -->
-            <div class="p-4 border-t border-border bg-surface space-y-2">
+            <div class="p-4 border-t border-border bg-surface space-y-2 shrink-0">
                 <button id="openTargetSearch"
                     class="w-full py-2 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 rounded text-xs font-mono transition flex items-center justify-center gap-2">
                     <span>+</span> ADD TARGET
@@ -104,8 +103,8 @@
     </div>
 
     <!-- Right Panel: Dossier Chat-style Input -->
-    <div
-        class="flex-1 bg-surface border border-border rounded-xl overflow-hidden flex flex-col min-h-0 relative h-full">
+    <div id="rightPanel"
+        class="hidden md:flex flex-col flex-1 bg-surface border border-border rounded-xl overflow-hidden min-h-0 relative h-full">
         <!-- Overlay for No Selection -->
         <div id="noSelectionOverlay"
             class="absolute inset-0 z-50 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center text-text-sub">
@@ -117,6 +116,11 @@
         <div class="p-4 border-b border-border bg-surface flex justify-between items-center shrink-0 z-10 shadow-md">
             <!-- Target Info -->
             <div class="flex items-center gap-3">
+                <!-- Back Button (Mobile Only) -->
+                <button id="mobileBackBtn" class="md:hidden w-8 h-8 flex items-center justify-center rounded-full active:bg-white/10 text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+
                 <div class="w-8 h-8 rounded bg-background border border-border overflow-hidden" id="selectedAvatar">
                     <!-- JS populated -->
                 </div>
@@ -307,81 +311,7 @@
         </form>
     </div>
 
-    <!-- Mobile Tabs -->
-    <div class="flex gap-2 mb-4">
-        <button id="mobileTabTargets" class="flex-1 py-2 px-4 rounded-lg bg-primary text-black font-medium text-sm">
-            ターゲット
-        </button>
-        <button id="mobileTabLog" class="flex-1 py-2 px-4 rounded-lg bg-white/5 text-gray-400 font-medium text-sm">
-            ログ
-        </button>
-    </div>
 
-    <!-- Mobile Target List View -->
-    <div id="mobileTargetsView" class="flex-1 overflow-y-auto space-y-2">
-        {% for item in todays_targets %}
-        <div class="bg-surface border border-white/10 rounded-xl p-4 flex items-center gap-3 active:bg-white/5"
-            onclick="selectMobileTarget('{{ item.obj.id }}', '{{ item.obj.nickname }}', '{% if item.obj.avatar %}{{ item.obj.avatar.url }}{% endif %}')">
-            <div class="w-12 h-12 rounded-full bg-background border border-white/10 overflow-hidden flex-shrink-0">
-                {% if item.obj.avatar %}
-                <img src="{{ item.obj.avatar.url }}" class="w-full h-full object-cover">
-                {% else %}
-                <div class="w-full h-full flex items-center justify-center text-xs text-gray-500">{{
-                    item.obj.nickname|slice:":1" }}</div>
-                {% endif %}
-            </div>
-            <div class="flex-1">
-                <div class="text-sm text-white font-medium">{{ item.obj.nickname }}</div>
-                <div class="text-xs text-gray-500">{{ item.obj.last_name }} {{ item.obj.first_name }}</div>
-            </div>
-            <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-            </svg>
-        </div>
-        {% endfor %}
-    </div>
-
-    <!-- Mobile Log View (hidden by default) -->
-    <div id="mobileLogView" class="hidden flex-1 flex flex-col overflow-hidden">
-        <!-- Selected Target Header -->
-        <div id="mobileSelectedTarget"
-            class="bg-surface border border-white/10 rounded-xl p-4 mb-4 flex items-center gap-3">
-            <button onclick="showMobileTargets()" class="text-gray-400">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                </svg>
-            </button>
-            <div class="w-10 h-10 rounded-full bg-background border border-white/10 overflow-hidden"
-                id="mobileTargetAvatar">
-                <div class="w-full h-full flex items-center justify-center text-xs text-gray-500">?</div>
-            </div>
-            <div class="flex-1">
-                <div class="text-sm text-white font-medium" id="mobileTargetName">ターゲットを選択</div>
-            </div>
-        </div>
-
-        <!-- Mobile Timeline -->
-        <div class="flex-1 overflow-y-auto space-y-3 mb-4" id="mobileTimelineContent">
-            <!-- Timeline items will be loaded here -->
-        </div>
-
-        <!-- Mobile Input (Fixed at bottom) -->
-        <div class="bg-surface border border-white/10 rounded-xl p-4">
-            <textarea id="mobileLogInput" rows="3"
-                class="w-full bg-background border border-white/20 rounded px-3 py-2 text-sm text-white resize-none mb-3"
-                placeholder="ログを入力..."></textarea>
-            <div class="flex items-center justify-between">
-                <label class="flex items-center gap-2 text-xs text-gray-400">
-                    <input type="checkbox" id="mobileContactFlag" class="rounded">
-                    接触
-                </label>
-                <button id="mobileSaveBtn" class="bg-primary text-black px-6 py-2 rounded-lg font-medium text-sm">
-                    保存
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- Search Modal -->
 <div id="searchModal"
@@ -442,60 +372,7 @@
 </script>
 
 <script>
-    // ===== MOBILE-SPECIFIC JAVASCRIPT =====
-    let mobileSelectedTargetId = null;
 
-    function selectMobileTarget(id, name, avatar) {
-        mobileSelectedTargetId = id;
-        document.getElementById('mobileTargetName').textContent = name;
-
-        const avatarEl = document.getElementById('mobileTargetAvatar');
-        if (avatar) {
-            avatarEl.innerHTML = `<img src="${avatar}" class="w-full h-full object-cover">`;
-        } else {
-            avatarEl.innerHTML = `<div class="w-full h-full flex items-center justify-center text-xs text-text-sub">${name.charAt(0)}</div>`; // Fixed color class
-        }
-
-        // Switch to log view
-        document.getElementById('mobileTargetsView').classList.add('hidden');
-        document.getElementById('mobileLogView').classList.remove('hidden');
-        document.getElementById('mobileTabTargets').classList.remove('bg-primary', 'text-black');
-        document.getElementById('mobileTabTargets').classList.add('bg-white/5', 'text-gray-400');
-        document.getElementById('mobileTabLog').classList.remove('bg-white/5', 'text-gray-400');
-        document.getElementById('mobileTabLog').classList.add('bg-primary', 'text-black');
-
-        // Logic needed for Shared State
-        currentTargetId = id;
-        resetTimeline();
-        fetchTimeline();
-    }
-
-    function showMobileTargets() {
-        document.getElementById('mobileLogView').classList.add('hidden');
-        document.getElementById('mobileTargetsView').classList.remove('hidden');
-        document.getElementById('mobileTabLog').classList.remove('bg-primary', 'text-black');
-        document.getElementById('mobileTabLog').classList.add('bg-white/5', 'text-gray-400');
-        document.getElementById('mobileTabTargets').classList.remove('bg-white/5', 'text-gray-400');
-        document.getElementById('mobileTabTargets').classList.add('bg-primary', 'text-black');
-    }
-
-    // Mobile tab switching - set up after DOM loads
-    document.addEventListener('DOMContentLoaded', function () {
-        if (document.getElementById('mobileTabTargets')) {
-            document.getElementById('mobileTabTargets').addEventListener('click', showMobileTargets);
-            document.getElementById('mobileTabLog').addEventListener('click', () => {
-                if (mobileSelectedTargetId) {
-                    document.getElementById('mobileTargetsView').classList.add('hidden');
-                    document.getElementById('mobileLogView').classList.remove('hidden');
-                    document.getElementById('mobileTabTargets').classList.remove('bg-primary', 'text-black');
-                    document.getElementById('mobileTabTargets').classList.add('bg-white/5', 'text-gray-400');
-                    document.getElementById('mobileTabLog').classList.remove('bg-white/5', 'text-gray-400');
-                    document.getElementById('mobileTabLog').classList.add('bg-primary', 'text-black');
-                }
-            });
-        }
-    });
-    // ===== END MOBILE JAVASCRIPT =====
 
     // --- State ---
     let currentTargetId = null;
@@ -526,15 +403,41 @@
 
     // --- Timeline State ---
     const timelineContainer = document.getElementById('timelineContainer');
-    const mobileTimelineContent = document.getElementById('mobileTimelineContent'); // Added for mobile
     const timelineContent = document.getElementById('timelineContent');
     const timelineLoading = document.getElementById('timelineLoading');
     const timelineSearch = document.getElementById('timelineSearch');
     const timelineTypeFilter = document.getElementById('timelineTypeFilter');
 
+    // Panels
+    const leftPanel = document.getElementById('leftPanel');
+    const rightPanel = document.getElementById('rightPanel');
+    const mobileBackBtn = document.getElementById('mobileBackBtn');
+
     let isFetching = false;
     let hasMore = true;
     let timelineCursorDate = null;
+
+    // --- Panel Switching Logic ---
+    function showChatView() {
+        if (window.innerWidth < 768) {
+            leftPanel.classList.add('hidden');
+            rightPanel.classList.remove('hidden');
+            // Ensure flex is added because it might be hidden
+            rightPanel.classList.add('flex');
+        }
+    }
+
+    function showListView() {
+        if (window.innerWidth < 768) {
+            rightPanel.classList.add('hidden');
+            rightPanel.classList.remove('flex');
+            leftPanel.classList.remove('hidden');
+        }
+    }
+
+    if (mobileBackBtn) {
+        mobileBackBtn.addEventListener('click', showListView);
+    }
 
     // --- Target Selection ---
     targetList.addEventListener('click', function (e) {
@@ -568,6 +471,10 @@
                 : `<div class="w-full h-full flex items-center justify-center text-xs text-text-sub">${item.dataset.name.slice(0, 1)}</div>`;
 
             document.getElementById('noSelectionOverlay').classList.add('hidden');
+            
+            // Switch View on Mobile
+            showChatView();
+
             resetTimeline();
             fetchTimeline();
             cancelEditMode(); // Reset edit mode on target switch
@@ -577,7 +484,6 @@
     // --- Timeline Functions ---
     function resetTimeline() {
         timelineContent.innerHTML = '';
-        if (mobileTimelineContent) mobileTimelineContent.innerHTML = '';
         console.log("Clearing timeline");
         timelineCursorDate = null;
         hasMore = true;
@@ -620,7 +526,7 @@
         // We want reversed (Old -> New) for chat style at bottom.
         const orderedItems = [...items].reverse();
 
-        // Render for Desktop
+        // Render (Universal)
         const fragment = document.createDocumentFragment();
         orderedItems.forEach(item => fragment.appendChild(createTimelineElement(item)));
 
@@ -632,22 +538,6 @@
         } else {
             timelineContent.appendChild(fragment);
             timelineContainer.scrollTop = timelineContainer.scrollHeight;
-        }
-
-        // Render for Mobile
-        if (mobileTimelineContent) {
-            const fragmentMobile = document.createDocumentFragment();
-            orderedItems.forEach(item => fragmentMobile.appendChild(createTimelineElement(item))); // Create fresh elements with listeners
-
-            if (append) {
-                const firstChild = mobileTimelineContent.firstElementChild;
-                const oldHeight = mobileTimelineContent.scrollHeight;
-                mobileTimelineContent.insertBefore(fragmentMobile, firstChild);
-                mobileTimelineContent.scrollTop = mobileTimelineContent.scrollHeight - oldHeight;
-            } else {
-                mobileTimelineContent.appendChild(fragmentMobile);
-                mobileTimelineContent.scrollTop = mobileTimelineContent.scrollHeight;
-            }
         }
     }
 
