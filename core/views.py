@@ -20,48 +20,27 @@ import json
     today = datetime.date.today()
     user = request.user
     
-    # 1. Stats
-    # Question Answers Count (Unique per Target/Question combination)
-    # Exclude duplicates (same target, same question, multiple logs? User said "exclude duplicates")
-    # We count distinct (target, question) pairs in TimelineItems of type Question
-    qa_count = TimelineItem.objects.filter(
+    # 1. Stats Calculation (Python-side for safety/compatibility)
+    # Fetch all relevant fields for Question items
+    q_items = TimelineItem.objects.filter(
         target__user=user, type='Question', question__isnull=False
-    ).values('target', 'question').distinct().count()
+    ).values('target_id', 'question_id', 'question__rank__points')
+    
+    # Process Unique Answers
+    # Set of unique (target_id, question_id) tuples
+    unique_pairs = set()
+    total_points = 0
+    
+    for item in q_items:
+        pair = (item['target_id'], item['question_id'])
+        if pair not in unique_pairs:
+            unique_pairs.add(pair)
+            # Add points for this unique answer
+            points = item['question__rank__points']
+            if points:
+                total_points += points
 
-    # Total Points
-    # Sum of QuestionRank points for all answered questions
-    # Note: If a question is answered multiple times, do we sum points multiple times? 
-    # User said "Answer count excludes duplicates". Points likely follow? 
-    # "Total Answered Question Points". If I answer Q1 (10pt) twice, is it 20pt? 
-    # Usually stats implied "Score". If I improved my dossier, I get points. 
-    # I will sum unique answers' rank points.
-    
-    # Efficient way: Get all unique answered questions -> sum their ranks
-    # But filtering unique in Django then summing related model field is tricky.
-    # Logic: Get unique questions per target -> get their ranks -> sum.
-    # We can fetch the list of q_ids and sum manually or subquery.
-    answered_q_ids = TimelineItem.objects.filter(
-        target__user=user, type='Question', question__isnull=False
-    ).values_list('question__rank__points', flat=True) # This includes duplicates!
-    
-    # To get unique (target, question), we need more complex query.
-    # Simplified: Sum all VALID answers points. 
-    # "Duplicate answers" usually means correcting an answer. 
-    # I will stick to: Count of Unique Answers * Avg Point? No.
-    # Let's count distinct pairs first.
-    unique_pairs = TimelineItem.objects.filter(
-        target__user=user, type='Question', question__isnull=False
-    ).values('question__rank__points').distinct() 
-    # distinct() on values('question')? NO. TimelineItem doesn't track "latest".
-    # User requirement: "Same target same question duplicate count not included"
-    # So we want to Sum points for the Unique Set.
-    # We can do this in Python for now as dataset isn't huge.
-    unique_answers = TimelineItem.objects.filter(
-        target__user=user, type='Question', question__isnull=False
-    ).values('target_id', 'question__rank__points').distinct()
-    
-    total_points = sum(item['question__rank__points'] or 0 for item in unique_answers)
-    
+    qa_count = len(unique_pairs)
     total_logs = TimelineItem.objects.filter(target__user=user).count()
 
     # 2. Anniversaries (Range: Today-2 to Today+21)
