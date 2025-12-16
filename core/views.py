@@ -191,8 +191,13 @@ class TargetDetailView(LoginRequiredMixin, DetailView):
     template_name = 'target_detail.html'
     context_object_name = 'target'
 
-    def get_queryset(self):
-        return Target.objects.filter(user=self.request.user)
+    def get_object(self):
+        # Allow fetching by ?target_id= or standard PK if provided (though URL will likely be clean)
+        pk = self.request.GET.get('target_id')
+        if not pk:
+            # Fallback to URL kwarg if present
+            return super().get_object()
+        return get_object_or_404(Target, pk=pk, user=self.request.user)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -230,7 +235,7 @@ class TargetDetailView(LoginRequiredMixin, DetailView):
                 
                 q_info = {
                     'question': q,
-                    'answer': answer_item.description if answer_item else None, # Use description as answer
+                    'answer': answer_item.content if answer_item else None, # key is 'content' in model
                     'answer_date': answer_item.date if answer_item else None,
                     'is_answered': bool(answer_item)
                 }

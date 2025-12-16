@@ -74,7 +74,7 @@
 
                     <!-- Action Buttons -->
                     <div class="flex gap-1.5 w-full justify-center mt-1">
-                        <a href="{% url 'target_detail' target.pk %}" 
+                        <a href="{% url 'target_detail' %}?target_id={{ target.pk }}" 
                            class="flex-1 py-0.5 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 border border-purple-500/30 rounded text-[9px] font-bold transition text-center flex items-center justify-center gap-1 shadow-sm leading-tight">
                            <i class="fas fa-chart-bar text-[8px]"></i> DETAIL
                         </a>
