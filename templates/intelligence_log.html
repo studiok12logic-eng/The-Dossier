@@ -406,7 +406,7 @@
         if (avatar) {
             avatarEl.innerHTML = `<img src="${avatar}" class="w-full h-full object-cover">`;
         } else {
-            avatarEl.innerHTML = `<div class="w-full h-full flex items-center justify-center text-xs text-gray-500">${name.charAt(0)}</div>`;
+            avatarEl.innerHTML = `<div class="w-full h-full flex items-center justify-center text-xs text-text-sub">${name.charAt(0)}</div>`; // Fixed color class
         }
         
         // Switch to log view
@@ -416,6 +416,11 @@
         document.getElementById('mobileTabTargets').classList.add('bg-white/5', 'text-gray-400');
         document.getElementById('mobileTabLog').classList.remove('bg-white/5', 'text-gray-400');
         document.getElementById('mobileTabLog').classList.add('bg-primary', 'text-black');
+
+        // Logic needed for Shared State
+        currentTargetId = id;
+        resetTimeline();
+        fetchTimeline();
     }
     
     function showMobileTargets() {
@@ -474,6 +479,7 @@
 
     // --- Timeline State ---
     const timelineContainer = document.getElementById('timelineContainer');
+    const mobileTimelineContent = document.getElementById('mobileTimelineContent'); // Added for mobile
     const timelineContent = document.getElementById('timelineContent');
     const timelineLoading = document.getElementById('timelineLoading');
     const timelineSearch = document.getElementById('timelineSearch');
@@ -524,7 +530,8 @@
     // --- Timeline Functions ---
     function resetTimeline() {
         timelineContent.innerHTML = '';
-        console.log("Clearing timeline", timelineContent.innerHTML); // Debug
+        if (mobileTimelineContent) mobileTimelineContent.innerHTML = '';
+        console.log("Clearing timeline"); 
         timelineCursorDate = null;
         hasMore = true;
     }
@@ -565,6 +572,8 @@
         // Items are created_at DESC (Newest First) from API.
         // We want reversed (Old -> New) for chat style at bottom.
         const orderedItems = [...items].reverse();
+        
+        // Render for Desktop
         const fragment = document.createDocumentFragment();
         orderedItems.forEach(item => fragment.appendChild(createTimelineElement(item)));
 
@@ -576,6 +585,22 @@
         } else {
             timelineContent.appendChild(fragment);
             timelineContainer.scrollTop = timelineContainer.scrollHeight;
+        }
+
+        // Render for Mobile
+        if(mobileTimelineContent) {
+            const fragmentMobile = document.createDocumentFragment();
+            orderedItems.forEach(item => fragmentMobile.appendChild(createTimelineElement(item))); // Create fresh elements with listeners
+
+            if (append) {
+                const firstChild = mobileTimelineContent.firstElementChild;
+                const oldHeight = mobileTimelineContent.scrollHeight;
+                mobileTimelineContent.insertBefore(fragmentMobile, firstChild);
+                mobileTimelineContent.scrollTop = mobileTimelineContent.scrollHeight - oldHeight;
+            } else {
+                mobileTimelineContent.appendChild(fragmentMobile);
+                mobileTimelineContent.scrollTop = mobileTimelineContent.scrollHeight;
+            }
         }
     }
 
@@ -655,6 +680,12 @@
     timelineContainer.addEventListener('scroll', () => {
         if (timelineContainer.scrollTop === 0 && hasMore && !isFetching) fetchTimeline(true);
     });
+    // Mobile Scroll
+    if (mobileTimelineContent) {
+        mobileTimelineContent.addEventListener('scroll', () => {
+            if (mobileTimelineContent.scrollTop === 0 && hasMore && !isFetching) fetchTimeline(true);
+        });
+    }
     
     let searchDebounce;
     timelineSearch.addEventListener('input', () => {
