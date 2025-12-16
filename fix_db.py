@@ -19,7 +19,7 @@ def fix_db():
         ('question_text', 'VARCHAR(255)'),
         ('question_answer', 'TEXT'),
         ('question_category', 'VARCHAR(100)'),
-        ('created_at', 'DATETIME DEFAULT CURRENT_TIMESTAMP')
+        ('created_at', "DATETIME DEFAULT '2025-01-01 00:00:00'")
     ]
     
     for col_name, col_def in cols_to_add:
