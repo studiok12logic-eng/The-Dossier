@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.views.generic import CreateView, UpdateView, View, DeleteView
+from django.views.generic import CreateView, UpdateView, View, DeleteView, DetailView
 from django.urls import reverse_lazy
 from django.db import transaction
 from django.http import JsonResponse
