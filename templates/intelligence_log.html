@@ -814,9 +814,27 @@
                 }
                 resetTimeline();
                 fetchTimeline();
-            } else {
-                alert('削除に失敗しました: ' + (data.error || 'Unknown error'));
-            }
+                
+                // Update NoLog Badge
+                if (data.target_id !== undefined && data.has_entry_today !== undefined) {
+                     const targetEl = document.querySelector(`.target-item[data-id="${data.target_id}"]`);
+                     if (targetEl) {
+                         let badge = targetEl.querySelector('.nolog-badge');
+                         if (!data.has_entry_today) {
+                             if (!badge) {
+                                 badge = document.createElement('div');
+                                 badge.className = "text-[10px] text-yellow-500/80 flex items-center gap-1 mt-0.5 nolog-badge";
+                                 badge.innerHTML = '<i class="fas fa-exclamation-circle text-[9px]"></i> NoLog';
+                                 const nameDiv = targetEl.querySelector('.text-\\[10px\\].text-text-sub.truncate');
+                                 if (nameDiv) nameDiv.after(badge);
+                             } else {
+                                 badge.classList.remove('hidden');
+                             }
+                         } else {
+                             if (badge) badge.classList.add('hidden');
+                         }
+                     }
+                }
         }).catch(err => {
             alert('通信エラーが発生しました');
             console.error(err);
@@ -1023,9 +1041,27 @@
                 }
                 resetTimeline();
                 fetchTimeline();
-            } else {
-                alert('保存に失敗しました: ' + (data.error || 'Unknown error'));
-            }
+
+                // Update NoLog Badge
+                if (data.target_id !== undefined && data.has_entry_today !== undefined) {
+                     const targetEl = document.querySelector(`.target-item[data-id="${data.target_id}"]`);
+                     if (targetEl) {
+                         let badge = targetEl.querySelector('.nolog-badge');
+                         if (!data.has_entry_today) {
+                             if (!badge) {
+                                 badge = document.createElement('div');
+                                 badge.className = "text-[10px] text-yellow-500/80 flex items-center gap-1 mt-0.5 nolog-badge";
+                                 badge.innerHTML = '<i class="fas fa-exclamation-circle text-[9px]"></i> NoLog';
+                                 const nameDiv = targetEl.querySelector('.text-\\[10px\\].text-text-sub.truncate');
+                                 if (nameDiv) nameDiv.after(badge);
+                             } else {
+                                 badge.classList.remove('hidden');
+                             }
+                         } else {
+                             if (badge) badge.classList.add('hidden');
+                         }
+                     }
+                }
         });
     });
 
