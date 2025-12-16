@@ -29,7 +29,7 @@ def dashboard(request):
 @login_required
 def target_list(request):
     sort_by = request.GET.get('sort', 'last_contact')
-    targets = Target.objects.filter(user=request.user)
+    targets = Target.objects.filter(user=request.user).prefetch_related('groups')
 
     if sort_by == 'group':
         targets = targets.order_by('groups__name', 'nickname')
