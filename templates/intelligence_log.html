@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block content_wrapper_class %}flex-1 h-full overflow-hidden p-4 md:p-8 pb-4 md:pb-4{% endblock %}
+{% block content_wrapper_class %}flex-1 h-full overflow-hidden p-4 md:p-8 pb-0 md:pb-0{% endblock %}
 
 {% block content %}
 <div class="h-full flex overflow-hidden gap-6">
@@ -38,7 +38,7 @@
                     data-avatar="{% if item.obj.avatar %}{{ item.obj.avatar.url }}{% endif %}">
                     
                     <!-- Avatar -->
-                    <div class="w-[50px] h-[50px] min-w-[50px] min-h-[50px] rounded-full bg-black border border-white/10 overflow-hidden flex-shrink-0 relative">
+                    <div class="w-[50px] h-[50px] min-w-[50px] min-h-[50px] rounded-full bg-black border border-white/10 overflow-hidden flex-shrink-0 relative" style="width: 50px; height: 50px;">
                         {% if item.obj.avatar %}
                         <img src="{{ item.obj.avatar.url }}" class="w-full h-full object-cover">
                         {% else %}
@@ -121,8 +121,9 @@
             <!-- Search & Filters -->
             <div class="flex items-center gap-2">
                 <!-- Encanto Filter Toggle -->
-                <button id="encantoFilterBtn" class="flex items-center gap-1 px-2 py-1 rounded bg-black/50 border border-white/10 text-gray-500 hover:text-green-400 hover:border-green-400/50 transition" title="Show Encanto Only">
+                <button id="encantoFilterBtn" class="flex items-center gap-1 px-3 py-1.5 rounded-full border border-white/10 text-gray-500 hover:text-green-400 hover:border-green-400/50 transition font-mono text-xs" title="Show Encanto Only">
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span>ENCANTO</span>
                 </button>
 
                 <select id="timelineTypeFilter" class="bg-black/50 border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-primary">
@@ -223,7 +224,7 @@
                 </div>
 
                 <!-- Controls Area -->
-                <div class="flex items-center justify-between gap-3 p-3 border-t border-white/10 bg-black/20">
+                <div class="flex items-center justify-between gap-3 p-4 pb-12 border-t border-white/10 bg-black/20">
                     <!-- Date & Contact -->
                     <div class="flex items-center gap-3">
                          <div class="relative">
@@ -520,34 +521,49 @@
     // Encanto Filter
     encantoFilterBtn.addEventListener('click', () => {
         isEncantoFilterActive = !isEncantoFilterActive;
-        encantoFilterBtn.classList.toggle('text-green-400');
-        encantoFilterBtn.classList.toggle('border-green-400');
-        encantoFilterBtn.classList.toggle('bg-green-500/10');
+        
+        if (isEncantoFilterActive) {
+            encantoFilterBtn.classList.remove('text-gray-500', 'border-white/10', 'bg-transparent');
+            encantoFilterBtn.classList.add('bg-green-500', 'text-black', 'border-green-500', 'font-bold');
+        } else {
+            encantoFilterBtn.classList.add('text-gray-500', 'border-white/10', 'bg-transparent');
+            encantoFilterBtn.classList.remove('bg-green-500', 'text-black', 'border-green-500', 'font-bold');
+        }
+
         resetTimeline();
         fetchTimeline();
     });
 
     // --- Action Functions ---
+    // --- Action Functions ---
     function deleteLog(itemId) {
-        if(!confirm("ログを削除しますか？")) return;
-        // Assuming delete functionality in backend, but we only have create/update in implementation plan?
-        // Wait, standard CRUD usually has delete. Checking urls.py... NO DELETE for TimelineItem!
-        // I will allow deletion via action='delete' in post? Or better add a standard delete view.
-        // For now, let's use the POST action='delete' which I can implement in backend or just warning.
-        // Implementation plan didn't specify Delete Backend. I added UI.
-        // I will assume logic similar to create/update.
-        // I should have added delete execution. I'll implement in 'post' now via `action`.
+        if(!confirm("ログを削除しますか？この操作は取り消せません。")) return;
         
-        // Actually, let's assume I need to handle it in POST since I modified POST heavily.
-        // But POST didn't have delete logic in my replace step.
-        // I will add it to POST logic via edit? No.
-        // I'll alert user "Delete not implemented" if I didn't. 
-        // But I should implement it. I'll implement it client side calling 'action=delete' and hope backend catches it?
-        // No, I rewrote backend in Step 339 and didn't include delete.
-        // I will disable delete button for now or implement it later?
-        // User asked for delete button. I'll add "TODO" alert or try to handle on update.
-        // Actually, I can use `action='delete'` in `post` and fix backend. 
-        alert("削除機能はまだ実装されていません (Backend requires update)");
+        fetch('{% url "intelligence_log" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                action: 'delete',
+                item_id: itemId
+            })
+        }).then(res => res.json()).then(data => {
+            if (data.success) {
+                // If editing this item, cancel edit
+                if (editingItemIdInput.value === itemId) {
+                    cancelEditMode();
+                }
+                resetTimeline();
+                fetchTimeline();
+            } else {
+                alert('削除に失敗しました: ' + (data.error || 'Unknown error'));
+            }
+        }).catch(err => {
+            alert('通信エラーが発生しました');
+            console.error(err);
+        });
     }
 
     function editLog(item) {

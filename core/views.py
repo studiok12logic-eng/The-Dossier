@@ -306,10 +306,17 @@ class IntelligenceLogView(LoginRequiredMixin, View):
         
         try:
             data = json.loads(request.body)
-            # Action: 'create' (default) or 'update'
+            # Action: 'create' (default), 'update' or 'delete'
             action = data.get('action', 'create')
             
-            if action == 'update':
+            if action == 'delete':
+                item_id = data.get('item_id')
+                if not item_id: return JsonResponse({'success': False, 'error': 'Item ID required'})
+                item = get_object_or_404(TimelineItem, pk=item_id, target__user=request.user)
+                item.delete()
+                return JsonResponse({'success': True})
+
+            elif action == 'update':
                 item_id = data.get('item_id')
                 item = get_object_or_404(TimelineItem, pk=item_id, target__user=request.user)
                 
