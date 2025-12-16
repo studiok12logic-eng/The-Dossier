@@ -237,8 +237,9 @@ class IntelligenceLogView(LoginRequiredMixin, View):
             birth_day=current_date.day
         )
         
-        anniv_ids = set()
-        for t in birthday_targets: anniv_ids.add(t.id)
+        anniv_labels = {}
+        for t in birthday_targets:
+            anniv_labels.setdefault(t.id, []).append("誕生日")
         
         custom_annivs = CustomAnniversary.objects.filter(
             target__user=request.user,
@@ -246,7 +247,9 @@ class IntelligenceLogView(LoginRequiredMixin, View):
             date__day=current_date.day
         )
         for ca in custom_annivs:
-            anniv_ids.add(ca.target.id)
+            anniv_labels.setdefault(ca.target.id, []).append(ca.label)
+        
+        anniv_ids = set(anniv_labels.keys())
 
         # 4. Manual State Handling
         daily_states = DailyTargetState.objects.filter(target__user=request.user, date=current_date)
@@ -265,13 +268,14 @@ class IntelligenceLogView(LoginRequiredMixin, View):
         target_list = []
         for t in targets:
             has_entry = TimelineItem.objects.filter(target=t, date=current_date).exists()
-            is_anniv = (t.id in anniv_ids)
+            labels = anniv_labels.get(t.id, [])
             age = t.age
             
             target_list.append({
                 'obj': t,
                 'has_entry': has_entry,
-                'is_anniversary': is_anniv,
+                'is_anniversary': bool(labels),
+                'anniversary_label': ", ".join(labels),
                 'age': age
             })
 

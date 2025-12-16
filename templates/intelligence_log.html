@@ -25,9 +25,7 @@
                     <span class="w-1 h-4 bg-primary block"></span>
                     TARGET SELECT
                 </h2>
-                <div class="text-[10px] text-gray-500 font-mono mt-1">
-                    {{ today_date }} ({{ weekday_jp }})
-                </div>
+                <!-- Date Removed -->
             </div>
     
             <!-- Target List -->
@@ -47,24 +45,26 @@
                     </div>
                     
                     <!-- Info -->
-                    <div class="flex-1 min-w-0">
+                    <div class="flex-1 min-w-0 flex flex-col justify-center">
                         <div class="flex items-center gap-2">
                             <span class="text-sm text-white font-mono truncate group-hover:text-primary">{{ item.obj.nickname }}</span>
-                            <!-- Icons -->
-                            {% if item.is_anniversary %}
-                            <span class="text-red-500 text-xs" title="Anniversary"><i class="fas fa-gift"></i></span>
-                            {% endif %}
-                            {% if item.has_entry %}
-                            <span class="text-primary text-xs" title="Log Exists"><i class="fas fa-check-circle"></i></span>
-                            {% endif %}
-                            {% if not item.has_entry %}
-                            <span class="text-yellow-500 text-xs" title="Unfilled"><i class="fas fa-exclamation-circle"></i></span>
-                            {% endif %}
                         </div>
-                        <div class="text-[10px] text-gray-500 truncate">
-                            {{ item.obj.last_name }} {{ item.obj.first_name }} 
-                            {% if item.age %}({{ item.age }}){% endif %}
+                        <div class="text-[10px] text-gray-400 truncate font-sans">
+                            {{ item.obj.last_name }} {{ item.obj.first_name }}{% if item.age %}({{ item.age }}){% endif %}
                         </div>
+
+                        <!-- Status Lines -->
+                        {% if not item.has_entry %}
+                        <div class="text-[10px] text-yellow-500/80 flex items-center gap-1 mt-0.5">
+                             <i class="fas fa-exclamation-circle text-[9px]"></i> NoLog
+                        </div>
+                        {% endif %}
+                        
+                        {% if item.is_anniversary %}
+                        <div class="text-[10px] text-red-400 flex items-center gap-1 mt-0.5 font-bold animate-pulse">
+                             <i class="fas fa-gift text-[9px]"></i> {{ item.anniversary_label }}
+                        </div>
+                        {% endif %}
                     </div>
 
                     <!-- Minus Button (Hover Only) -->
