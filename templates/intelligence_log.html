@@ -227,17 +227,22 @@
                             </select>
                         </div>
 
-                        <div id="qDetails"
-                            class="hidden bg-background border border-border rounded p-2 text-[10px] text-text-sub flex gap-4">
-                            <div>Rank: <span id="qRank" class="text-primary"></span></div>
-                            <div class="truncate flex-1">Intent: <span id="qDesc"></span></div>
-                            <div class="hidden">Ex: <span id="qEx"></span></div>
-                        </div>
+                        <!-- PC: Details and Choices in one row. Mobile: Stacked -->
+                        <div class="flex flex-col md:flex-row gap-2">
+                            <!-- Details (Always Visible) -->
+                            <div id="qDetails"
+                                class="bg-background border border-border rounded p-2 text-[10px] text-text-sub flex flex-col justify-center min-w-[120px]">
+                                <div>Rank: <span id="qRank" class="text-primary">-</span></div>
+                                <div class="truncate flex-1">Intent: <span id="qDesc">-</span></div>
+                                <div class="hidden">Ex: <span id="qEx">-</span></div>
+                            </div>
 
-                        <div id="qChoicesCheck"
-                            class="opacity-50 pointer-events-none transition-opacity bg-background border border-border rounded p-2 min-h-[40px] flex flex-col justify-center">
-                            <div id="qCheckPlaceholder" class="text-[10px] text-text-sub text-center">選択肢 (質問を選択)</div>
-                            <div id="qChoicesContainer" class="flex flex-wrap gap-1"></div>
+                            <!-- Choices -->
+                            <div id="qChoicesCheck"
+                                class="flex-1 opacity-50 pointer-events-none transition-opacity bg-background border border-border rounded p-2 min-h-[40px] flex flex-col justify-center">
+                                <div id="qCheckPlaceholder" class="text-[10px] text-text-sub text-center">選択肢 (質問を選択)</div>
+                                <div id="qChoicesContainer" class="flex flex-wrap gap-1"></div>
+                            </div>
                         </div>
 
                         <textarea id="qAnswer"
@@ -652,10 +657,9 @@
 
         let content = '';
         if (item.type === 'QUESTION') {
-            content = `
-                    <div class="text-xs font-bold text-text-main mb-1">Q. ${item.question_title || 'Unknown Question'}</div>
-                    <div class="text-text-sub">${escapeHtml(item.question_answer || '')}</div>
-                `;
+            const qTitle = item.question_title || 'Unknown Question';
+            // Title is now in header, so content is just answer
+            content = `<div class="text-text-sub text-sm whitespace-pre-wrap">${escapeHtml(item.question_answer || '')}</div>`;
         } else {
             content = `<div class="text-text-sub text-sm whitespace-pre-wrap">${escapeHtml(item.description || '')}</div>`;
         }
@@ -678,9 +682,9 @@
         div.className = "bg-text-main/5 border border-border rounded p-3 text-sm hover:bg-text-main/10 transition-colors group relative";
         div.innerHTML = `
             <div class="flex justify-between items-start mb-1">
-                 <div class="flex items-center gap-2">
                     ${encantoBadge}
-                    <span class="text-[10px] px-1.5 rounded ${typeBadge} border border-border">${item.type}</span>
+                    <span class="text-[10px] px-1.5 rounded ${typeBadge} border border-border flex-shrink-0">${item.type}</span>
+                    ${item.type === 'QUESTION' ? `<span class="text-[10px] font-bold text-green-400 border border-green-500/30 bg-green-500/10 px-1.5 rounded truncate max-w-[150px] md:max-w-[200px]">Q. ${item.question_title || '?'}</span>` : ''}
                  </div>
                  <div class="flex items-center gap-3">
                      <!-- Buttons -->
@@ -1002,9 +1006,16 @@
         const cat = e.target.value;
         qSelect.innerHTML = '<option value="">質問を選択してください</option>';
         qSelect.disabled = !cat;
-        qDetails.classList.add('hidden');
+        // qDetails.classList.add('hidden'); // Removed to keep visible
+        // Reset details
+        document.getElementById('qRank').textContent = '-';
+        document.getElementById('qDesc').textContent = '-';
+        document.getElementById('qEx').textContent = '-';
+        
         qChoicesContainer.innerHTML = '';
         qChoicesCheck.classList.add('opacity-50', 'pointer-events-none');
+        // Reset placeholder
+        if(qCheckPlaceholder) qCheckPlaceholder.classList.remove('hidden');
         selectedChoices.clear(); currentQuestion = null;
         if (cat) questionsData.filter(q => q.category === cat).forEach(q => qSelect.add(new Option(q.text, q.id)));
     });
@@ -1018,7 +1029,7 @@
             document.getElementById('qRank').textContent = q.rank || '-';
             document.getElementById('qDesc').textContent = q.description || '-';
             document.getElementById('qEx').textContent = q.example || '-';
-            qDetails.classList.remove('hidden');
+            // qDetails.classList.remove('hidden'); // Always visible now
 
             qChoicesContainer.innerHTML = '';
             if (q.answer_type === 'SELECTION' && q.choices) {
@@ -1045,7 +1056,11 @@
                 if (qCheckPlaceholder) qCheckPlaceholder.classList.remove('hidden');
             }
         } else {
-            qDetails.classList.add('hidden');
+            // qDetails.classList.add('hidden'); // Removed
+             document.getElementById('qRank').textContent = '-';
+             document.getElementById('qDesc').textContent = '-';
+             document.getElementById('qEx').textContent = '-';
+             if(qCheckPlaceholder) qCheckPlaceholder.classList.remove('hidden');
             qChoicesCheck.classList.add('opacity-50', 'pointer-events-none');
         }
     });

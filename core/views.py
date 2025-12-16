@@ -424,7 +424,7 @@ class IntelligenceLogView(LoginRequiredMixin, View):
         from intelligence.models import Question, Tag
         questions = Question.objects.filter(
             Q(is_shared=True) | Q(user=request.user)
-        ).order_by('order', 'title')
+        ).order_by('category', 'order', 'title')
         
         all_targets = Target.objects.filter(user=request.user)
 
