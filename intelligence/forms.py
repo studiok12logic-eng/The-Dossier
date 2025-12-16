@@ -122,21 +122,42 @@ class QuestionForm(forms.ModelForm):
         }
     
     def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)
+        self.user = kwargs.pop('user', None) # Store user
         super().__init__(*args, **kwargs)
-        if user:
-            self.fields['category'].queryset = QuestionCategory.objects.filter(user=user)
-            self.fields['rank'].queryset = QuestionRank.objects.filter(user=user)
+        if self.user:
+            self.fields['category'].queryset = QuestionCategory.objects.filter(user=self.user)
+            self.fields['rank'].queryset = QuestionRank.objects.filter(user=self.user)
             
-            # Permission: Only 'MASTER' or 'Admin' role can set is_shared
-            # Assuming 'MASTER' is the value stored in DB.
+            # Permission: Only 'MASTER' or 'Admin' role can set is_shared, category, rank
             is_master = False
-            if hasattr(user, 'role') and user.role == 'MASTER':
+            if hasattr(self.user, 'role') and self.user.role == 'MASTER':
                 is_master = True
             
             if not is_master:
-                if 'is_shared' in self.fields:
-                    del self.fields['is_shared']
+                # Remove fields for non-MASTER
+                cols_to_remove = ['is_shared', 'category', 'rank']
+                for col in cols_to_remove:
+                    if col in self.fields:
+                        del self.fields[col]
         else:
              self.fields['category'].queryset = QuestionCategory.objects.none()
              self.fields['rank'].queryset = QuestionRank.objects.none()
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        
+        # Enforce defaults for non-MASTER
+        is_master = False
+        if hasattr(self.user, 'role') and self.user.role == 'MASTER':
+            is_master = True
+            
+        if not is_master and self.user:
+            instance.is_shared = False
+            instance.rank = None
+            # Set default category 'その他'
+            cat, _ = QuestionCategory.objects.get_or_create(user=self.user, name='その他')
+            instance.category = cat
+            
+        if commit:
+            instance.save()
+        return instance

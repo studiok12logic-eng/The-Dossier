@@ -16,6 +16,7 @@
             
             <!-- Type & Scope -->
             <div class="grid grid-cols-2 gap-4">
+                {% if user.role == 'MASTER' %}
                 <div class="bg-surface border border-white/10 p-4 rounded-xl">
                     <label class="block text-xs font-mono text-gray-400 mb-2">公開範囲</label>
                     <div class="flex items-center gap-2">
@@ -23,6 +24,7 @@
                         <span class="text-sm text-gray-300">共通質問 (Shared)</span>
                     </div>
                 </div>
+                {% endif %}
                 <div class="bg-surface border border-white/10 p-4 rounded-xl">
                     <label class="block text-xs font-mono text-gray-400 mb-2">表示順</label>
                     {{ form.order }}
@@ -30,6 +32,7 @@
             </div>
 
             <!-- Classification (Category & Rank) -->
+            {% if user.role == 'MASTER' %}
             <div class="bg-surface border border-white/10 p-6 rounded-xl space-y-4">
                 <h3 class="text-sm font-bold text-primary font-mono border-b border-white/5 pb-2">CLASSIFICATION</h3>
                 
@@ -53,6 +56,7 @@
                     </div>
                 </div>
             </div>
+            {% endif %}
 
             <!-- Content -->
             <div class="bg-surface border border-white/10 p-6 rounded-xl space-y-4">
