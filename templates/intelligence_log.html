@@ -834,7 +834,11 @@
                              if (badge) badge.classList.add('hidden');
                          }
                      }
+                     }
                 }
+            } else {
+                alert('削除に失敗しました: ' + (data.error || 'Unknown error'));
+            }
         }).catch(err => {
             alert('通信エラーが発生しました');
             console.error(err);
@@ -1062,6 +1066,11 @@
                          }
                      }
                 }
+                     }
+                }
+            } else {
+                alert('保存に失敗しました: ' + (data.error || 'Unknown error'));
+            }
         });
     });
 
