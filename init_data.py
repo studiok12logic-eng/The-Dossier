@@ -11,9 +11,9 @@ if not User.objects.filter(username='admin').exists():
 if not Target.objects.exists():
     t = Target.objects.create(
         nickname="Elara Vance",
-        rank="A",
-        origin="Neo-Tokyo Sector 7",
-        intel_depth=60.0,
+        role_rank="A",
+        # origin="Neo-Tokyo Sector 7", # Field removed
+        # intel_depth=60.0, # Field removed
         last_contact=timezone.now(),
         gender="Female"
     )
@@ -40,7 +40,7 @@ from intelligence.models import Question, QuestionCategory
 admin_user = User.objects.get(username='admin')
 
 # 1. Categories
-system_cat, _ = QuestionCategory.objects.get_or_create(user=admin_user, name="Basic Profile", description="Fundamental details")
+system_cat, _ = QuestionCategory.objects.get_or_create(user=admin_user, name="その他", description="Fundamental details")
 
 # 2. Questions Configuration
 # title: 質問名（画面に表示される名前）
@@ -48,7 +48,7 @@ system_cat, _ = QuestionCategory.objects.get_or_create(user=admin_user, name="Ba
 # type:  回答形式 ('TEXT'=自由記述, 'SELECTION'=選択式)
 # choices: 選択肢（カンマ区切り文字列）。type='SELECTION'の場合に必須です。
 # order: 表示順（数字が小さい順に表示されます）
-# category: カテゴリ名（指定しない場合は "Basic Profile" になります）
+# category: カテゴリ名（指定しない場合は "その他" になります）
 default_questions = [
     {"title": "現住所", "desc": "今現在住んでいる住所", "type": "TEXT", "order": 1, "category": "基本情報"},
     {"title": "職業", "desc": "現在の職業や役職", "type": "TEXT", "order": 2, "category": "基本情報"},
