@@ -816,11 +816,6 @@
         occurrenceDateInput.value = item.date;
         contactFlagCheckbox.checked = item.contact_made;
 
-        if (item.type === 'QUESTION') {
-            tabQuestion.click();
-            // Try to set Question Select
-            // We need question_id. Backend didn't send it until I added it in Step 344.
-            // item.question_id should exist now.
         if (item.type.toUpperCase() === 'QUESTION') {
             tabQuestion.click();
             // Try to set Question Select
