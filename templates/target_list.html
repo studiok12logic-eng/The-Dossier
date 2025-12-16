@@ -37,86 +37,89 @@
         {% for target in targets %}
         <div
             class="bg-surface/50 border border-white/10 rounded-xl p-4 hover:border-primary/50 transition-all group relative overflow-hidden">
+            <!-- Header Bar (Rank & Last Contact) -->
+            <div class="flex justify-between items-center bg-black/40 -mx-4 -mt-4 mb-4 px-4 py-2 border-b border-white/5">
+                <!-- Left: Rank & Stats -->
+                <div class="flex items-center gap-3 text-[10px] font-mono">
+                    <span class="text-yellow-500 font-bold flex items-center gap-1">
+                        <i class="fas fa-crown"></i> ゴールド
+                    </span>
+                    <span class="text-gray-400 flex items-center gap-1">
+                        <i class="fas fa-star text-gray-600"></i> 30pt
+                    </span>
+                    <span class="text-gray-400 flex items-center gap-1">
+                        <i class="fas fa-comment text-gray-600"></i> 3
+                    </span>
+                </div>
+                <!-- Right: Last Contact -->
+                <div class="flex items-center gap-2 text-[10px] font-mono text-gray-400">
+                    <i class="fas fa-history text-emerald-500"></i>
+                    <span>{% if target.last_contact %}{{ target.last_contact|date:"Y-m-d" }}{% else %}-{% endif %}</span>
+                </div>
+            </div>
+
             <!-- Inner Card Content -->
             <div class="flex items-start gap-4">
                 <!-- Left Column: Avatar & Buttons -->
-                <div class="flex flex-col gap-2 items-center shrink-0 w-[60px]">
-                    <!-- Avatar -->
-                    <div class="w-[60px] h-[60px] rounded-full bg-black border border-white/20 overflow-hidden relative shadow-lg">
+                <div class="flex flex-col gap-3 items-center shrink-0 w-[100px]">
+                    <!-- Avatar (Max 100px) -->
+                    <div class="w-[80px] h-[80px] md:w-[100px] md:h-[100px] rounded-full bg-black border border-white/20 overflow-hidden relative shadow-lg shrink-0">
                         {% if target.avatar %}
                         <img src="{{ target.avatar.url }}" class="w-full h-full object-cover">
                         {% else %}
-                        <div class="w-full h-full flex items-center justify-center text-xs text-gray-500">{{ target.nickname|slice:":1" }}</div>
+                        <div class="w-full h-full flex items-center justify-center text-xl text-gray-500">{{ target.nickname|slice:":1" }}</div>
                         {% endif %}
                     </div>
 
                     <!-- Action Buttons -->
-                    <div class="flex flex-col gap-1 w-full">
-                        <button type="button" class="w-full py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded text-[9px] text-gray-400 transition hover:text-white"
-                            onclick="alert('LEADME Dashboard - Coming Soon')">LEADME</button>
+                    <div class="flex gap-2 w-full justify-center">
                         <a href="{% url 'intelligence_log' %}?target_id={{ target.pk }}" 
-                           class="w-full py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded text-[9px] text-gray-400 transition hover:text-white text-center block"
-                           style="line-height: 1.5;">LOG</a>
+                           class="flex-1 py-1 bg-white hover:bg-white/90 text-black border border-white rounded text-[10px] font-bold transition text-center flex items-center justify-center gap-1">
+                           <i class="fas fa-file-alt"></i> LOG
+                        </a>
                         <a href="{% url 'target_edit' target.pk %}" 
-                           class="w-full py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded text-[9px] text-gray-400 transition hover:text-white text-center block"
-                           style="line-height: 1.5;">EDIT</a>
+                           class="flex-1 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-500 border border-emerald-500/50 rounded text-[10px] font-bold transition text-center flex items-center justify-center gap-1">
+                           <i class="fas fa-pencil-alt"></i> EDIT
+                        </a>
                     </div>
                 </div>
 
                 <!-- Right Column: Detailed Info -->
-                <div class="flex-1 min-w-0 flex flex-col gap-1">
-                    <!-- Line 1: Identity & Last Contact -->
-                    <div class="flex items-baseline gap-2 flex-wrap leading-tight border-b border-white/5 pb-1">
-                        <span class="text-base font-bold text-white truncate font-mono">{{ target.nickname }}</span>
-                        <span class="text-[10px] text-gray-400">
-                            {{ target.last_name }} {{ target.first_name }}
-                            {% if target.age %}({{ target.age }}){% endif %}
-                        </span>
-                        <div class="ml-auto text-right">
-                            <span class="block text-[8px] text-gray-500 font-mono">LAST CONTACT</span>
-                            <span class="text-[10px] text-emerald-500 font-mono">
-                                {% if target.last_contact %}{{ target.last_contact|date:"Y-m-d" }}{% else %}-{% endif %}
-                            </span>
-                        </div>
+                <div class="flex-1 min-w-0 flex flex-col justify-center gap-1">
+                    <!-- Line 1: Name (Small) -->
+                    <div class="text-[10px] text-gray-400 leading-tight">
+                        {{ target.last_name }} {{ target.first_name }} {% if target.age %}({{ target.age }}){% endif %}
                     </div>
 
-                    <!-- Line 2: Groups -->
-                    <div class="text-[10px] text-primary truncate">
+                    <!-- Line 2: Nickname (Big) -->
+                    <div class="text-xl font-bold text-white font-mono truncate mb-2 leading-none">
+                        {{ target.nickname }}
+                    </div>
+
+                    <!-- Line 3: Groups (Pills) -->
+                    <div class="flex flex-wrap gap-1 mb-2">
                         {% for group in target.groups.all %}
-                            {{ group.name }}{% if not forloop.last %}, {% endif %}
+                        <span class="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-[9px] border border-blue-500/20">
+                            {{ group.name }}
+                        </span>
                         {% empty %}
-                            <span class="text-gray-600">-</span>
+                        <span class="text-gray-600 text-[9px]">-</span>
                         {% endfor %}
                     </div>
 
-                    <!-- Line 3: Bio Data -->
-                    <div class="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-gray-400 leading-tight mt-1">
-                        <span class="flex items-center gap-1">
-                            <i class="fas fa-birthday-cake text-gray-600 text-[9px]"></i>
-                            {% if target.birth_month %}{{ target.birth_year }}/{{ target.birth_month }}/{{ target.birth_day }}{% else %}-{% endif %}
-                        </span>
-                        <span>{{ target.zodiac_sign }}</span>
-                        <span>{{ target.eto|default:"" }}</span>
-                    </div>
-                    <!-- Line 4: Info -->
-                    <div class="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-gray-400 leading-tight">
-                        <span>{{ target.get_gender_display|default:"-" }}</span>
-                        <span>{% if target.blood_type %}{{ target.blood_type }}型{% endif %}</span>
-                        <span>{{ target.birthplace }}</span>
-                    </div>
-
-                    <!-- Line 5: Rank & Stats (Mock) -->
-                    <div class="mt-2 flex items-center gap-3 text-[10px] bg-black/20 p-1.5 rounded border border-white/5">
-                        <span class="flex items-center gap-1 text-yellow-500 font-bold">
-                            <i class="fas fa-crown text-[9px]"></i> ゴールド
-                        </span>
-                        <div class="h-3 w-px bg-white/10"></div>
-                        <span class="flex items-center gap-1 text-gray-400">
-                            <span class="text-white font-mono">30</span>pt
-                        </span>
-                        <span class="flex items-center gap-1 text-gray-400 ml-auto">
-                            <span class="text-white font-mono">3</span> ANSWERS
-                        </span>
+                    <!-- Line 4: Bio Data (Single Line Pipe Separated) -->
+                    <div class="text-[10px] text-gray-400 font-mono leading-relaxed break-all">
+                        {% if target.birth_month %}{{ target.birth_year }}/{{ target.birth_month }}/{{ target.birth_day }}{% else %}-{% endif %}
+                        <span class="text-gray-600 mx-1">|</span>
+                        {{ target.eto|default:"-" }}
+                        <span class="text-gray-600 mx-1">|</span>
+                        {{ target.zodiac_hiragana|default:"-" }}
+                        <span class="text-gray-600 mx-1">|</span>
+                        {{ target.gender_symbol }}
+                        <span class="text-gray-600 mx-1">|</span>
+                        {% if target.blood_type %}{{ target.blood_type }}型{% else %}-{% endif %}
+                        <span class="text-gray-600 mx-1">|</span>
+                        {{ target.birthplace|default:"-" }}
                     </div>
                 </div>
             </div>

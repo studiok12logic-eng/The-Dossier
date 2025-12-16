@@ -85,6 +85,22 @@ class Target(models.Model):
         etos = ['申','酉','戌','亥','子','丑','寅','卯','辰','巳','午','未']
         return etos[self.birth_year % 12]
 
+    @property
+    def gender_symbol(self):
+        if self.gender == 'Male': return '♂'
+        if self.gender == 'Female': return '♀'
+        return '-'
+
+    @property
+    def zodiac_hiragana(self):
+        mapping = {
+            '牡羊座': 'おひつじ座', '牡牛座': 'おうし座', '双子座': 'ふたご座',
+            '蟹座': 'かに座', '獅子座': 'しし座', '乙女座': 'おとめ座',
+            '天秤座': 'てんびん座', '蠍座': 'さそり座', '射手座': 'いて座',
+            '山羊座': 'やぎ座', '水瓶座': 'みずがめ座', '魚座': 'うお座'
+        }
+        return mapping.get(self.zodiac_sign, self.zodiac_sign or '-')
+
 class DailyTargetState(models.Model):
     target = models.ForeignKey(Target, on_delete=models.CASCADE)
     date = models.DateField()
