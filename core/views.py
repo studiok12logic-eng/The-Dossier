@@ -563,7 +563,7 @@ class TimelineListAPIView(LoginRequiredMixin, View):
                 queryset = queryset.filter(date__lt=before_date)
                 
             # Ordering: Newest first (for chat style bottom-up, usually we load newest first)
-            queryset = queryset.order_by('-date', '-id')
+            queryset = queryset.order_by('-date', '-created_at')
 
             # Limit
             limit = int(request.GET.get('limit', 20))
@@ -575,6 +575,7 @@ class TimelineListAPIView(LoginRequiredMixin, View):
                 data.append({
                     'id': item.id,
                     'date': item.date.strftime('%Y-%m-%d'),
+                    'created_at': item.created_at.strftime('%Y-%m-%d %H:%M:%S') if item.created_at else '',
                     'type': item.type, # Model has 'type', view uses 'event_type' filter but model field is 'type'
                     'description': item.content, # Model has 'content', mapped to 'description' for frontend
                     # Safety checks for question relation

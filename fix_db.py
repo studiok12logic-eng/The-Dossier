@@ -18,7 +18,8 @@ def fix_db():
         ('question_id', 'INTEGER REFERENCES intelligence_question(id)'),
         ('question_text', 'VARCHAR(255)'),
         ('question_answer', 'TEXT'),
-        ('question_category', 'VARCHAR(100)')
+        ('question_category', 'VARCHAR(100)'),
+        ('created_at', 'DATETIME DEFAULT CURRENT_TIMESTAMP')
     ]
     
     for col_name, col_def in cols_to_add:

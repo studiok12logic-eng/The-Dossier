@@ -126,6 +126,7 @@ class TimelineItem(models.Model):
     
     # New Fields for Dossier Feature
     contact_made = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
     
     # Question specific
     question_category = models.CharField(max_length=100, blank=True, null=True, default='')
