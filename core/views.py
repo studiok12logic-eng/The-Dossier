@@ -691,6 +691,77 @@ class QuestionDeleteView(LoginRequiredMixin, DeleteView):
     def get_queryset(self):
         return Question.objects.filter(user=self.request.user)
 
+class QuestionDetailView(LoginRequiredMixin, View):
+    template_name = 'question_detail.html'
+    
+    def get(self, request, pk):
+        from django.db.models import Q, Count, Max, Prefetch
+        
+        # Get question
+        question = Question.objects.filter(
+            Q(user=request.user) | Q(is_shared=True)
+        ).prefetch_related('category', 'rank').get(pk=pk)
+        
+        # Get all answers for this question
+        answers_qs = TimelineItem.objects.filter(
+            question=question,
+            target__user=request.user
+        ).select_related('target').prefetch_related('tags').order_by('target', '-date')
+        
+        # Apply filters
+        group_id = request.GET.get('group')
+        if group_id:
+            answers_qs = answers_qs.filter(target__groups__id=group_id)
+        
+        # Get latest answer per target with count
+        from collections import defaultdict
+        target_answers = defaultdict(list)
+        for answer in answers_qs:
+            target_answers[answer.target].append(answer)
+        
+        # Build answer data
+        answer_data = []
+        for target, answers in target_answers.items():
+            answer_data.append({
+                'target': target,
+                'latest_answer': answers[0],
+                'all_answers': answers,
+                'answer_count': len(answers)
+            })
+        
+        # Apply sorting
+        sort_by = request.GET.get('sort', 'date')
+        if sort_by == 'date':
+            answer_data.sort(key=lambda x: x['latest_answer'].date, reverse=True)
+        elif sort_by == 'choice':
+            answer_data.sort(key=lambda x: x['latest_answer'].question_answer or '')
+        elif sort_by == 'count':
+            answer_data.sort(key=lambda x: x['answer_count'], reverse=True)
+        
+        # Get all questions for search dropdown
+        questions = Question.objects.filter(
+            Q(user=request.user) | Q(is_shared=True)
+        ).order_by('category', 'order', 'title')
+        
+        # Get categories for filter
+        categories = QuestionCategory.objects.filter(user=request.user)
+        
+        # Get groups for filter
+        from intelligence.models import TargetGroup
+        groups = TargetGroup.objects.filter(user=request.user)
+        
+        context = {
+            'question': question,
+            'answer_data': answer_data,
+            'questions': questions,
+            'categories': categories,
+            'groups': groups,
+            'total_answers': sum(x['answer_count'] for x in answer_data),
+            'total_targets': len(answer_data)
+        }
+        
+        return render(request, self.template_name, context)
+
 # API Views for Dynamic Add
 class CategoryCreateView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):

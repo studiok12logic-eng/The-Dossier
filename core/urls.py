@@ -20,6 +20,7 @@ urlpatterns = [
     path('questions/add/', views.QuestionCreateView.as_view(), name='question_add'),
     path('questions/<int:pk>/edit/', views.QuestionUpdateView.as_view(), name='question_edit'),
     path('questions/<int:pk>/delete/', views.QuestionDeleteView.as_view(), name='question_delete'),
+    path('questions/<int:pk>/', views.QuestionDetailView.as_view(), name='question_detail'),
     path('api/questions/category/add/', views.CategoryCreateView.as_view(), name='category_add'),
     path('api/questions/rank/add/', views.RankCreateView.as_view(), name='rank_add'),
     

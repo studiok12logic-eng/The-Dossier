@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="h-full flex flex-col p-6 space-y-6">
+    <!-- Header -->
+    <div class="flex justify-between items-start">
+        <div>
+            <h1 class="text-2xl text-white font-mono tracking-wider">QUESTION DETAIL</h1>
+            <p class="text-xs text-gray-400 font-mono mt-1">{{ question.title }}</p>
+        </div>
+        <a href="{% url 'question_list' %}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 font-mono text-sm rounded border border-white/10 transition">
+            ← BACK
+        </a>
+    </div>
+
+    <!-- Question Info Card -->
+    <div class="bg-surface border border-white/10 rounded-xl p-6">
+        <div class="flex justify-between items-start mb-4">
+            <div class="flex flex-wrap gap-2 items-center">
+                <span class="text-xs font-mono text-primary bg-primary/10 px-2 py-1 rounded border border-primary/20">
+                    {{ question.category.name|default:"Uncategorized" }}
+                </span>
+                {% if question.rank %}
+                <span class="text-xs font-mono text-gray-300 bg-white/5 px-2 py-1 rounded border border-white/10">
+                    {{ question.rank.name }} ({{ question.rank.points }}pt)
+                </span>
+                {% endif %}
+                <span class="text-xs font-mono text-gray-400">
+                    {{ question.get_answer_type_display }}
+                </span>
+            </div>
+            <div class="text-xs text-gray-500 font-mono">
+                {{ total_targets }} Targets • {{ total_answers }} Answers
+            </div>
+        </div>
+        
+        <h2 class="text-xl text-white font-bold mb-2">{{ question.title }}</h2>
+        
+        {% if question.description %}
+        <p class="text-sm text-gray-400 mb-3">{{ question.description }}</p>
+        {% endif %}
+        
+        {% if question.example %}
+        <div class="bg-black/20 p-3 rounded border border-white/5">
+            <p class="text-xs text-gray-500 font-mono">EX: {{ question.example }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Search & Filters -->
+    <div class="flex flex-col md:flex-row gap-3 items-start md:items-center">
+        <!-- Question Search -->
+        <form method="get" class="flex items-center gap-2 bg-surface border border-white/10 rounded-lg p-1 flex-1">
+            <select name="category" onchange="updateQuestionList(this.value)" class="bg-transparent text-xs text-white border-none focus:ring-0 cursor-pointer">
+                <option value="">All Categories</option>
+                {% for c in categories %}
+                <option value="{{ c.id }}">{{ c.name }}</option>
+                {% endfor %}
+            </select>
+            <div class="w-px h-4 bg-white/10"></div>
+            <select name="question" onchange="if(this.value) window.location.href='{% url 'question_detail' 0 %}'.replace('/0/', '/'+this.value+'/')" class="bg-transparent text-xs text-white border-none focus:ring-0 cursor-pointer flex-1">
+                <option value="">Select Question...</option>
+                {% regroup questions by category as category_list %}
+                {% for cat in category_list %}
+                <optgroup label="{{ cat.grouper }}">
+                    {% for q in cat.list %}
+                    <option value="{{ q.id }}" {% if q.id == question.id %}selected{% endif %}>{{ q.title }}</option>
+                    {% endfor %}
+                </optgroup>
+                {% endfor %}
+            </select>
+        </form>
+
+        <!-- Sort & Filter -->
+        <form method="get" class="flex items-center gap-2 bg-surface border border-white/10 rounded-lg p-1">
+            <select name="sort" onchange="this.form.submit()" class="bg-transparent text-xs text-white border-none focus:ring-0 cursor-pointer">
+                <option value="date" {% if request.GET.sort == 'date' or not request.GET.sort %}selected{% endif %}>Latest Log</option>
+                <option value="choice" {% if request.GET.sort == 'choice' %}selected{% endif %}>Choice Order</option>
+                <option value="count" {% if request.GET.sort == 'count' %}selected{% endif %}>Answer Count</option>
+            </select>
+            <div class="w-px h-4 bg-white/10"></div>
+            <select name="group" onchange="this.form.submit()" class="bg-transparent text-xs text-white border-none focus:ring-0 cursor-pointer">
+                <option value="">All Groups</option>
+                {% for g in groups %}
+                <option value="{{ g.id }}" {% if request.GET.group == g.id|stringformat:"s" %}selected{% endif %}>{{ g.name }}</option>
+                {% endfor %}
+            </select>
+            {% if request.GET.sort or request.GET.group %}
+            <a href="{% url 'question_detail' question.id %}" class="ml-2 text-xs text-gray-500 hover:text-white">✕</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Answer List -->
+    <div class="flex-1 overflow-y-auto space-y-3 pb-20">
+        {% for item in answer_data %}
+        <div class="bg-surface border border-white/10 rounded-xl overflow-hidden">
+            <!-- Target Header -->
+            <div class="p-4 flex justify-between items-center border-b border-white/5 bg-white/5">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-background border border-white/10 overflow-hidden">
+                        {% if item.target.avatar %}
+                        <img src="{{ item.target.avatar.url }}" class="w-full h-full object-cover">
+                        {% else %}
+                        <div class="w-full h-full flex items-center justify-center text-xs text-gray-500">{{ item.target.nickname|slice:":1" }}</div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <div class="text-sm text-white font-mono">{{ item.target.nickname }}</div>
+                        <div class="text-xs text-gray-500">{{ item.target.last_name }} {{ item.target.first_name }}</div>
+                    </div>
+                </div>
+                <div class="text-xs text-gray-500 font-mono">
+                    {{ item.answer_count }} answer{{ item.answer_count|pluralize }}
+                </div>
+            </div>
+
+            <!-- Latest Answer -->
+            <div class="p-4">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="text-xs text-gray-500 font-mono">{{ item.latest_answer.date }}</span>
+                    {% if item.latest_answer.contact_made %}
+                    <span class="text-xs px-2 py-0.5 rounded bg-green-500/20 text-green-400 border border-green-500/30">Encanto</span>
+                    {% endif %}
+                </div>
+                <p class="text-sm text-gray-300 whitespace-pre-wrap">{{ item.latest_answer.question_answer }}</p>
+                
+                {% if item.latest_answer.tags.all %}
+                <div class="mt-2 flex flex-wrap gap-1">
+                    {% for tag in item.latest_answer.tags.all %}
+                    <span class="text-xs text-gray-500">#{{ tag.name }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- History Accordion (if multiple answers) -->
+            {% if item.answer_count > 1 %}
+            <div class="border-t border-white/5">
+                <button onclick="toggleHistory(this)" class="w-full p-3 text-xs text-gray-400 hover:text-white transition flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10">
+                    <span>Show {{ item.answer_count|add:"-1" }} older answer{{ item.answer_count|add:"-1"|pluralize }}</span>
+                    <svg class="w-3 h-3 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+                <div class="hidden history-content border-t border-white/5">
+                    {% for answer in item.all_answers %}
+                    {% if not forloop.first %}
+                    <div class="p-4 border-t border-white/5 bg-black/10">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-xs text-gray-500 font-mono">{{ answer.date }}</span>
+                            {% if answer.contact_made %}
+                            <span class="text-xs px-2 py-0.5 rounded bg-green-500/20 text-green-400 border border-green-500/30">Encanto</span>
+                            {% endif %}
+                        </div>
+                        <p class="text-sm text-gray-400 whitespace-pre-wrap">{{ answer.question_answer }}</p>
+                        
+                        {% if answer.tags.all %}
+                        <div class="mt-2 flex flex-wrap gap-1">
+                            {% for tag in answer.tags.all %}
+                            <span class="text-xs text-gray-500">#{{ tag.name }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div class="text-center py-20">
+            <p class="text-gray-500 font-mono">No answers recorded yet.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    function toggleHistory(btn) {
+        const content = btn.nextElementSibling;
+        const icon = btn.querySelector('svg');
+        
+        content.classList.toggle('hidden');
+        icon.classList.toggle('rotate-180');
+    }
+
+    function updateQuestionList(categoryId) {
+        // This would filter questions in the dropdown, but since we're using optgroups, 
+        // the native select handles this well enough
+    }
+</script>
+{% endblock %}
