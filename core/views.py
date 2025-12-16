@@ -694,54 +694,69 @@ class QuestionDeleteView(LoginRequiredMixin, DeleteView):
 class QuestionDetailView(LoginRequiredMixin, View):
     template_name = 'question_detail.html'
     
-    def get(self, request, pk):
+    def get(self, request, pk=None):
         from django.db.models import Q, Count, Max, Prefetch
+        import json
         
-        # Get question
-        question = Question.objects.filter(
-            Q(user=request.user) | Q(is_shared=True)
-        ).prefetch_related('category', 'rank').get(pk=pk)
-        
-        # Get all answers for this question
-        answers_qs = TimelineItem.objects.filter(
-            question=question,
-            target__user=request.user
-        ).select_related('target').prefetch_related('tags').order_by('target', '-date')
-        
-        # Apply filters
-        group_id = request.GET.get('group')
-        if group_id:
-            answers_qs = answers_qs.filter(target__groups__id=group_id)
-        
-        # Get latest answer per target with count
-        from collections import defaultdict
-        target_answers = defaultdict(list)
-        for answer in answers_qs:
-            target_answers[answer.target].append(answer)
-        
-        # Build answer data
+        # Get question if pk provided or from query param
+        question_id = pk or request.GET.get('question_id')
+        question = None
         answer_data = []
-        for target, answers in target_answers.items():
-            answer_data.append({
-                'target': target,
-                'latest_answer': answers[0],
-                'all_answers': answers,
-                'answer_count': len(answers)
-            })
         
-        # Apply sorting
-        sort_by = request.GET.get('sort', 'date')
-        if sort_by == 'date':
-            answer_data.sort(key=lambda x: x['latest_answer'].date, reverse=True)
-        elif sort_by == 'choice':
-            answer_data.sort(key=lambda x: x['latest_answer'].question_answer or '')
-        elif sort_by == 'count':
-            answer_data.sort(key=lambda x: x['answer_count'], reverse=True)
+        if question_id:
+            try:
+                question = Question.objects.filter(
+                    Q(user=request.user) | Q(is_shared=True)
+                ).prefetch_related('category', 'rank').get(pk=question_id)
+                
+                # Get all answers for this question
+                answers_qs = TimelineItem.objects.filter(
+                    question=question,
+                    target__user=request.user
+                ).select_related('target').prefetch_related('tags').order_by('target', '-date')
+                
+                # Apply filters
+                group_id = request.GET.get('group')
+                if group_id:
+                    answers_qs = answers_qs.filter(target__groups__id=group_id)
+                
+                # Get latest answer per target with count
+                from collections import defaultdict
+                target_answers = defaultdict(list)
+                for answer in answers_qs:
+                    target_answers[answer.target].append(answer)
+                
+                # Build answer data
+                for target, answers in target_answers.items():
+                    answer_data.append({
+                        'target': target,
+                        'latest_answer': answers[0],
+                        'all_answers': answers,
+                        'answer_count': len(answers)
+                    })
+                
+                # Apply sorting
+                sort_by = request.GET.get('sort', 'date')
+                if sort_by == 'date':
+                    answer_data.sort(key=lambda x: x['latest_answer'].date, reverse=True)
+                elif sort_by == 'choice':
+                    answer_data.sort(key=lambda x: x['latest_answer'].question_answer or '')
+                elif sort_by == 'count':
+                    answer_data.sort(key=lambda x: x['answer_count'], reverse=True)
+            except Question.DoesNotExist:
+                pass
         
-        # Get all questions for search dropdown
+        # Get all questions for dropdown with category info
         questions = Question.objects.filter(
             Q(user=request.user) | Q(is_shared=True)
-        ).order_by('category', 'order', 'title')
+        ).select_related('category').order_by('category', 'order', 'title')
+        
+        # Prepare questions data for JavaScript
+        questions_json = json.dumps([{
+            'id': q.id,
+            'title': q.title,
+            'category_id': q.category.id if q.category else None
+        } for q in questions])
         
         # Get categories for filter
         categories = QuestionCategory.objects.filter(user=request.user)
@@ -753,14 +768,15 @@ class QuestionDetailView(LoginRequiredMixin, View):
         context = {
             'question': question,
             'answer_data': answer_data,
-            'questions': questions,
+            'questions': questions_json,
             'categories': categories,
             'groups': groups,
-            'total_answers': sum(x['answer_count'] for x in answer_data),
+            'total_answers': sum(x['answer_count'] for x in answer_data) if answer_data else 0,
             'total_targets': len(answer_data)
         }
         
         return render(request, self.template_name, context)
+
 
 # API Views for Dynamic Add
 class CategoryCreateView(LoginRequiredMixin, View):

@@ -5,13 +5,38 @@
     <div class="flex justify-between items-start">
         <div>
             <h1 class="text-2xl text-white font-mono tracking-wider">QUESTION DETAIL</h1>
-            <p class="text-xs text-gray-400 font-mono mt-1">{{ question.title }}</p>
+            <p class="text-xs text-gray-400 font-mono mt-1">質問詳細分析</p>
         </div>
         <a href="{% url 'question_list' %}" class="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 font-mono text-sm rounded border border-white/10 transition">
             ← BACK
         </a>
     </div>
 
+    <!-- Question Selection -->
+    <div class="bg-surface border border-white/10 rounded-xl p-6">
+        <h3 class="text-sm font-bold text-primary font-mono mb-4">質問を選択</h3>
+        <form method="get" action="" class="flex gap-3">
+            <div class="flex-1">
+                <label class="block text-xs text-gray-400 mb-2">カテゴリー</label>
+                <select name="category" id="categorySelect" onchange="updateQuestionList()" 
+                    class="w-full bg-background border border-white/20 rounded px-3 py-2 text-sm text-white focus:border-primary focus:outline-none">
+                    <option value="">カテゴリーを選択...</option>
+                    {% for c in categories %}
+                    <option value="{{ c.id }}" {% if request.GET.category == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="flex-1">
+                <label class="block text-xs text-gray-400 mb-2">質問</label>
+                <select name="question_id" id="questionSelect" onchange="this.form.submit()" disabled
+                    class="w-full bg-background border border-white/20 rounded px-3 py-2 text-sm text-white focus:border-primary focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed">
+                    <option value="">まずカテゴリーを選択してください</option>
+                </select>
+            </div>
+        </form>
+    </div>
+
+    {% if question %}
     <!-- Question Info Card -->
     <div class="bg-surface border border-white/10 rounded-xl p-6">
         <div class="flex justify-between items-start mb-4">
@@ -46,47 +71,49 @@
         {% endif %}
     </div>
 
-    <!-- Search & Filters -->
-    <div class="flex flex-col md:flex-row gap-3 items-start md:items-center">
-        <!-- Question Search -->
-        <form method="get" class="flex items-center gap-2 bg-surface border border-white/10 rounded-lg p-1 flex-1">
-            <select name="category" onchange="updateQuestionList(this.value)" class="bg-transparent text-xs text-white border-none focus:ring-0 cursor-pointer">
-                <option value="">All Categories</option>
-                {% for c in categories %}
-                <option value="{{ c.id }}">{{ c.name }}</option>
-                {% endfor %}
-            </select>
-            <div class="w-px h-4 bg-white/10"></div>
-            <select name="question" onchange="if(this.value) window.location.href='{% url 'question_detail' 0 %}'.replace('/0/', '/'+this.value+'/')" class="bg-transparent text-xs text-white border-none focus:ring-0 cursor-pointer flex-1">
-                <option value="">Select Question...</option>
-                {% regroup questions by category as category_list %}
-                {% for cat in category_list %}
-                <optgroup label="{{ cat.grouper }}">
-                    {% for q in cat.list %}
-                    <option value="{{ q.id }}" {% if q.id == question.id %}selected{% endif %}>{{ q.title }}</option>
-                    {% endfor %}
-                </optgroup>
-                {% endfor %}
-            </select>
+    <!-- Filters & Sort -->
+    <div class="flex gap-3">
+        <form method="get" class="flex-1 bg-surface border border-white/10 rounded-lg p-4">
+            <input type="hidden" name="question_id" value="{{ question.id }}">
+            <input type="hidden" name="category" value="{{ request.GET.category }}">
+            
+            <h4 class="text-xs font-mono text-gray-400 mb-3">フィルター</h4>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">グループ</label>
+                    <select name="group" class="w-full bg-background border border-white/20 rounded px-3 py-2 text-sm text-white focus:border-primary">
+                        <option value="">すべてのグループ</option>
+                        {% for g in groups %}
+                        <option value="{{ g.id }}" {% if request.GET.group == g.id|stringformat:"s" %}selected{% endif %}>{{ g.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="flex gap-2">
+                    <button type="submit" class="flex-1 px-3 py-2 bg-primary/20 hover:bg-primary/30 text-primary text-xs font-mono rounded border border-primary/30 transition">
+                        適用
+                    </button>
+                    <a href="?question_id={{ question.id }}&category={{ request.GET.category }}" 
+                       class="px-3 py-2 bg-white/5 hover:bg-white/10 text-gray-400 text-xs font-mono rounded border border-white/10 transition">
+                        リセット
+                    </a>
+                </div>
+            </div>
         </form>
 
-        <!-- Sort & Filter -->
-        <form method="get" class="flex items-center gap-2 bg-surface border border-white/10 rounded-lg p-1">
-            <select name="sort" onchange="this.form.submit()" class="bg-transparent text-xs text-white border-none focus:ring-0 cursor-pointer">
-                <option value="date" {% if request.GET.sort == 'date' or not request.GET.sort %}selected{% endif %}>Latest Log</option>
-                <option value="choice" {% if request.GET.sort == 'choice' %}selected{% endif %}>Choice Order</option>
-                <option value="count" {% if request.GET.sort == 'count' %}selected{% endif %}>Answer Count</option>
-            </select>
-            <div class="w-px h-4 bg-white/10"></div>
-            <select name="group" onchange="this.form.submit()" class="bg-transparent text-xs text-white border-none focus:ring-0 cursor-pointer">
-                <option value="">All Groups</option>
-                {% for g in groups %}
-                <option value="{{ g.id }}" {% if request.GET.group == g.id|stringformat:"s" %}selected{% endif %}>{{ g.name }}</option>
-                {% endfor %}
-            </select>
-            {% if request.GET.sort or request.GET.group %}
-            <a href="{% url 'question_detail' question.id %}" class="ml-2 text-xs text-gray-500 hover:text-white">✕</a>
-            {% endif %}
+        <form method="get" class="flex-1 bg-surface border border-white/10 rounded-lg p-4">
+            <input type="hidden" name="question_id" value="{{ question.id }}">
+            <input type="hidden" name="category" value="{{ request.GET.category }}">
+            <input type="hidden" name="group" value="{{ request.GET.group }}">
+            
+            <h4 class="text-xs font-mono text-gray-400 mb-3">並び替え</h4>
+            <div class="space-y-3">
+                <select name="sort" onchange="this.form.submit()" class="w-full bg-background border border-white/20 rounded px-3 py-2 text-sm text-white focus:border-primary">
+                    <option value="date" {% if request.GET.sort == 'date' or not request.GET.sort %}selected{% endif %}>最新ログ順</option>
+                    <option value="choice" {% if request.GET.sort == 'choice' %}selected{% endif %}>選択肢順</option>
+                    <option value="count" {% if request.GET.sort == 'count' %}selected{% endif %}>回答数順</option>
+                </select>
+            </div>
         </form>
     </div>
 
@@ -110,7 +137,7 @@
                     </div>
                 </div>
                 <div class="text-xs text-gray-500 font-mono">
-                    {{ item.answer_count }} answer{{ item.answer_count|pluralize }}
+                    {{ item.answer_count }} 回答
                 </div>
             </div>
 
@@ -133,11 +160,11 @@
                 {% endif %}
             </div>
 
-            <!-- History Accordion (if multiple answers) -->
+            <!-- History Accordion -->
             {% if item.answer_count > 1 %}
             <div class="border-t border-white/5">
                 <button onclick="toggleHistory(this)" class="w-full p-3 text-xs text-gray-400 hover:text-white transition flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10">
-                    <span>Show {{ item.answer_count|add:"-1" }} older answer{{ item.answer_count|add:"-1"|pluralize }}</span>
+                    <span>{{ item.answer_count|add:"-1" }} 件の過去回答を表示</span>
                     <svg class="w-3 h-3 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                     </svg>
@@ -170,13 +197,49 @@
         </div>
         {% empty %}
         <div class="text-center py-20">
-            <p class="text-gray-500 font-mono">No answers recorded yet.</p>
+            <p class="text-gray-500 font-mono">この質問への回答はまだありません。</p>
         </div>
         {% endfor %}
     </div>
+    {% else %}
+    <!-- No Question Selected -->
+    <div class="flex-1 flex items-center justify-center">
+        <div class="text-center">
+            <div class="text-6xl mb-4 opacity-20">📊</div>
+            <p class="text-gray-500 font-mono">カテゴリーと質問を選択してください</p>
+        </div>
+    </div>
+    {% endif %}
 </div>
 
 <script>
+    const questionsData = {{ questions|safe }};
+    
+    function updateQuestionList() {
+        const categoryId = document.getElementById('categorySelect').value;
+        const questionSelect = document.getElementById('questionSelect');
+        
+        questionSelect.innerHTML = '<option value="">質問を選択...</option>';
+        
+        if (!categoryId) {
+            questionSelect.disabled = true;
+            questionSelect.innerHTML = '<option value="">まずカテゴリーを選択してください</option>';
+            return;
+        }
+        
+        questionSelect.disabled = false;
+        
+        // Filter questions by category
+        const filteredQuestions = questionsData.filter(q => q.category_id == categoryId);
+        
+        filteredQuestions.forEach(q => {
+            const option = document.createElement('option');
+            option.value = q.id;
+            option.textContent = q.title;
+            questionSelect.appendChild(option);
+        });
+    }
+    
     function toggleHistory(btn) {
         const content = btn.nextElementSibling;
         const icon = btn.querySelector('svg');
@@ -184,10 +247,14 @@
         content.classList.toggle('hidden');
         icon.classList.toggle('rotate-180');
     }
-
-    function updateQuestionList(categoryId) {
-        // This would filter questions in the dropdown, but since we're using optgroups, 
-        // the native select handles this well enough
+    
+    // Initialize on page load
+    if (document.getElementById('categorySelect').value) {
+        updateQuestionList();
+        const qId = new URLSearchParams(window.location.search).get('question_id');
+        if (qId) {
+            document.getElementById('questionSelect').value = qId;
+        }
     }
 </script>
 {% endblock %}
