@@ -341,17 +341,7 @@ class IntelligenceLogView(LoginRequiredMixin, View):
                 date=date_obj,
                 contact_made=contact_made,
                 type=item_type,
-                description=content # Assuming we renamed 'content' to 'description' or mapped it? 
-                # Wait, model has 'content' field. Logic below uses 'content'.
-                # Let's check model again. Model has 'content' (TextField). Not 'description'.
-                # But TimelineListAPIView uses 'description'.
-                # Wait, TimelineItem model in step 783 has 'content'. 
-                # Did I check TimelineListAPIView serializer?
-                # Step 730/737: 'description': item.description
-                # Does TimelineItem have 'description'?
-                # Step 783: It has 'title', 'content', 'related_quest', 'tags', 'sentiment', 'contact_made', 'question_...'
-                # It does NOT have 'description'. 
-                # Pivot: I should use 'content' field in model, and update serializer to use 'content' too.
+                content=content
             )
             item.content = content # Assign content
             

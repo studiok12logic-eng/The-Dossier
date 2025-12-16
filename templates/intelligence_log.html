@@ -202,6 +202,7 @@
                         <div id="qDetails" class="hidden bg-black/20 border border-white/5 rounded p-2 text-[10px] text-gray-400 flex gap-4">
                              <div>Rank: <span id="qRank" class="text-primary"></span></div>
                              <div class="truncate flex-1">Intent: <span id="qDesc"></span></div>
+                             <div class="hidden">Ex: <span id="qEx"></span></div>
                         </div>
                         
                         <div id="qChoicesCheck" class="opacity-50 pointer-events-none transition-opacity bg-black/20 border border-white/5 rounded p-2 min-h-[40px] flex flex-col justify-center">
@@ -653,9 +654,9 @@
         
         if (q) {
             // Show Details
-            qRank.textContent = q.rank || '-';
-            qDesc.textContent = q.description || '-';
-            qEx.textContent = q.example || '-';
+            if(qRank) qRank.textContent = q.rank || '-';
+            if(qDesc) qDesc.textContent = q.description || '-';
+            if(qEx) qEx.textContent = q.example || '-';
             qDetails.classList.remove('hidden');
 
             // Handle Choices
