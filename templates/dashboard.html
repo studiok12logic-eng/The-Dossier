@@ -168,78 +168,7 @@
 </div>
 
 <!-- Scripts -->
-{{ calendar_data|json_script:"calendarData" }}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
-
-<script>
-    // --- Calendar Render ---
-    const calendarData = JSON.parse(document.getElementById('calendarData').textContent);
-    const calGrid = document.getElementById('calendarGrid');
-    
-    function renderCalendar() {
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = today.getMonth(); // 0-indexed
-        
-        // First day of month
-        const firstDay = new Date(year, month, 1);
-        const lastDay = new Date(year, month + 1, 0);
-        
-        // Pad start (Mon=1 ... Sun=7. JS: Sun=0)
-        let startDay = firstDay.getDay(); 
-        if(startDay === 0) startDay = 7; // Make Sun 7
-        // Adjust for Mon start (Mon=1 -> Need 0 pad. Tue=2 -> Need 1 pad)
-        // Pad = startDay - 1
-        
-        let html = `
-            <div class="text-center text-text-sub py-1">Mo</div><div class="text-center text-text-sub py-1">Tu</div><div class="text-center text-text-sub py-1">We</div>
-            <div class="text-center text-text-sub py-1">Th</div><div class="text-center text-text-sub py-1">Fr</div><div class="text-center text-text-sub py-1">Sa</div>
-            <div class="text-center text-text-sub py-1 text-red-400">Su</div>
-        `;
-        
-        // Empty cells
-        for(let i=1; i<startDay; i++) {
-            html += `<div class="p-1"></div>`;
-        }
-        
-        // Days
-        for(let d=1; d<=lastDay.getDate(); d++) {
-            const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-            const data = calendarData[dateStr];
-            
-            let content = `<div class="text-sm font-bold text-text-sub mb-1">${d}</div>`;
-            let classes = "min-h-[60px] border border-border/50 rounded bg-background p-1 flex flex-col hover:bg-surface transition cursor-pointer group overflow-hidden";
-            
-            if (data) {
-                // Loggers (Green)
-                if (data.loggers && data.loggers.length > 0) {
-                    data.loggers.forEach(nick => { // Backedn sent ID? Wait, Backend sent Target objects set?
-                        // Sets convert to list in backend. In template we iterate. But objects in JSON script? 
-                        // Django template `json_script` serializes objects? No, usually str representation or error?
-                        // Ah! I passed OBJECTS in my view. `json_script` might serialize to string repr.
-                        // I Must verify View Logic.
-                        // Steps 1148: I converted sets to lists. List of Target Objects.
-                        // `json_script` uses DjangoJSONEncoder. It might serialize fields or just str? 
-                        // It usually fails on complex objects unless specific serializer use.
-                        // I should have serialized manually in view.
-                        
-                        // FIX: I will assume the view logic failed or I need to update it.
-                        // Actually, I can't update View now easily without breaking flow. 
-                        // I will assume `dashboard.html` template context `calendar_data` is used directly in template if I loop there.
-                        // But I decided to use JS.
-                        // Wait, `json_script` handles basic types. Target object? No.
-                        // I should have passed dicts: `{'nickname': t.nickname, 'id': t.id}`.
-                        
-                        // PLAN ADJUSTMENT:
-                        // I will rely on the backend sending valid JSON or I will use TEMPLATE LOOPING to build the JS object.
-                    });
-                }
-            }
-            // ...
-            // Since I cannot trust the object serialization, I will construct the data object manually via Django Template loop inside <script>.
-        }
-    }
-</script>
 
 <script>
     // --- Data Construction due to Object Serialization Limitation ---
