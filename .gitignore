@@ -14,3 +14,7 @@ staticfiles/
 # OS
 .DS_Store
 Thumbs.db
+
+# Docs to ignore
+PROJECT_RULES.md
+design_guidelines.md
