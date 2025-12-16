@@ -117,8 +117,7 @@ class TargetUpdateView(LoginRequiredMixin, UpdateView):
 class TargetDeleteView(LoginRequiredMixin, DeleteView):
     model = Target
     success_url = reverse_lazy('target_list')
-    template_name = 'target_confirm_delete.html' # We might not use this if we do modal or direct post, but standard way needs template. 
-    # Actually user asked for button styling, usually implies confirmation.
+    template_name = 'target_confirm_delete.html' 
     
     def get_queryset(self):
         return Target.objects.filter(user=self.request.user)
@@ -281,18 +280,20 @@ class IntelligenceLogView(LoginRequiredMixin, View):
         questions = Question.objects.filter(
             Q(is_shared=True) | Q(user=request.user)
         ).order_by('order', 'title')
-        tags = Tag.objects.all()
         
         all_targets = Target.objects.filter(user=request.user)
 
         from django.db.models import Count
-        top_tags = Tag.objects.annotate(count=Count('timelineitem')).order_by('-count')[:10]
+        # Filter tags used by THIS user's targets
+        top_tags = Tag.objects.filter(
+            timelineitem__target__user=request.user
+        ).annotate(count=Count('timelineitem')).order_by('-count')[:10]
 
         context = {
             'todays_targets': target_list,
             'all_targets': all_targets,
             'questions': questions,
-            'tags': top_tags, # Updated to use top_tags
+            'tags': top_tags,
             'today_date': current_date.strftime('%Y-%m-%d'),
             'weekday_jp': ['月','火','水','木','金','土','日'][weekday]
         }
@@ -300,91 +301,114 @@ class IntelligenceLogView(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         import datetime
+        import re
+        from django.utils import timezone
+        
         try:
             data = json.loads(request.body)
-            target_id = data.get('target_id')
-            date_str = data.get('date')
+            # Action: 'create' (default) or 'update'
+            action = data.get('action', 'create')
             
-            # Map frontend types to backend logic
-            # Frontend sends: "NOTE" (event), "QUESTION" (question)
-            # Backend legacy: "EVENT", "ANSWER"
-            frontend_type = data.get('event_type', 'NOTE') 
-            
-            content = data.get('description', '') # Frontend sends 'description'
-            if not content: content = data.get('content', '') # Fallback
-            
-            contact_made = data.get('contact_made', False)
-            
-            if not target_id: 
-                return JsonResponse({'success': False, 'error': 'No target specified'})
-            
-            target = get_object_or_404(Target, pk=target_id, user=request.user)
-            
-            # Date validation
-            if date_str:
-                try:
-                    date_obj = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
-                except ValueError:
-                    date_obj = datetime.date.today()
-            else:
-                date_obj = datetime.date.today()
-            
-            # Create Timeline Item
-            # Determine type
-            if frontend_type == 'QUESTION':
-                item_type = 'Question' # Match model choices
-            else:
-                item_type = 'Event' # Or 'Note' - let's use 'Event' for general notes
+            if action == 'update':
+                item_id = data.get('item_id')
+                item = get_object_or_404(TimelineItem, pk=item_id, target__user=request.user)
                 
-            item = TimelineItem(
-                target=target,
-                date=date_obj,
-                contact_made=contact_made,
-                type=item_type,
-                content=content
-            )
-            item.content = content # Assign content
-            
-            if frontend_type == 'NOTE': # eq EVENT
-                item.save() # Save first
-                # Tags
-                tag_ids = data.get('tags', [])
-                if tag_ids:
-                    item.tags.set(tag_ids)
-                    
-                if not content and not contact_made and not tag_ids:
-                     return JsonResponse({'success': False, 'error': 'Content, Contact or Tags required'})
-                     
-            elif frontend_type == 'QUESTION':
-                q_id = data.get('question_id')
-                if q_id:
-                    from intelligence.models import Question
+                # Update fields
+                if 'description' in data: item.content = data.get('description')
+                content = item.content # for tag processing
+                
+                if 'date' in data and data['date']:
                     try:
-                        q = Question.objects.get(pk=q_id)
-                        item.question = q
-                        item.question_text = q.title
-                        item.question_category = q.category.name if q.category else ''
-                    except Question.DoesNotExist:
-                        pass
+                        item.date = datetime.datetime.strptime(data['date'], '%Y-%m-%d').date()
+                    except ValueError: pass
+                    
+                if 'contact_made' in data: item.contact_made = data.get('contact_made')
                 
-                item.question_answer = content # The content is the answer/reaction
-                item.content = content # Also save in content for generic display
+                # Bump created_at to now
+                item.created_at = timezone.now()
                 
-            item.save()
+                # Question specific updates (if it was a question type)
+                if item.type == 'Question':
+                     item.question_answer = content
+                     if 'question_id' in data: 
+                         q_id = data.get('question_id')
+                         if q_id:
+                             from intelligence.models import Question
+                             try:
+                                 q = Question.objects.get(pk=q_id)
+                                 item.question = q
+                                 item.question_text = q.title
+                                 item.question_category = q.category.name if q.category else ''
+                             except Question.DoesNotExist: pass
+
+                item.save()
+                item.tags.clear()
+                
+            else: # Create
+                target_id = data.get('target_id')
+                date_str = data.get('date')
+                frontend_type = data.get('event_type', 'NOTE') 
+                content = data.get('description', '')
+                if not content: content = data.get('content', '')
+                contact_made = data.get('contact_made', False)
+                
+                if not target_id: return JsonResponse({'success': False, 'error': 'No target specified'})
+                target = get_object_or_404(Target, pk=target_id, user=request.user)
+                
+                if date_str:
+                    try:
+                        date_obj = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+                    except ValueError: date_obj = datetime.date.today()
+                else: date_obj = datetime.date.today()
+                
+                if frontend_type == 'QUESTION': item_type = 'Question'
+                else: item_type = 'Event'
+                    
+                item = TimelineItem(
+                    target=target,
+                    date=date_obj,
+                    contact_made=contact_made,
+                    type=item_type,
+                    content=content
+                )
+                
+                if frontend_type == 'QUESTION':
+                    q_id = data.get('question_id')
+                    if q_id:
+                        from intelligence.models import Question
+                        try:
+                            q = Question.objects.get(pk=q_id)
+                            item.question = q
+                            item.question_text = q.title
+                            item.question_category = q.category.name if q.category else ''
+                        except Question.DoesNotExist: pass
+                    item.question_answer = content
+                    item.content = content 
+                
+                item.save()
+            
+            # --- Common Logic for Create & Update: Tags ---
+            tag_ids = data.get('tags', [])
+            if tag_ids:
+                item.tags.add(*tag_ids)
+            
+            from intelligence.models import Tag
+            hashtags = re.findall(r'#(\S+)', content)
+            for tag_name in hashtags:
+                clean_tag = tag_name.split()[0]
+                if clean_tag:
+                    tag_obj, _ = Tag.objects.get_or_create(name=clean_tag)
+                    item.tags.add(tag_obj)
+            
+            if item.contact_made:
+                item.target.last_contact = timezone.now()
+                item.target.save()
+
             return JsonResponse({'success': True})
+            
         except Exception as e:
             import traceback
             traceback.print_exc()
-            return JsonResponse({'success': False, 'error': str(e)})
-            
-            # Update Last Contact if contact made
-            if contact_made:
-                target.last_contact = datetime.datetime.now()
-                target.save()
-                
-            return JsonResponse({'success': True})
-            
-        except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
 
 class TargetStateToggleView(LoginRequiredMixin, View):
@@ -482,7 +506,7 @@ class QuestionUpdateView(LoginRequiredMixin, UpdateView):
 class QuestionDeleteView(LoginRequiredMixin, DeleteView):
     model = Question
     success_url = reverse_lazy('question_list')
-    template_name = 'question_confirm_delete.html' # Logic will typically be modal or simple confirm
+    template_name = 'question_confirm_delete.html' 
     
     def get_queryset(self):
         return Question.objects.filter(user=self.request.user)
@@ -551,6 +575,11 @@ class TimelineListAPIView(LoginRequiredMixin, View):
                     Q(content__icontains=query) | 
                     Q(question__title__icontains=query)
                 )
+            
+            # Encanto Filter
+            contact_only = request.GET.get('contact_only') == 'true'
+            if contact_only:
+                queryset = queryset.filter(contact_made=True)
 
             # Tags (list of IDs)
             tags = request.GET.getlist('tags[]')
@@ -562,8 +591,8 @@ class TimelineListAPIView(LoginRequiredMixin, View):
             if before_date:
                 queryset = queryset.filter(date__lt=before_date)
                 
-            # Ordering: Newest first (for chat style bottom-up, usually we load newest first)
-            queryset = queryset.order_by('-date', '-created_at')
+            # Ordering: Input Order (Created At) Descending
+            queryset = queryset.order_by('-created_at')
 
             # Limit
             limit = int(request.GET.get('limit', 20))
@@ -576,7 +605,8 @@ class TimelineListAPIView(LoginRequiredMixin, View):
                     'id': item.id,
                     'date': item.date.strftime('%Y-%m-%d'),
                     'created_at': item.created_at.strftime('%Y-%m-%d %H:%M:%S') if item.created_at else '',
-                    'type': item.type, # Model has 'type', view uses 'event_type' filter but model field is 'type'
+                    'type': item.type, 
+                    'question_id': item.question.id if item.question else None,
                     'description': item.content, # Model has 'content', mapped to 'description' for frontend
                     # Safety checks for question relation
                     'question_title': (item.question.title if item.question else item.question_text) or '',
@@ -591,3 +621,18 @@ class TimelineListAPIView(LoginRequiredMixin, View):
             traceback.print_exc()
             return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
+class TagListAPIView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        try:
+            from django.db.models import Count
+            from intelligence.models import Tag
+            
+            # Get all tags used by the user, ordered by count
+            tags = Tag.objects.filter(
+                timelineitem__target__user=request.user
+            ).annotate(count=Count('timelineitem')).order_by('-count')
+            
+            data = [{'id': t.id, 'name': t.name, 'count': t.count} for t in tags]
+            return JsonResponse({'success': True, 'tags': data})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
