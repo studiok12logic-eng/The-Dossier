@@ -105,7 +105,7 @@
                  </div>
                  
                  <div class="flex gap-2">
-                     <a href="{% url 'question_detail' q.pk %}" 
+                     <a href="{% url 'question_detail' %}?question_id={{ q.pk }}" 
                         class="bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 text-[10px] px-3 py-1 rounded border border-purple-500/30 transition flex items-center gap-1 font-mono">
                         <i class="fas fa-chart-bar"></i> DETAIL
                      </a>
