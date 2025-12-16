@@ -1,71 +1,173 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="h-full flex flex-col p-6 space-y-6">
-    <!-- Header -->
-    <div class="flex justify-between items-center">
+    <!-- Header & Filters -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
             <h1 class="text-2xl text-white font-mono tracking-wider">QUESTION LIST</h1>
             <p class="text-xs text-gray-400 font-mono mt-1">戦略的質問の管理・データベース</p>
         </div>
-        <a href="{% url 'question_add' %}"
-            class="px-4 py-2 bg-primary text-black font-bold font-mono text-sm rounded hover:bg-primary/90 transition shadow-[0_0_15px_rgba(34,197,94,0.3)] flex items-center gap-2">
-            <span>+</span> ADD QUESTION
-        </a>
+        
+        <div class="flex items-center gap-2 w-full md:w-auto">
+             <!-- Filters -->
+            <form id="filterForm" class="flex items-center gap-2 bg-surface border border-white/10 rounded-lg p-1">
+                <select name="category" onchange="this.form.submit()" class="bg-transparent text-xs text-white border-none focus:ring-0 cursor-pointer">
+                    <option value="">All Categories</option>
+                    {% for c in categories %}
+                    <option value="{{ c.id }}" {% if request.GET.category == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+                <div class="w-px h-4 bg-white/10"></div>
+                <select name="rank" onchange="this.form.submit()" class="bg-transparent text-xs text-white border-none focus:ring-0 cursor-pointer">
+                    <option value="">All Ranks</option>
+                    {% for r in ranks %}
+                    <option value="{{ r.id }}" {% if request.GET.rank == r.id|stringformat:"s" %}selected{% endif %}>{{ r.name }}</option>
+                    {% endfor %}
+                </select>
+                <div class="w-px h-4 bg-white/10"></div>
+                <select name="shared" onchange="this.form.submit()" class="bg-transparent text-xs text-white border-none focus:ring-0 cursor-pointer">
+                    <option value="">All Scopes</option>
+                    <option value="1" {% if request.GET.shared == '1' %}selected{% endif %}>Shared</option>
+                    <option value="0" {% if request.GET.shared == '0' %}selected{% endif %}>Individual</option>
+                </select>
+                {% if request.GET.category or request.GET.rank or request.GET.shared %}
+                <a href="{% url 'question_list' %}" class="ml-2 text-xs text-gray-500 hover:text-white">✕</a>
+                {% endif %}
+            </form>
+
+            <a href="{% url 'question_add' %}"
+                class="px-4 py-2 bg-primary text-black font-bold font-mono text-sm rounded hover:bg-primary/90 transition shadow-[0_0_15px_rgba(34,197,94,0.3)] flex items-center gap-2 whitespace-nowrap">
+                <span>+</span> ADD
+            </a>
+        </div>
     </div>
 
     <!-- Question Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 overflow-y-auto pb-20">
         {% for q in questions %}
-        <div class="bg-surface border border-white/10 rounded-xl p-5 hover:border-primary/50 transition relative group">
-            <!-- Rank Badge -->
-            {% if q.rank %}
-            <div class="absolute top-3 right-3 bg-white/5 border border-white/10 rounded px-2 py-1 text-[10px] text-gray-300 font-mono">
-                {{ q.rank.name }} <span class="text-primary">{{ q.rank.points }}pt</span>
-            </div>
-            {% endif %}
-
-            <!-- Category -->
-            <div class="mb-2">
-                <span class="text-xs font-mono text-primary bg-primary/10 px-2 py-0.5 rounded border border-primary/20">
-                    {{ q.category.name|default:"Uncategorized" }}
+        <div class="bg-surface border border-white/10 rounded-xl p-5 hover:border-primary/50 transition relative group flex flex-col h-full">
+            <!-- Card Header: Stats & Type -->
+            <div class="flex justify-between items-start mb-3 border-b border-white/5 pb-2">
+                <div class="flex flex-wrap gap-2 items-center">
+                    <!-- Category -->
+                    <span class="text-[10px] font-mono text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">
+                        {{ q.category.name|default:"Uncategorized" }}
+                    </span>
+                    <!-- Rank -->
+                    {% if q.rank %}
+                    <span class="text-[10px] font-mono text-gray-300 bg-white/5 px-1.5 py-0.5 rounded border border-white/10">
+                        {{ q.rank.name }}
+                    </span>
+                    <!-- Points -->
+                    <span class="text-[10px] font-mono text-yellow-400">
+                        {{ q.rank.points }}pt
+                    </span>
+                    {% endif %}
+                    
+                    <!-- Answer Count -->
+                    <span class="text-[10px] font-mono text-gray-500 flex items-center gap-1" title="Answers">
+                        <i class="fas fa-comment-dots"></i> {{ q.answer_count }}
+                    </span>
+                </div>
+                
+                <!-- Type Badge -->
+                <span class="text-[9px] px-1.5 py-0.5 rounded border border-white/10 text-gray-400 font-mono">
+                    {{ q.get_answer_type_display }}
                 </span>
             </div>
 
-            <!-- Title -->
-            <h3 class="text-lg text-white font-bold mb-2">{{ q.title }}</h3>
+            <!-- Card Body -->
+            <div class="flex-1 space-y-2">
+                <!-- Title -->
+                <h3 class="text-base text-white font-bold leading-tight">{{ q.title }}</h3>
+                
+                <!-- Description -->
+                {% if q.description %}
+                <p class="text-xs text-gray-400 leading-relaxed">{{ q.description }}</p>
+                {% endif %}
+                
+                <!-- Example -->
+                {% if q.example %}
+                <div class="bg-black/20 p-2 rounded border border-white/5 mt-2">
+                    <p class="text-[10px] text-gray-500 font-mono">EX: {{ q.example }}</p>
+                </div>
+                {% endif %}
+            </div>
 
-            <!-- Description -->
-            {% if q.description %}
-            <p class="text-xs text-gray-400 mb-2 line-clamp-2" title="{{ q.description }}">{{ q.description }}</p>
+            <!-- Card Footer: Actions -->
+            <div class="mt-4 pt-3 border-t border-white/5 flex justify-between items-center">
+                 <div class="flex gap-2">
+                    {% if user.role == "MASTER" or not q.is_shared %}
+                    <a href="{% url 'question_edit' q.pk %}" class="bg-white/5 hover:bg-white/10 text-gray-300 text-[10px] px-2 py-1 rounded border border-white/10 transition">
+                        EDIT
+                    </a>
+                    {% endif %}
+                 </div>
+                 
+                 <button onclick="openLogModal('{{ q.id }}')" 
+                    class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-[10px] px-3 py-1 rounded border border-blue-500/30 transition flex items-center gap-1 font-mono">
+                    <i class="fas fa-pen-nib"></i> LOG
+                 </button>
+            </div>
+            
+             <!-- Delete Button (Top Right) -->
+            {% if user.role == "MASTER" or not q.is_shared %}
+            <a href="{% url 'question_delete' q.pk %}" class="absolute top-2 right-2 p-1 text-gray-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition" title="Delete">
+                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </a>
             {% endif %}
-
-            <!-- Details -->
-            <div class="space-y-1 mt-4 border-t border-white/5 pt-3">
-                <div class="flex justify-between text-xs">
-                    <span class="text-gray-500 font-mono">Type:</span>
-                    <span class="text-gray-300">{{ q.get_answer_type_display }}</span>
-                </div>
-                <div class="flex justify-between text-xs">
-                    <span class="text-gray-500 font-mono">Scope:</span>
-                    <span class="text-gray-300">{% if q.is_shared %}Shared{% else %}Individual{% endif %}</span>
-                </div>
-            </div>
-
-            <!-- Actions -->
-            <div class="absolute bottom-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <a href="{% url 'question_edit' q.pk %}" class="p-1.5 bg-white/10 hover:bg-white/20 rounded text-white" title="Edit">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                </a>
-                <a href="{% url 'question_delete' q.pk %}" class="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded border border-red-500/30" title="Delete">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                </a>
-            </div>
         </div>
         {% empty %}
         <div class="col-span-full text-center py-20">
-            <p class="text-gray-500 font-mono">No questions registered yet.</p>
+            <p class="text-gray-500 font-mono">No questions match the filter.</p>
         </div>
         {% endfor %}
     </div>
 </div>
+
+<!-- Log Target Selection Modal -->
+<div id="logModal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-surface border border-white/20 p-6 rounded-xl w-full max-w-sm shadow-2xl">
+        <h3 class="text-white font-mono mb-4 text-center">SELECT TARGET TO LOG</h3>
+        
+        <div class="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
+            {% for t in all_targets %}
+            <button onclick="selectTargetForLog('{{ t.id }}')" 
+                class="w-full p-3 rounded bg-black/20 border border-white/10 hover:bg-white/5 hover:border-primary/50 transition flex items-center gap-3 group text-left">
+                <!-- Avatar -->
+                <div class="w-8 h-8 rounded bg-background border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                     {% if t.avatar %}<img src="{{ t.avatar.url }}" class="w-full h-full object-cover">
+                     {% else %}<span class="text-xs text-gray-500">{{ t.nickname|slice:":1" }}</span>{% endif %}
+                </div>
+                <div>
+                    <div class="text-sm text-white group-hover:text-primary transition font-mono">{{ t.nickname }}</div>
+                    <div class="text-[10px] text-gray-500">{{ t.last_name }} {{ t.first_name }}</div>
+                </div>
+            </button>
+            {% empty %}
+            <p class="text-gray-500 text-center text-xs">No targets registered.</p>
+            {% endfor %}
+        </div>
+        
+        <button onclick="document.getElementById('logModal').classList.add('hidden')" class="w-full mt-4 py-2 text-xs text-gray-400 hover:text-white transition">Cancel</button>
+    </div>
+</div>
+
+<script>
+    let currentLogQId = null;
+
+    function openLogModal(qId) {
+        currentLogQId = qId;
+        document.getElementById('logModal').classList.remove('hidden');
+    }
+
+    function selectTargetForLog(targetId) {
+        if(!currentLogQId) return;
+        // Redirect to Intelligence Log with params
+        // Log URL: /intelligence/log/
+        // Params: target_id, question_id
+        const url = `{% url 'intelligence_log' %}?target_id=${targetId}&question_id=${currentLogQId}`;
+        window.location.href = url;
+    }
+</script>
 {% endblock %}

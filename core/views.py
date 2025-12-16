@@ -618,12 +618,40 @@ class QuestionListView(LoginRequiredMixin, ListView):
     context_object_name = 'questions'
 
     def get_queryset(self):
-        return Question.objects.filter(user=self.request.user).order_by('order', 'created_at')
+        from django.db.models import Q, Count
+        
+        # Base Query: User's Own OR Shared Questions
+        qs = Question.objects.filter(
+            Q(user=self.request.user) | Q(is_shared=True)
+        ).annotate(
+            answer_count=Count('timelineitem')
+        ).order_by('order', 'created_at')
+        
+        # Filters
+        cat_id = self.request.GET.get('category')
+        if cat_id:
+            qs = qs.filter(category_id=cat_id)
+            
+        rank_id = self.request.GET.get('rank')
+        if rank_id:
+            qs = qs.filter(rank_id=rank_id)
+            
+        # shared param: '1' -> Only Shared, '0' -> Only Individual
+        is_shared = self.request.GET.get('shared')
+        if is_shared == '1':
+            qs = qs.filter(is_shared=True)
+        elif is_shared == '0':
+            qs = qs.filter(is_shared=False)
+            
+        return qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['categories'] = QuestionCategory.objects.filter(user=self.request.user)
         context['ranks'] = QuestionRank.objects.filter(user=self.request.user)
+        # Add all targets for the LOG modal
+        from intelligence.models import Target
+        context['all_targets'] = Target.objects.filter(user=self.request.user).order_by('nickname')
         return context
 
 class QuestionCreateView(LoginRequiredMixin, CreateView):

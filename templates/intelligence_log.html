@@ -875,5 +875,28 @@
         tabEvent.classList.remove('border-primary', 'text-text-main', 'bg-text-main/5');
     });
 
+    // --- Initialization: Handle URL Params for Pre-selection ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const preQId = urlParams.get('question_id');
+    
+    if (preQId) {
+        // Switch to Question Tab
+        tabQuestion.click();
+        
+        // Find question data
+        const preQ = questionsData.find(q => q.id === preQId);
+        if (preQ) {
+            // Set Category
+            qCategory.value = preQ.category;
+            qCategory.dispatchEvent(new Event('change'));
+            
+            // Set Question
+            qSelect.value = preQ.id;
+            qSelect.dispatchEvent(new Event('change'));
+            
+            // Highlight intent
+            console.log("Pre-selected Question:", preQ.text);
+        }
+    }
 </script>
 {% endblock %}
