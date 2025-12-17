@@ -680,11 +680,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (timelineContainer.scrollTop === 0 && hasMore && !isFetching) fetchTimeline(true);
     });
     // Mobile Scroll
-    if (mobileTimelineContent) {
-        mobileTimelineContent.addEventListener('scroll', () => {
-            if (mobileTimelineContent.scrollTop === 0 && hasMore && !isFetching) fetchTimeline(true);
-        });
-    }
+
 
     let searchDebounce;
     timelineSearch.addEventListener('input', () => {
@@ -890,9 +886,7 @@ document.addEventListener('DOMContentLoaded', function() {
     closeTagModal.addEventListener('click', () => tagModal.classList.add('hidden'));
 
     // --- Save ---
-    console.log('[DEBUG] Attaching saveLogBtn listener');
     document.getElementById('saveLogBtn').addEventListener('click', () => {
-        console.log('[DEBUG] saveLogBtn clicked!');
         if (!currentTargetId) { alert('ターゲットを選択してください'); return; }
 
         const isEventTab = !formEvent.classList.contains('hidden');
@@ -1112,9 +1106,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // --- Tab Switching Logic ---
-    console.log('[DEBUG] Attaching tabEvent listener, element:', tabEvent);
     tabEvent.addEventListener('click', () => {
-        console.log('[DEBUG] tabEvent clicked!');
         formEvent.classList.remove('hidden');
         formQuestion.classList.add('hidden');
         tabEvent.classList.add('border-primary', 'text-text-main', 'bg-text-main/5');
@@ -1123,9 +1115,7 @@ document.addEventListener('DOMContentLoaded', function() {
         tabQuestion.classList.remove('border-primary', 'text-text-main', 'bg-text-main/5');
     });
 
-    console.log('[DEBUG] Attaching tabQuestion listener, element:', tabQuestion);
     tabQuestion.addEventListener('click', () => {
-        console.log('[DEBUG] tabQuestion clicked!');
         formQuestion.classList.remove('hidden');
         formEvent.classList.add('hidden');
         tabQuestion.classList.add('border-primary', 'text-text-main', 'bg-text-main/5');
