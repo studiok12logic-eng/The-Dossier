@@ -45,18 +45,11 @@ def dashboard(request):
     qa_count = len(unique_pairs)
     total_logs = TimelineItem.objects.filter(target__user=user).count()
 
-    # 2. Anniversaries (Range: Today-2 to Today+21)
-    start_date = today - datetime.timedelta(days=2)
-    end_date = today + datetime.timedelta(days=21)
+    # 2. Anniversaries (Range: Today to Today+7 for notification bar)
+    start_date = today
+    end_date = today + datetime.timedelta(days=7)
     
-    # We need to fetch Targets (birthdays) and CustomAnniversaries
-    # Birthdays are tricky because year doesn't matter, only month/day.
-    # We scan the range day by day or using complex Q.
-    # Given range is small (23 days), we can iterate dates? No.
-    # We can filter targets where (month=M1 and day>=D1) OR (month=M2 and day<=D2).
-    # Since range might span months.
-    
-    anniv_list = []
+    upcoming_anniv_list = []
     
     # Helper to check range
     date_curs = start_date
@@ -66,7 +59,7 @@ def dashboard(request):
             user=user, birth_month=date_curs.month, birth_day=date_curs.day
         )
         for t in b_targets:
-            anniv_list.append({
+            upcoming_anniv_list.append({
                 'date': date_curs,
                 'name': '誕生日',
                 'target': t,
@@ -78,7 +71,7 @@ def dashboard(request):
             target__user=user, date__month=date_curs.month, date__day=date_curs.day
         ).select_related('target')
         for ca in c_annivs:
-            anniv_list.append({
+            upcoming_anniv_list.append({
                 'date': date_curs,
                 'name': ca.label,
                 'target': ca.target,
@@ -87,65 +80,9 @@ def dashboard(request):
             
         date_curs += datetime.timedelta(days=1)
         
-    anniv_list.sort(key=lambda x: x['date']) # Sort by date
+    upcoming_anniv_list.sort(key=lambda x: x['date']) # Sort by date
 
-    # 3. Calendar Data (Current Month)
-    # Aggregated counts per day: { '2025-12-01': {count: 5, logs: [{nick: 'A', id: 1}, ...]}, ... }
-    # User wants: "Log count total", "Person who input log (Green)", "Person with Anniversary (Yellow)"
-    # Nickname click -> Open Log for that date/target.
-    
-    # Range: 1st to End of Month
-    c_year, c_month = today.year, today.month
-    import calendar
-    _, last_day = calendar.monthrange(c_year, c_month)
-    month_start = datetime.date(c_year, c_month, 1)
-    month_end = datetime.date(c_year, c_month, last_day)
-    
-    # Fetch Logs
-    month_logs = TimelineItem.objects.filter(
-        target__user=user, date__range=(month_start, month_end)
-    ).select_related('target').order_by('date')
-    
-    cal_data = {}
-    for log in month_logs:
-        d_str = log.date.strftime('%Y-%m-%d')
-        if d_str not in cal_data: cal_data[d_str] = {'date': log.date, 'count': 0, 'loggers': set(), 'annivs': set()}
-        cal_data[d_str]['count'] += 1
-        cal_data[d_str]['loggers'].add(log.target) # Store target obj for nickname/ID
-
-    # Fetch Anniversaries for Calendar (reuse logic or query)
-    # Optimize: reuse iteration? 
-    # Just query for month
-    month_birthdays = Target.objects.filter(user=user, birth_month=c_month)
-    for t in month_birthdays:
-        # Year irrelevant, map to this year
-        # Watch out for Feb 29
-        try:
-            d = datetime.date(c_year, c_month, t.birth_day)
-            d_str = d.strftime('%Y-%m-%d')
-            if d_str not in cal_data: cal_data[d_str] = {'date': d, 'count': 0, 'loggers': set(), 'annivs': set()}
-            cal_data[d_str]['annivs'].add(t)
-        except ValueError: pass
-
-    month_custom = CustomAnniversary.objects.filter(target__user=user, date__month=c_month).select_related('target')
-    for ca in month_custom:
-         d = datetime.date(c_year, c_month, ca.date.day) # Map to current year view? Or strictly date? 
-         # CustomAnniversary has a specific YEAR usually? Or is it recurring? 
-         # Model CustomAnniversary has 'date' field (DateField). 
-         # If it's a "Memorial", it might be specific (Wedding 2020). 
-         # Assuming we treat day/month as recurring for display, or strict? 
-         # User said "Anniversary List" -> usually recurring. 
-         # I will treat as recurring for Calendar.
-         d_str = d.strftime('%Y-%m-%d')
-         if d_str not in cal_data: cal_data[d_str] = {'date': d, 'count': 0, 'loggers': set(), 'annivs': set()}
-         cal_data[d_str]['annivs'].add(ca.target)
-
-    # Convert Sets to Lists for Template
-    for k, v in cal_data.items():
-        v['loggers'] = list(v['loggers'])
-        v['annivs'] = list(v['annivs'])
-
-    # Filters Support (Groups, Tags)
+    # 3. Filters Support (Groups, Tags)
     groups = TargetGroup.objects.filter(user=user)
     top_tags = Tag.objects.filter(timelineitem__target__user=user).annotate(c=Count('timelineitem')).order_by('-c')[:20]
 
@@ -155,9 +92,7 @@ def dashboard(request):
             'total_points': total_points,
             'total_logs': total_logs
         },
-        'anniversaries': anniv_list,
-        'calendar_data': cal_data, 
-        'calendar_month': today.strftime('%Y-%m'),
+        'upcoming_anniversaries': upcoming_anniv_list,
         'groups': groups,
         'tags': top_tags,
     }

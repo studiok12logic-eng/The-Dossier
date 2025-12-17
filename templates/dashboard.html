@@ -3,362 +3,115 @@
 {% block content_wrapper_class %}flex-1 flex flex-col min-h-0 overflow-hidden p-4 md:p-8 pb-32 md:pb-12{% endblock %}
 
 {% block content %}
-<div class="flex-1 min-h-0 flex flex-col gap-6 overflow-hidden">
+<div class="flex-1 min-h-0 flex flex-col gap-4 overflow-hidden">
     
-    <!-- 1. Stats Bar -->
-    <div class="grid grid-cols-3 gap-4 shrink-0">
-        <!-- Logs -->
-        <div class="bg-surface border border-border rounded-xl p-4 flex items-center justify-between shadow-lg shadow-black/20">
-            <div>
-                <div class="text-xs text-text-sub font-mono mb-1">TOTAL LOGS</div>
-                <div class="text-2xl font-bold text-text-main font-mono">{{ stats.total_logs }}</div>
+    <!-- Anniversary Notifications -->
+    {% if upcoming_anniversaries %}
+    <div class="bg-surface/50 border border-accent/30 rounded-lg p-3 shrink-0 flex items-center gap-3 overflow-x-auto">
+        <i class="fas fa-gift text-accent text-sm shrink-0"></i>
+        <div class="flex items-center gap-4 flex-1 min-w-0">
+            {% for item in upcoming_anniversaries %}
+            <div class="flex items-center gap-2 shrink-0">
+                <div class="w-8 h-8 rounded-full bg-background border border-border overflow-hidden">
+                    {% if item.target.avatar %}
+                    <img src="{{ item.target.avatar.url }}" class="w-full h-full object-cover">
+                    {% else %}
+                    <div class="w-full h-full flex items-center justify-center text-xs text-text-sub">{{ item.target.nickname|slice:":1" }}</div>
+                    {% endif %}
+                </div>
+                <div class="text-xs">
+                    <span class="text-accent font-bold">{{ item.name }}</span>
+                    <span class="text-text-sub mx-1">·</span>
+                    <span class="text-text-sub">{{ item.date|date:"m/d" }}</span>
+                </div>
             </div>
-            <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                <i class="fas fa-file-alt"></i>
-            </div>
-        </div>
-        <!-- Q&A -->
-        <div class="bg-surface border border-border rounded-xl p-4 flex items-center justify-between shadow-lg shadow-black/20">
-            <div>
-                <div class="text-xs text-text-sub font-mono mb-1">Q&A ANSWERS</div>
-                <div class="text-2xl font-bold text-text-main font-mono">{{ stats.qa_count }}</div>
-            </div>
-            <div class="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400">
-                <i class="fas fa-question-circle"></i>
-            </div>
-        </div>
-        <!-- Points -->
-        <div class="bg-surface border border-border rounded-xl p-4 flex items-center justify-between shadow-lg shadow-black/20">
-            <div>
-                <div class="text-xs text-text-sub font-mono mb-1">TOTAL POINTS</div>
-                <div class="text-2xl font-bold text-text-main font-mono">{{ stats.total_points }}</div>
-            </div>
-            <div class="w-10 h-10 rounded-full bg-yellow-500/10 flex items-center justify-center text-accent">
-                <i class="fas fa-star"></i>
-            </div>
+            {% endfor %}
         </div>
     </div>
+    {% endif %}
 
-    <!-- 2. Main Content Grid -->
+    <!-- Main Content: Recent Logs List -->
     <div class="flex-1 min-h-0 grid grid-cols-1 gap-6 overflow-hidden">
-        
-        <!-- Left: Intelligence Feed (Cols 8) -->
-        <div class="lg:col-span-8 flex flex-col min-h-0 bg-surface border border-border rounded-xl overflow-hidden shadow-xl">
-            <!-- Feed Header & Filters -->
-            <div class="p-4 border-b border-border bg-surface shrink-0 z-10">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-mono text-text-main flex items-center gap-2">
-                        <span class="w-1 h-5 bg-primary block"></span> LATEST INTELLIGENCE
-                    </h2>
-                    <div class="flex items-center gap-2">
-                         <div class="relative group">
-                            <input type="text" id="feedSearch" placeholder="Search logs..." 
-                                class="bg-background border border-border rounded-full px-3 py-1.5 text-xs text-text-main focus:border-primary w-40 focus:w-60 transition-all font-mono">
-                            <i class="fas fa-search absolute right-3 top-2 text-text-sub text-xs pointer-events-none"></i>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Filter Chips -->
-                <div class="flex flex-wrap gap-2 items-center">
-                    <button id="refreshFeedBtn" class="w-6 h-6 flex items-center justify-center rounded-full border border-border text-text-sub hover:text-text-main hover:bg-text-main/5 transition" title="Refresh">
-                        <i class="fas fa-sync-alt text-[10px]"></i>
-                    </button>
-                    
-                    <!-- Group Filter -->
-                    <select id="groupFilter" class="bg-background border border-border rounded px-2 py-1 text-[10px] text-text-main focus:border-primary font-mono max-w-[100px]">
-                        <option value="">ALL GROUPS</option>
-                        {% for g in groups %}<option value="{{ g.id }}">{{ g.name }}</option>{% endfor %}
-                    </select>
-
-                    <!-- Type Filter -->
-                    <select id="typeFilter" class="bg-background border border-border rounded px-2 py-1 text-[10px] text-text-main focus:border-primary font-mono">
-                        <option value="">ALL TYPES</option>
-                        <option value="EVENT">EVENT/NOTE</option>
-                        <option value="QUESTION">QUESTION</option>
-                    </select>
-
-                    <!-- Encanto Toggle -->
-                    <button id="encantoToggle" class="flex items-center gap-1 px-2 py-1 rounded border border-border text-text-sub hover:text-green-400 hover:border-green-400/50 transition font-mono text-[10px]" title="Show Encanto Only">
-                         <i class="fas fa-handshake"></i> ENCANTO
-                    </button>
-                </div>
+        <div class="flex flex-col min-h-0 bg-surface border border-border rounded-xl overflow-hidden shadow-xl">
+            <!-- Header -->
+            <div class="p-4 border-b border-border bg-surface shrink-0">
+                <h2 class="text-lg font-mono text-text-main flex items-center gap-2">
+                    <span class="w-1 h-5 bg-primary block"></span> RECENT ACTIVITY
+                </h2>
+                <div class="text-xs text-text-sub mt-1">最近ログを追加した人</div>
             </div>
 
-            <!-- Feed Content (Infinite Scroll) -->
-            <div id="feedContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-background/50 relative scroll-smooth">
-                <div id="feedLoading" class="hidden absolute top-2 left-0 right-0 text-center py-2 pointer-events-none z-20">
-                    <span class="bg-surface border border-border px-3 py-1 rounded-full text-xs text-text-sub shadow-lg">
-                        <i class="fas fa-spinner fa-spin mr-1"></i> Loading...
-                    </span>
-                </div>
-                <div id="feedContent" class="space-y-3 pb-10"></div>
-                <div id="feedEnd" class="text-center text-text-sub text-[10px] py-4 hidden">END OF LOGS</div>
+            <!-- Recent Logs List -->
+            <div id="recentLogsContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-background/50">
+                <div id="recentLogsContent" class="space-y-3"></div>
             </div>
-        </div>
-
-        <!-- Right: Calendar & Anniversaries (Cols 4) -->
-        <div class="lg:col-span-4 flex flex-col gap-6 min-h-0 overflow-y-auto pr-1">
-            
-            <!-- Calendar -->
-            <div class="bg-surface border border-border rounded-xl overflow-hidden shrink-0">
-                <div class="p-3 border-b border-border flex justify-between items-center bg-surface">
-                    <h3 class="text-sm font-mono text-text-main flex items-center gap-2">
-                        <i class="far fa-calendar-alt text-text-sub"></i> {{ calendar_month }}
-                    </h3>
-                    <div class="text-[10px] text-text-sub">
-                        <span class="inline-block w-2 h-2 rounded-full bg-primary mx-1"></span>Log
-                        <span class="inline-block w-2 h-2 rounded-full bg-accent mx-1"></span>Anniv
-                    </div>
-                </div>
-                
-                <!-- Simple Month Grid Rendered Backend-Side Data -->
-                <!-- We just iterate passed data. Keys are dates string YYYY-MM-DD -->
-                <div class="p-4 grid grid-cols-7 gap-1 text-center font-mono text-[10px] bg-background/50">
-                    <div class="text-text-sub">Mo</div><div class="text-text-sub">Tu</div><div class="text-text-sub">We</div>
-                    <div class="text-text-sub">Th</div><div class="text-text-sub">Fr</div><div class="text-text-sub">Sa</div>
-                    <div class="text-text-sub text-red-500">Su</div>
-                    
-                    {# Logic to render empty cells effectively requires python loop day by day. We passed 'calendar_data' dict only. #}
-                    {# To render a proper grid, we need standard calendar logic (padding days). #}
-                    {# I will use JS to render this grid to handle the date logic correctly. #}
-                    {# Pass data via JSON script #}
-                </div>
-                <div id="calendarGrid" class="p-2 grid grid-cols-7 gap-1 text-[10px] font-mono"></div>
-            </div>
-            
-            <!-- Anniversaries -->
-            <div class="bg-surface border border-border rounded-xl overflow-hidden flex-1 min-h-[300px] flex flex-col">
-                <div class="p-3 border-b border-border bg-surface">
-                    <h3 class="text-sm font-mono text-text-main flex items-center gap-2">
-                        <i class="fas fa-gift text-accent"></i> UPCOMING
-                    </h3>
-                </div>
-                <div class="flex-1 overflow-y-auto p-2 space-y-2">
-                    {% for item in anniversaries %}
-                    <div class="p-2 rounded border {% if item.is_past %}bg-background/30 border-border opacity-60 grayscale{% else %}bg-surface border-border hover:border-accent/50{% endif %} transition group flex items-center gap-3 relative">
-                        <!-- Date -->
-                        <div class="w-10 text-center shrink-0">
-                            <div class="text-[9px] text-text-sub">{{ item.date|date:"M" }}</div>
-                            <div class="text-lg font-bold {% if item.is_past %}text-text-sub{% else %}text-text-main{% endif %} leading-none">{{ item.date|date:"d" }}</div>
-                        </div>
-                        
-                        <!-- Info -->
-                        <div class="flex-1 min-w-0">
-                            <div class="text-[10px] {% if item.is_past %}text-text-sub{% else %}text-accent font-bold{% endif %} truncate">
-                                {{ item.name }}
-                            </div>
-                            <div class="text-xs text-text-main truncate">{{ item.target.nickname }}</div>
-                        </div>
-                        
-                        <!-- Log Button -->
-                        <a href="{% url 'intelligence_log' %}?target_id={{ item.target.id }}&date={{ item.date|date:'Y-m-d' }}" 
-                           class="w-8 h-8 rounded-full border border-border flex items-center justify-center text-text-sub hover:bg-black hover:text-white hover:border-primary transition" title="Log for this day">
-                            <i class="fas fa-pen text-xs"></i>
-                        </a>
-                    </div>
-                    {% empty %}
-                    <div class="py-8 text-center text-text-sub text-xs">No upcoming anniversaries</div>
-                    {% endfor %}
-                </div>
-            </div>
-
         </div>
     </div>
 </div>
 
-<!-- Scripts -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
-
 <script>
-    // --- Data Construction due to Object Serialization Limitation ---
-    const calData = {};
-    {% for date_str, info in calendar_data.items %}
-    calData["{{ date_str }}"] = {
-        count: {{ info.count }},
-        loggers: [
-            {% for t in info.loggers %}{ id: "{{ t.id }}", name: "{{ t.nickname }}" },{% endfor %}
-        ],
-        annivs: [
-            {% for t in info.annivs %}{ id: "{{ t.id }}", name: "{{ t.nickname }}" },{% endfor %}
-        ]
-    };
-    {% endfor %}
-
-    // --- Render Logic (Redefine) ---
-    function renderCal() {
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = now.getMonth();
-        // Assume current month matches server data (which it does, `today` in view)
-        
-        const firstDay = new Date(year, month, 1);
-        const lastDay = new Date(year, month + 1, 0);
-        let startDay = firstDay.getDay(); if(startDay===0) startDay=7;
-        
-        let html = `
-            <div class="text-center text-text-sub font-bold text-[9px] py-1">Mo</div><div class="text-center text-text-sub font-bold text-[9px] py-1">Tu</div>
-            <div class="text-center text-text-sub font-bold text-[9px] py-1">We</div><div class="text-center text-text-sub font-bold text-[9px] py-1">Th</div>
-            <div class="text-center text-text-sub font-bold text-[9px] py-1">Fr</div><div class="text-center text-text-sub font-bold text-[9px] py-1">Sa</div>
-            <div class="text-center text-red-500 font-bold text-[9px] py-1">Su</div>
-        `;
-        
-        for(let i=1; i<startDay; i++) html += `<div class="p-1"></div>`;
-        
-        for(let d=1; d<=lastDay.getDate(); d++) {
-             const dStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-             const dayData = calData[dStr];
-             
-             let inner = "";
-             if(dayData) {
-                 // Loggers: Green
-                 dayData.loggers.forEach(l => {
-                     // Link to Log for that date/target
-                     inner += `<a href="{% url 'intelligence_log' %}?target_id=${l.id}&date=${dStr}" class="block text-primary hover:text-white truncate" title="Log: ${l.name}">● ${l.name}</a>`;
-                 });
-                 // Annivs: Yellow
-                 dayData.annivs.forEach(a => {
-                     inner += `<a href="{% url 'intelligence_log' %}?target_id=${a.id}&date=${dStr}" class="block text-accent hover:text-white truncate" title="Anniv: ${a.name}">★ ${a.name}</a>`;
-                 });
-             }
-             
-             // Today highlight
-             const isToday = (d === now.getDate());
-             const bgClass = isToday ? "bg-primary/5 border-primary" : "bg-background border-border/50 hover:bg-surface";
-             
-             html += `
-                <div class="${bgClass} border rounded p-1 min-h-[60px] flex flex-col gap-0.5 transition relative overflow-hidden">
-                    <div class="text-[9px] ${isToday?'text-primary font-bold':'text-text-sub'} leading-none mb-1">${d}</div>
-                    <div class="text-[8px] leading-tight flex-1 flex flex-col gap-0.5 overflow-hidden">
-                        ${inner}
-                    </div>
-                </div>
-             `;
-        }
-        document.getElementById('calendarGrid').innerHTML = html;
-    }
-    renderCal();
-
-    // --- FEED LOGIC ---
-    const feedContainer = document.getElementById('feedContainer');
-    const feedContent = document.getElementById('feedContent');
-    const feedLoading = document.getElementById('feedLoading');
-    const feedEnd = document.getElementById('feedEnd');
+    // --- Recent Logs Logic ---
+    const recentLogsContent = document.getElementById('recentLogsContent');
     
-    // Filters
-    const feedSearch = document.getElementById('feedSearch');
-    const groupFilter = document.getElementById('groupFilter');
-    const typeFilter = document.getElementById('typeFilter');
-    const encantoToggle = document.getElementById('encantoToggle');
-    const refreshBtn = document.getElementById('refreshFeedBtn');
-    
-    let isFetching = false;
-    let hasMore = true;
-    let cursorTime = null; // Use created_at timestamp cursor logic or Date? 
-    // API uses 'before_timestamp'. First fetch: null.
-    
-    function fetchFeed(reset=false) {
-        if(isFetching) return;
-        if(reset) {
-            feedContent.innerHTML = '';
-            cursorTime = null;
-            hasMore = true;
-            feedEnd.classList.add('hidden');
-        }
-        if(!hasMore) return;
-        
-        isFetching = true;
-        feedLoading.classList.remove('hidden');
-        
-        const params = new URLSearchParams({ limit: 20 });
-        if(cursorTime) params.append('before_timestamp', cursorTime);
-        if(feedSearch.value) params.append('search', feedSearch.value);
-        if(groupFilter.value) params.append('group_id', groupFilter.value);
-        if(typeFilter.value) params.append('type', typeFilter.value);
-        if(encantoToggle.classList.contains('active')) params.append('contact_only', 'true');
-        
-        fetch(`{% url 'timeline_list' %}?${params.toString()}`)
+    function fetchRecentLogs() {
+        // Fetch recent activity - last 10 people who added logs
+        fetch('{% url "timeline_list" %}?limit=10&group_by_target=true')
             .then(res => res.json())
             .then(data => {
-                isFetching = false;
-                feedLoading.classList.add('hidden');
-                
-                if(data.success) {
-                    if(data.data.length < 20) { hasMore = false; feedEnd.classList.remove('hidden'); }
-                    if(data.data.length > 0) {
-                        // Update cursor to the LAST item's created_at
-                        cursorTime = data.data[data.data.length - 1].created_at;
-                        renderFeedItems(data.data);
-                    } else if(reset) {
-                        feedContent.innerHTML = '<div class="text-center text-text-sub text-xs py-10">No logs found matching criteria.</div>';
-                    }
+                if(data.success && data.data.length > 0) {
+                    renderRecentLogs(data.data);
+                } else {
+                    recentLogsContent.innerHTML = '<div class="text-center text-text-sub text-xs py-10">まだログがありません</div>';
                 }
             })
-            .catch(err => { console.error(err); isFetching = false; feedLoading.classList.add('hidden'); });
+            .catch(err => {
+                console.error(err);
+                recentLogsContent.innerHTML = '<div class="text-center text-text-sub text-xs py-10">エラーが発生しました</div>';
+            });
     }
     
-    function renderFeedItems(items) {
+    function renderRecentLogs(items) {
         const frag = document.createDocumentFragment();
+        
         items.forEach(item => {
             const el = document.createElement('div');
-            // Simplified Card Style
-            // Top: Avatar + Nickname + Info + Date
-            // Mid: Content
-            // Bottom: Tags + Actions
-            
-            const target = item.target || {nickname: 'Unknown'}; // Fallback
+            const target = item.target || {nickname: 'Unknown'};
             const isQ = item.type === 'Question';
             const typeBadge = isQ ? 'bg-green-500/20 text-green-400' : 'bg-blue-500/20 text-blue-400';
             
-            // Edit Link: Go to Log Page with Focus
-            const editUrl = `{% url 'intelligence_log' %}?target_id=${target.id}&date=${item.date}#item-${item.id}`; // Anchors? 
-            // IntelligenceLog logic uses `editingItemId` hidden input. 
-            // Better: Pass `edit_item=ID` in URL and handle in View/JS? 
-            // Or just open the log. 
-            // User requirement: "Edit button -> moves to edit screen of target log". 
-            // Since Dashboard and Log are separate, we navigate.
-            // I'll link to `intelligence_log` with query params. 
-            // The `intelligence_log` view doesn't auto-open edit mode yet.
-            // I added logic to `dashboard.html` but `intelligence_log.html` needs to read param?
-            // I will assume simple navigation for now.
-            
-            el.className = "bg-surface border border-border rounded-lg p-3 hover:border-text-main/20 transition-all group";
+            el.className = "bg-surface border border-border rounded-lg p-4 hover:border-primary/30 transition-all group";
             el.innerHTML = `
-                <div class="flex items-start gap-3 mb-2">
-                    <div class="w-10 h-10 rounded-full bg-background border border-border overflow-hidden shrink-0">
-                         ${ target.avatar ? `<img src="${target.avatar}" class="w-full h-full object-cover">` : `<div class="w-full h-full flex items-center justify-center text-xs text-text-sub">${target.nickname[0]}</div>` }
+                <div class="flex items-start gap-3">
+                    <div class="w-12 h-12 rounded-full bg-background border border-border overflow-hidden shrink-0">
+                         ${ target.avatar ? `<img src="${target.avatar}" class="w-full h-full object-cover">` : `<div class="w-full h-full flex items-center justify-center text-sm text-text-sub">${target.nickname[0]}</div>` }
                     </div>
                     <div class="flex-1 min-w-0">
-                        <div class="flex justify-between items-start">
-                            <div class="text-sm font-bold text-text-main font-mono">${target.nickname}</div>
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="text-base font-bold text-text-main font-mono">${escapeHtml(target.nickname)}</div>
                             <div class="text-[10px] text-text-sub font-mono text-right leading-tight">
                                 <div>${item.date}</div>
                                 <div class="opacity-50">${item.created_at.split(' ')[1] || ''}</div>
                             </div>
                         </div>
-                        <div class="flex items-center gap-2 mt-0.5">
-                            <span class="px-1.5 py-0.5 rounded text-[9px] ${typeBadge} border border-white/5">${item.type.toUpperCase()}</span>
-                            ${item.contact_made ? '<span class="px-1.5 py-0.5 rounded text-[9px] bg-primary/20 text-primary border border-primary/30"><i class="fas fa-handshake mr-1"></i>Encanto</span>' : ''}
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="px-2 py-0.5 rounded text-[10px] ${typeBadge} border border-white/5">${item.type.toUpperCase()}</span>
+                            ${item.contact_made ? '<span class="px-2 py-0.5 rounded text-[10px] bg-primary/20 text-primary border border-primary/30"><i class="fas fa-handshake mr-1"></i>Encanto</span>' : ''}
                         </div>
-                    </div>
-                </div>
-                
-                <div class="pl-[52px]">
-                    ${ isQ ? `<div class="text-xs font-bold text-text-main mb-1">Q. ${escapeHtml(item.question_title)}</div>` : '' }
-                    <div class="text-sm text-text-sub whitespace-pre-wrap leading-relaxed">${escapeHtml(item.description)}</div>
-                    
-                    ${ item.tags.length ? `<div class="mt-2 flex flex-wrap gap-1">${ item.tags.map(t=>`<span class="text-[10px] text-text-sub opacity-70">#${escapeHtml(t.name)}</span>`).join('') }</div>` : '' }
-                    
-                    <div class="mt-3 flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                         <a href="{% url 'intelligence_log' %}?target_id=${target.id}&date=${item.date}" class="text-[10px] px-2 py-1 rounded border border-border text-text-sub hover:text-text-main hover:bg-surface-highlight transition flex items-center gap-1">
-                             <i class="fas fa-pen"></i> EDIT DOUSSIER
-                         </a>
+                        <div class="text-sm text-text-sub line-clamp-2 leading-relaxed">
+                            ${ isQ ? `<span class="font-bold text-text-main">Q. ${escapeHtml(item.question_title || '')}</span> ` : '' }
+                            ${escapeHtml(item.description || '').substring(0, 100)}${(item.description || '').length > 100 ? '...' : ''}
+                        </div>
+                        <div class="mt-3 flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                             <a href="{% url 'intelligence_log' %}?target_id=${target.id}&date=${item.date}" class="text-[10px] px-3 py-1.5 rounded border border-border text-text-sub hover:text-text-main hover:bg-text-main/5 transition flex items-center gap-1">
+                                 <i class="fas fa-pen"></i> VIEW LOG
+                             </a>
+                        </div>
                     </div>
                 </div>
             `;
             frag.appendChild(el);
         });
-        feedContent.appendChild(frag);
+        recentLogsContent.appendChild(frag);
     }
     
     function escapeHtml(text) {
@@ -366,34 +119,8 @@
         return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     }
 
-    // Scroll
-    feedContainer.addEventListener('scroll', () => {
-        if(feedContainer.scrollTop + feedContainer.clientHeight >= feedContainer.scrollHeight - 50) {
-            fetchFeed();
-        }
-    });
-    
-    // Filter Events
-    let debounce;
-    feedSearch.addEventListener('input', () => { clearTimeout(debounce); debounce = setTimeout(()=>fetchFeed(true), 500); });
-    groupFilter.addEventListener('change', ()=>fetchFeed(true));
-    typeFilter.addEventListener('change', ()=>fetchFeed(true));
-    refreshBtn.addEventListener('click', ()=>fetchFeed(true));
-    
-    encantoToggle.addEventListener('click', () => {
-        encantoToggle.classList.toggle('active');
-        if(encantoToggle.classList.contains('active')) {
-            encantoToggle.classList.add('bg-green-500', 'text-black', 'border-transparent');
-            encantoToggle.classList.remove('text-text-sub', 'border-border');
-        } else {
-             encantoToggle.classList.remove('bg-green-500', 'text-black', 'border-transparent');
-            encantoToggle.classList.add('text-text-sub', 'border-border');
-        }
-        fetchFeed(true);
-    });
-
     // Init
-    fetchFeed(true);
+    fetchRecentLogs();
 
 </script>
 {% endblock %}
