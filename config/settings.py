@@ -25,7 +25,20 @@ SECRET_KEY = 'django-insecure-+sjqk_(^)$4=8_q6@x(pmf*0g-6fcm_@ca8tbowm)21vr1(sfh
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['116.80.44.190', 'localhost', '127.0.0.1']
+# 1. 許可するホスト名（ドメインそのもの）
+ALLOWED_HOSTS = [
+    '116.80.44.190', 
+    'localhost', 
+    '127.0.0.1', 
+    'dossier-app.com', 
+    'www.dossier-app.com'
+]
+
+# 2. CSRF検証で信頼するURL（https:// をつけた完全なURL）
+CSRF_TRUSTED_ORIGINS = [
+    'https://dossier-app.com',
+    'https://www.dossier-app.com',
+]
 
 
 # Application definition
