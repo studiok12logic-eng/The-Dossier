@@ -42,7 +42,7 @@
                 data-avatar="{% if item.obj.avatar %}{{ item.obj.avatar.url }}{% endif %}">
 
                 <!-- Avatar -->
-                <div class="w-10 h-10 min-w-[40px] max-w-[40px] rounded-full bg-gray-800 border border-white/10 overflow-hidden relative pointer-events-none shrink-0">
+                <div class="w-10 h-10 min-w-[40px] max-w-[40px] rounded-full bg-gray-800 border border-white/10 overflow-hidden relative pointer-events-none shrink-0" style="width: 40px !important; height: 40px !important; min-width: 40px !important; max-width: 40px !important;">
                     {% if item.obj.avatar %}
                     <img src="{{ item.obj.avatar.url }}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity">
                     {% else %}
