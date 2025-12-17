@@ -388,6 +388,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const editingItemIdInput = document.getElementById('editingItemId');
     const editModeBar = document.getElementById('editModeBar');
     const cancelEditBtn = document.getElementById('cancelEditBtn');
+    const deleteBtn = document.getElementById('deleteLogBtn');
 
     // Encanto Filter
     const encantoFilterBtn = document.getElementById('encantoFilterBtn');
@@ -761,7 +762,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    const deleteBtn = document.getElementById('deleteLogBtn');
     deleteBtn.addEventListener('click', () => {
         if(editingItemIdInput.value) deleteLog(editingItemIdInput.value);
     });
