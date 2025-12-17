@@ -8,8 +8,13 @@
     <!-- Header -->
     <header class="h-14 px-4 flex items-center justify-between bg-surface/50 backdrop-blur sticky top-0 z-30">
         <h1 class="text-xl font-bold text-text-main tracking-wide">DOSSIER</h1>
-        <div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary border border-primary/30">
-            <i class="fas fa-user-secret"></i>
+        <div class="flex items-center gap-3">
+             <a href="{% url 'profile' %}" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-text-sub border border-white/10 hover:bg-white/10">
+                <i class="fas fa-cog"></i>
+            </a>
+            <div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary border border-primary/30">
+                <i class="fas fa-user-secret"></i>
+            </div>
         </div>
     </header>
 

@@ -1,6 +1,6 @@
 {% load static tailwind_tags %}
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -20,24 +20,52 @@
     
     <!-- Mobile Bottom Navigation (Visible on most pages, hidden on Timeline) -->
     {% block bottom_nav %}
-    <nav id="mobileBottomNav" class="fixed bottom-0 left-0 right-0 bg-surface/95 backdrop-blur border-t border-white/10 pb-safe z-50">
-        <div class="flex justify-around items-center h-16">
-            <a href="{% url 'intelligence_log' %}" class="flex flex-col items-center justify-center w-full h-full text-text-sub hover:text-primary {% if request.resolver_match.url_name == 'intelligence_log' and not request.GET.target_id %}text-primary{% endif %}">
-                <i class="fas fa-edit text-lg mb-1"></i>
-                <span class="text-[10px]">LOG</span>
+    <nav id="mobileBottomNav" class="fixed bottom-0 left-0 right-0 bg-surface/95 backdrop-blur-xl border-t border-white/10 pb-safe z-50">
+        <div class="grid grid-cols-5 items-center h-16">
+            <!-- Dashboard -->
+            <a href="{% url 'dashboard' %}" 
+               class="flex flex-col items-center gap-1 transition-colors {% if request.resolver_match.url_name == 'dashboard' %}text-primary{% else %}text-gray-400{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                </svg>
+                <span class="text-[10px] font-medium">ホーム</span>
             </a>
-            <a href="{% url 'target_list' %}" class="flex flex-col items-center justify-center w-full h-full text-text-sub hover:text-primary {% if request.resolver_match.url_name == 'target_list' %}text-primary{% endif %}">
-                <i class="fas fa-users text-lg mb-1"></i>
-                <span class="text-[10px]">TARGETS</span>
+
+            <!-- Targets -->
+            <a href="{% url 'target_list' %}" 
+               class="flex flex-col items-center gap-1 transition-colors {% if request.resolver_match.url_name == 'target_list' %}text-primary{% else %}text-gray-400{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                </svg>
+                <span class="text-[10px] font-medium">ターゲット</span>
             </a>
-            <a href="{% url 'question_list' %}" class="flex flex-col items-center justify-center w-full h-full text-text-sub hover:text-primary {% if request.resolver_match.url_name == 'question_list' %}text-primary{% endif %}">
-                <i class="fas fa-list-ul text-lg mb-1"></i>
-                <span class="text-[10px]">Questions</span>
+
+            <!-- Intelligence Log -->
+            <a href="{% url 'intelligence_log' %}" 
+               class="flex flex-col items-center gap-1 transition-colors {% if request.resolver_match.url_name == 'intelligence_log' and not request.GET.target_id %}text-primary{% else %}text-gray-400{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"></path>
+                </svg>
+                <span class="text-[10px] font-medium">ログ</span>
             </a>
-            <!-- Home/Dashboard Placeholder -->
-             <a href="#" class="flex flex-col items-center justify-center w-full h-full text-text-sub hover:text-primary">
-                <i class="fas fa-home text-lg mb-1"></i>
-                <span class="text-[10px]">Home</span>
+
+            <!-- Questions -->
+            <a href="{% url 'question_list' %}" 
+               class="flex flex-col items-center gap-1 transition-colors {% if request.resolver_match.url_name == 'question_list' %}text-primary{% else %}text-gray-400{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span class="text-[10px] font-medium">質問</span>
+            </a>
+
+            <!-- Profile/Settings -->
+            <a href="{% url 'profile' %}" 
+               class="flex flex-col items-center gap-1 transition-colors {% if request.resolver_match.url_name == 'profile' %}text-primary{% else %}text-gray-400{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                <span class="text-[10px] font-medium">設定</span>
             </a>
         </div>
     </nav>

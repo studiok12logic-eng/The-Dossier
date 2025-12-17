@@ -1,0 +1,50 @@
+<!-- Question Answer Modal -->
+<div id="questionAnswerModal" class="hidden fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-surface border border-border rounded-xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[90vh]">
+        <div class="p-4 border-b border-border flex justify-between items-center bg-surface rounded-t-xl">
+            <h3 class="text-lg font-bold text-text-main"><i class="fas fa-comment-dots text-primary mr-2"></i>質問に回答</h3>
+            <button onclick="document.getElementById('questionAnswerModal').classList.add('hidden')" class="text-text-sub hover:text-white"><i class="fas fa-times"></i></button>
+        </div>
+        
+        <div class="flex-1 overflow-y-auto p-4">
+            <!-- Step 1: Category Selection -->
+            <div id="qStep1" class="space-y-4">
+               <h4 class="text-sm text-text-sub mb-2">カテゴリを選択</h4>
+               <div class="grid grid-cols-2 md:grid-cols-3 gap-2" id="qCategoryGrid">
+                   <!-- Populated by JS -->
+               </div>
+            </div>
+
+            <!-- Step 2: Question Selection -->
+            <div id="qStep2" class="hidden space-y-4">
+                <div class="flex items-center gap-2 mb-2">
+                    <button id="qBackToCat" class="text-text-sub hover:text-white text-xs"><i class="fas fa-arrow-left"></i> 戻る</button>
+                    <h4 class="text-sm text-text-main font-bold" id="qSelectedCatName">-</h4>
+                </div>
+                <div class="grid grid-cols-2 gap-2" id="qQuestionGrid">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Step 3: Answer Form -->
+            <div id="qStep3" class="hidden space-y-4">
+                 <div class="flex items-center gap-2 mb-2">
+                    <button id="qBackToQuestions" class="text-text-sub hover:text-white text-xs"><i class="fas fa-arrow-left"></i> 戻る</button>
+                    <h4 class="text-sm text-text-main font-bold">回答を入力</h4>
+                </div>
+                
+                <div class="bg-background p-3 rounded border border-border mb-4">
+                    <div class="text-primary font-bold text-sm mb-1" id="qTargetQuestion">-</div>
+                    <div class="text-xs text-text-sub" id="qTargetIntent">-</div>
+                </div>
+
+                <textarea id="qModalAnswer" class="w-full h-32 bg-background border border-border rounded p-3 text-sm text-text-main focus:border-primary focus:outline-none" placeholder="回答を入力..."></textarea>
+                
+                <div class="flex justify-end gap-2">
+                    <button class="px-4 py-2 rounded border border-border text-text-sub hover:text-white" onclick="document.getElementById('questionAnswerModal').classList.add('hidden')">キャンセル</button>
+                    <button id="submitAnswerBtn" class="px-6 py-2 rounded bg-primary text-black font-bold hover:bg-primary/90">回答を保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

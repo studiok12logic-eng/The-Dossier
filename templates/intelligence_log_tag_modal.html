@@ -1,0 +1,13 @@
+<!-- Tag Modal -->
+<div id="tagModal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-surface border border-border rounded-xl p-6 w-full max-w-lg shadow-2xl max-h-[80vh] flex flex-col">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-mono text-text-main">ALL TAGS</h3>
+            <button id="closeTagModal" class="text-text-sub hover:text-text-main">✕</button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-2" id="allTagsContainer">
+            <!-- Loaded via JS -->
+            <div class="text-center text-text-sub text-xs">Loading tags...</div>
+        </div>
+    </div>
+</div>

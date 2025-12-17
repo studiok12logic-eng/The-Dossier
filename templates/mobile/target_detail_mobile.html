@@ -3,7 +3,7 @@
 {% block title %}{{ target.nickname }} - Detail{% endblock %}
 
 {% block content %}
-<div class="flex flex-col h-full bg-background pb-20 relative">
+<div class="flex flex-col h-full bg-background pb-20 pt-14 relative">
 
     <!-- Top Navigation (Transparent) -->
     <div class="fixed top-0 left-0 right-0 h-14 px-4 flex items-center justify-between z-40 bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
@@ -78,7 +78,7 @@
              <div class="flex gap-3">
                  <!-- Date Column -->
                  <div class="flex flex-col items-center shrink-0 w-10 pt-1">
-                     <span class="text-[10px] text-text-sub font-mono">{{ item.date|date:"H:i" }}</span>
+                     <span class="text-[10px] text-text-sub font-mono">{{ item.created_at|date:"H:i"|default:"--" }}</span>
                      {% if item.contact_made %}
                      <div class="mt-1 w-5 h-5 flex items-center justify-center rounded-full bg-primary/20 text-primary border border-primary/30">
                          <i class="fas fa-handshake text-[10px]"></i>

@@ -10,7 +10,14 @@
         <h1 class="text-lg font-bold text-text-main tracking-wide">LOG ENTRY</h1>
         <div class="flex items-center gap-4">
              <!-- Date Display -->
-             <span class="text-sm font-mono text-primary">{{ today_date|date:"Y/m/d" }} ({{ weekday_jp }})</span>
+             <div class="relative flex items-center gap-2">
+                 <span class="text-sm font-mono text-primary pointer-events-none">{{ today_date|date:"Y/m/d" }} ({{ weekday_jp }})</span>
+                 <i class="fas fa-chevron-down text-primary text-xs"></i>
+                 <input type="date" value="{{ today_date|date:'Y-m-d' }}" 
+                        class="absolute inset-0 opacity-0 w-full h-full"
+                        style="width: 100%; height: 100%; cursor: pointer;"
+                        onchange="window.location.search = '?date=' + this.value">
+            </div>
         </div>
     </header>
 
@@ -22,7 +29,7 @@
              oncontextmenu="showContextMenu(event, '{{ item.obj.id }}'); return false;">
             
             <!-- Avatar -->
-            <div class="w-12 h-12 rounded-full bg-surface-2 border border-white/10 flex items-center justify-center shrink-0 overflow-hidden relative">
+            <div class="w-12 h-12 rounded-full bg-surface-2 border border-white/10 flex items-center justify-center shrink-0 overflow-hidden relative" style="width: 3rem; height: 3rem;">
                  {% if item.obj.avatar %}
                     <img src="{{ item.obj.avatar.url }}" class="w-full h-full object-cover">
                  {% else %}
