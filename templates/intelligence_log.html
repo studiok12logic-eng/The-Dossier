@@ -117,7 +117,7 @@
 
     <!-- Right Panel: Dossier Chat-style Input -->
     <div id="rightPanel"
-        class="hidden md:flex flex-col flex-1 bg-surface border border-border rounded-xl overflow-hidden min-h-0 relative h-full">
+        class="hidden md:flex flex-col flex-1 bg-surface overflow-hidden min-h-0 relative h-full">
         <!-- Overlay for No Selection -->
         <div id="noSelectionOverlay"
             class="absolute inset-0 z-50 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center text-text-sub">
@@ -169,16 +169,8 @@
         </div>
 
         <!-- Style to Hide Mobile Bottom Nav when this view is active (Chat View) -->
-        <style>
-            @media (max-width: 768px) {
-                /* Hide global nav when this page is loaded/active */
-                /* Assuming global nav has a specific class or we target 'nav.fixed.bottom-0' */
-                nav.fixed.bottom-0 { display: none !important; }
-                
-                /* Adjust pb safety if needed since nav is gone */
-                #rightPanel { padding-bottom: env(safe-area-inset-bottom); }
-            }
-        </style>
+        <!-- Style to Hide Mobile Bottom Nav when this view is active (Chat View) -->
+        <!-- Logic moved to JS for dynamic visibility -->
 
         <!-- 2. TIMELINE: Infinite Scroll Area -->
         <div id="timelineContainer" class="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth bg-surface/50">
@@ -188,34 +180,44 @@
             <div id="timelineContent" class="space-y-4 flex flex-col justify-end min-h-0"></div>
         </div>
 
-        <!-- 3. FOOTER: Chat Input Area -->
-        <div class="bg-surface border-t border-white/10 shrink-0 z-20 pb-safe">
-            <div class="p-2 flex items-end gap-2 bg-surface">
-                <!-- Tools Left -->
-                 <div class="flex items-center pb-2 gap-1">
-                     <!-- Tag -->
-                    <button id="toggleTagMenuBtn" class="w-8 h-8 flex items-center justify-center text-text-sub hover:text-primary transition rounded-full hover:bg-white/5" title="タグ">
-                        <i class="fas fa-hashtag"></i>
+        <!-- 3. INPUT AREA: Fixed Bottom (Chat Style) -->
+        <div class="shrink-0 bg-surface border-t border-white/10 p-2 pb-safe z-20" id="chatInputBar">
+             <div class="flex items-center gap-2 max-w-3xl mx-auto">
+                <!-- Left Icons Group -->
+                <div class="flex items-center gap-1 shrink-0">
+                    <!-- 1. Image Upload -->
+                    <button class="w-9 h-9 flex items-center justify-center text-text-sub hover:text-primary transition rounded-full hover:bg-white/5" id="uploadImageBtn" title="画像">
+                        <i class="far fa-image text-lg"></i>
                     </button>
-                    <!-- Image -->
-                    <button id="uploadImageBtn" class="w-8 h-8 flex items-center justify-center text-text-sub hover:text-primary transition rounded-full hover:bg-white/5" title="画像">
-                        <i class="fas fa-image"></i>
+                    
+                    <!-- 2. Contact Flag -->
+                    <button class="w-9 h-9 flex items-center justify-center text-text-sub hover:text-primary transition rounded-full hover:bg-white/5" id="contactFlagBtn" title="接触">
+                        <i class="fas fa-handshake text-lg"></i>
                     </button>
-                     <!-- Contact -->
-                    <button id="contactFlagBtn" class="h-8 px-2 flex items-center justify-center text-text-sub hover:text-primary transition rounded-full hover:bg-white/5 text-xs font-bold border border-transparent" 
-                        onclick="this.classList.toggle('text-primary'); this.classList.toggle('border-primary'); this.classList.toggle('bg-primary/10'); document.getElementById('contactFlag').checked = !document.getElementById('contactFlag').checked;">
-                        接触
+                    
+                    <!-- 3. Tag Selection -->
+                    <button class="w-9 h-9 flex items-center justify-center text-text-sub hover:text-primary transition rounded-full hover:bg-white/5" id="toggleTagMenuBtn" title="タグ">
+                         <i class="fas fa-hashtag text-lg"></i>
                     </button>
-                 </div>
+                </div>
 
-                <!-- Input -->
-                <textarea id="chatInput" rows="1" class="flex-1 bg-background border border-white/10 rounded-2xl px-4 py-2.5 text-sm text-text-main focus:border-primary focus:outline-none resize-none font-sans max-h-32" placeholder="メッセージを入力..."></textarea>
+                <!-- Center: Text Input -->
+                <textarea id="chatInput" rows="1" placeholder="メッセージを入力..." 
+                    class="flex-1 bg-background border border-white/10 text-text-main text-sm rounded-full px-4 py-2 focus:ring-1 focus:ring-primary focus:border-primary resize-none overflow-hidden hover:border-white/20 transition leading-5 max-h-32"></textarea>
                 
-                <!-- Submit (Plane) -->
-                <button id="saveLogBtn" class="w-10 h-10 rounded-full bg-primary text-black flex items-center justify-center shrink-0 hover:scale-105 transition shadow-lg opacity-0 pointer-events-none transform scale-0 duration-200" disabled>
-                    <i class="fas fa-paper-plane text-lg translate-x-[-1px] translate-y-[1px]"></i>
-                </button>
-                
+                <!-- Right: Action Button (Toggle) -->
+                <div class="shrink-0 w-10 h-10 flex items-center justify-center relative">
+                    <!-- A. Detail Link (Default) -->
+                     <button id="targetDetailBtn" class="absolute inset-0 flex items-center justify-center text-text-sub hover:text-white transition rounded-full hover:bg-white/5">
+                        <i class="fas fa-ellipsis-h text-lg"></i>
+                    </button>
+                    
+                    <!-- B. Send Button (When Typing) -->
+                    <button id="saveLogBtn" class="absolute inset-0 flex items-center justify-center bg-primary text-black rounded-full shadow-lg hover:bg-primary/90 transition transform scale-0 opacity-0 pointer-events-none duration-200" disabled>
+                        <i class="fas fa-paper-plane text-sm"></i>
+                    </button>
+                </div>
+
                 <!-- Hidden inputs -->
                 <input type="checkbox" id="contactFlag" class="hidden">
                 <input type="file" id="imageInput" class="hidden" accept="image/*">
@@ -382,34 +384,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let hasMore = true;
     let timelineCursorDate = null;
 
-    // --- Panel Switching Logic ---
-    const mobileBottomNav = document.getElementById('mobileBottomNav');
-
-    function showChatView() {
-        if (window.innerWidth < 768) {
-            leftPanel.classList.add('hidden');
-            rightPanel.classList.remove('hidden');
-            rightPanel.classList.add('flex');
-            
-            // Hide Bottom Nav in Detail View
-            if (mobileBottomNav) mobileBottomNav.classList.add('hidden');
-        }
-    }
-
-    function showListView() {
-        if (window.innerWidth < 768) {
-            rightPanel.classList.add('hidden');
-            rightPanel.classList.remove('flex');
-            leftPanel.classList.remove('hidden');
-            
-            // Show Bottom Nav in List View
-            if (mobileBottomNav) mobileBottomNav.classList.remove('hidden');
-        }
-    }
-
-    if (mobileBackBtn) {
-        mobileBackBtn.addEventListener('click', showListView);
-    }
+    // (Legacy Panel Logic removed)
 
     // --- Resizer Logic ---
     const resizer = document.getElementById('resizer');
@@ -765,6 +740,250 @@ document.addEventListener('DOMContentLoaded', function() {
         if(editingItemIdInput.value) deleteLog(editingItemIdInput.value);
     });
 
+    // --- Dynamic Mobile Nav Logic ---
+    const mobileBottomNav = document.querySelector('nav.fixed.bottom-0'); 
+    
+    function toggleMobileNav(show) {
+        if (!mobileBottomNav) return;
+        if (show) {
+             mobileBottomNav.classList.remove('hidden');
+        } else {
+             mobileBottomNav.classList.add('hidden');
+        }
+    }
+
+    // --- Window Functions (Edit/Cancel) ---
+    window.editLog = function(item) {
+        editingItemIdInput.value = item.id;
+        editingItemIdInput.dataset.type = item.type || 'NOTE';
+        editingItemIdInput.dataset.questionId = item.question_id || '';
+        
+        chatInput.value = item.description || '';
+        
+        if (item.type === 'QUESTION') {
+            chatInput.placeholder = "回答を編集 (" + (item.question_title || "Question") + ")...";
+        } else {
+            chatInput.placeholder = "内容を編集...";
+            contactFlagCheckbox.checked = item.contact_made;
+             // Update contact button style
+            const btn = document.getElementById('contactFlagBtn');
+            if(item.contact_made) {
+                 btn.classList.add('text-primary', 'border-primary', 'bg-primary/10');
+            } else {
+                 btn.classList.remove('text-primary', 'border-transparent', 'bg-primary/10');
+                 btn.classList.add('border-transparent');
+            }
+        }
+
+        chatInput.focus();
+        // Force update input state
+        chatInput.dispatchEvent(new Event('input'));
+        
+        // Update Save Button Appearance for Edit
+        saveLogBtn.classList.remove('bg-primary');
+        saveLogBtn.classList.add('bg-yellow-500');
+    };
+
+    window.cancelEditMode = function() {
+        editingItemIdInput.value = '';
+        delete editingItemIdInput.dataset.type;
+        delete editingItemIdInput.dataset.questionId;
+        
+        chatInput.value = '';
+        chatInput.placeholder = "メッセージを入力...";
+        
+        saveLogBtn.classList.remove('bg-yellow-500');
+        saveLogBtn.classList.add('bg-primary');
+        
+        contactFlagCheckbox.checked = false;
+        const btn = document.getElementById('contactFlagBtn');
+        btn.classList.remove('text-primary', 'border-primary', 'bg-primary/10');
+        btn.classList.add('border-transparent');
+        
+        chatInput.style.height = 'auto';
+        chatInput.dispatchEvent(new Event('input')); // Reset button state
+    };
+    
+    cancelEditBtn.addEventListener('click', cancelEditMode);
+
+    // --- Navigation Logic ---
+    if(mobileBackBtn) {
+        mobileBackBtn.addEventListener('click', () => {
+             document.getElementById('leftPanel').classList.remove('hidden');
+             document.getElementById('rightPanel').classList.add('hidden');
+             document.getElementById('rightPanel').classList.remove('flex');
+             toggleMobileNav(true);
+             currentTargetId = null;
+             history.pushState(null, '', location.pathname);
+        });
+    }
+
+    document.querySelectorAll('.target-item').forEach(btn => {
+        btn.addEventListener('click', function() {
+             toggleMobileNav(false);
+        });
+    });
+    
+    // Initial Nav State
+    const urlParams = new URLSearchParams(window.location.search);
+    const preTargetId = urlParams.get('target_id');
+    if (preTargetId) {
+        const targetBtn = document.querySelector(`.target-item[data-id="${preTargetId}"]`);
+        if (targetBtn) {
+            targetBtn.click();
+            targetBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        if(window.innerWidth < 768) toggleMobileNav(false);
+    } else {
+         toggleMobileNav(true);
+    }
+
+    // --- Input & Action Logic ---
+    const chatInput = document.getElementById('chatInput');
+    const saveLogBtn = document.getElementById('saveLogBtn');
+    const targetDetailBtn = document.getElementById('targetDetailBtn');
+
+    // Detail Button
+    if(targetDetailBtn) {
+        targetDetailBtn.addEventListener('click', () => {
+             if(currentTargetId) {
+                 window.location.href = `/targets/${currentTargetId}/`;
+             }
+        });
+    }
+
+    // Chat Input Listener
+    if(chatInput && saveLogBtn) {
+        chatInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+            
+            const hasText = this.value.trim().length > 0;
+            
+            if (hasText) {
+                // Show Send (Plane), Hide Detail (...)
+                saveLogBtn.classList.remove('opacity-0', 'pointer-events-none', 'scale-0');
+                saveLogBtn.classList.add('opacity-100', 'scale-100');
+                saveLogBtn.disabled = false;
+                
+                if(targetDetailBtn) targetDetailBtn.classList.add('opacity-0', 'scale-0');
+            } else {
+                // Hide Send, Show Detail
+                saveLogBtn.classList.add('opacity-0', 'pointer-events-none', 'scale-0');
+                saveLogBtn.classList.remove('opacity-100', 'scale-100');
+                saveLogBtn.disabled = true;
+                
+                if(targetDetailBtn) targetDetailBtn.classList.remove('opacity-0', 'scale-0');
+            }
+        });
+    }
+
+    // Image Upload Logic
+    const uploadImageBtn = document.getElementById('uploadImageBtn');
+    const imageInput = document.getElementById('imageInput');
+    if(uploadImageBtn && imageInput) {
+        uploadImageBtn.addEventListener('click', () => imageInput.click());
+        imageInput.addEventListener('change', () => {
+             if(imageInput.files.length > 0) {
+                 chatInput.value += ` [画像: ${imageInput.files[0].name}] `;
+                 chatInput.dispatchEvent(new Event('input'));
+             }
+        });
+    }
+
+    // Tag Modal Logic
+    const tagModal = document.getElementById('tagModal');
+    const toggleTagMenuBtn = document.getElementById('toggleTagMenuBtn');
+    const closeTagModal = document.getElementById('closeTagModal');
+    const allTagsContainer = document.getElementById('allTagsContainer');
+
+    function appendTagToActive(tagName) {
+        const val = chatInput.value;
+        if (val.length > 0 && !val.endsWith(' ')) {
+             chatInput.value = val + " #" + tagName + " ";
+        } else {
+             chatInput.value = val + "#" + tagName + " ";
+        }
+        chatInput.dispatchEvent(new Event('input'));
+    }
+
+    if(toggleTagMenuBtn){
+        toggleTagMenuBtn.addEventListener('click', () => {
+            tagModal.classList.remove('hidden');
+            fetch('{% url "tag_list_api" %}')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        allTagsContainer.innerHTML = '';
+                        data.tags.forEach(tag => {
+                            const btn = document.createElement('button');
+                            btn.className = "px-3 py-1 m-1 rounded-full border border-border text-xs text-text-sub hover:border-primary hover:text-primary transition bg-background";
+                            btn.textContent = `${tag.name} (${tag.count})`;
+                            btn.onclick = () => {
+                                appendTagToActive(tag.name);
+                                tagModal.classList.add('hidden');
+                            };
+                            allTagsContainer.appendChild(btn);
+                        });
+                    }
+                });
+        });
+    }
+    closeTagModal.addEventListener('click', () => tagModal.classList.add('hidden'));
+
+
+    // --- Save Function ---
+    saveLogBtn.addEventListener('click', () => {
+        saveLogItem({
+            description: chatInput.value,
+            contact_made: contactFlagCheckbox.checked
+        });
+    });
+
+    function saveLogItem(payload, onSuccess) {
+        if (!currentTargetId) { alert('ターゲットを選択してください'); return; }
+        
+        const finalPayload = {
+            target_id: currentTargetId,
+            date: payload.date || document.getElementById('occurrenceDate').value,
+            description: payload.description,
+            event_type: payload.event_type || (editingItemIdInput.value ? editingItemIdInput.dataset.type : 'NOTE'),
+            question_id: payload.question_id || (editingItemIdInput.value ? editingItemIdInput.dataset.questionId : null),
+            contact_made: payload.contact_made || false,
+            tags: payload.tags || [],
+            action: editingItemIdInput.value ? 'update' : 'create',
+            item_id: editingItemIdInput.value
+        };
+        
+        if (!finalPayload.description && !finalPayload.question_id && !finalPayload.contact_made) {
+             alert('内容を入力してください'); return;
+        }
+
+        fetch('{% url "intelligence_log" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(finalPayload)
+        }).then(res => res.json()).then(data => {
+            if (data.success) {
+                if (data.action === 'create') {
+                     cancelEditMode();
+                } else {
+                    cancelEditMode();
+                }
+                resetTimeline();
+                fetchTimeline();
+                if(onSuccess) onSuccess();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        });
+    }
+
+}); // End DOMContentLoaded
+
     function editLog(item) {
         // Mode Set
         editingItemIdInput.value = item.id;
@@ -1113,70 +1332,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-
-    // Edit Log Wrapper
-    window.editLog = function(item) {
-        editingItemIdInput.value = item.id;
-        editingItemIdInput.dataset.type = item.type || 'NOTE';
-        editingItemIdInput.dataset.questionId = item.question_id || '';
-        
-        chatInput.value = item.description || '';
-        
-        if (item.type === 'QUESTION') {
-            chatInput.placeholder = "回答を編集 (" + (item.question_title || "Question") + ")...";
-        } else {
-            chatInput.placeholder = "内容を編集...";
-            contactFlagCheckbox.checked = item.contact_made;
-             // Update contact button style
-            const btn = document.getElementById('contactFlagBtn');
-            if(item.contact_made) {
-                 btn.classList.add('text-primary', 'border-primary', 'bg-primary/10');
-            } else {
-                 btn.classList.remove('text-primary', 'border-primary', 'bg-primary/10');
-            }
-        }
-
-        chatInput.focus();
-        // Show Send Button
-        saveLogBtn.classList.remove('opacity-0', 'pointer-events-none', 'scale-0');
-        saveLogBtn.classList.add('opacity-100', 'scale-100', 'bg-yellow-500'); 
-        saveLogBtn.classList.remove('bg-primary');
-        saveLogBtn.disabled = false;
-        
-        chatInput.style.height = 'auto';
-        chatInput.style.height = (chatInput.scrollHeight) + 'px';
-    };
-
-    window.cancelEditMode = function() {
-        editingItemIdInput.value = '';
-        delete editingItemIdInput.dataset.type;
-        delete editingItemIdInput.dataset.questionId;
-        
-        chatInput.value = '';
-        chatInput.placeholder = "メッセージを入力...";
-        
-        saveLogBtn.classList.add('opacity-0', 'pointer-events-none', 'scale-0');
-        saveLogBtn.classList.remove('opacity-100', 'scale-100', 'bg-yellow-500');
-        saveLogBtn.classList.add('bg-primary');
-        
-        contactFlagCheckbox.checked = false;
-        const btn = document.getElementById('contactFlagBtn');
-        btn.classList.remove('text-primary', 'border-primary', 'bg-primary/10');
-        chatInput.style.height = 'auto';
-    };
-    
-    // Auto-Select Logic (Simplified)
-    const urlParams = new URLSearchParams(window.location.search);
-    const preTargetId = urlParams.get('target_id');
-    if (preTargetId) {
-        const targetBtn = document.querySelector(`.target-item[data-id="${preTargetId}"]`);
-        if (targetBtn) {
-            targetBtn.click();
-            targetBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-    }
-    
-    cancelEditBtn.addEventListener('click', cancelEditMode);
 
 }); // End DOMContentLoaded
 </script>
