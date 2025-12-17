@@ -4,7 +4,8 @@ from django.conf.urls.static import static
 from . import views
 
 urlpatterns = [
-    path('', views.dashboard, name='dashboard'),
+    path('', views.IntelligenceLogView.as_view(), name='home'), # Homepage is now Intelligence Log
+    path('dashboard/', views.dashboard, name='dashboard'), # Dashboard moved
     path('targets/', views.target_list, name='target_list'),
     path('targets/add/', views.TargetCreateView.as_view(), name='target_add'),
     path('targets/detail/', views.TargetDetailView.as_view(), name='target_detail'), # Query param style
