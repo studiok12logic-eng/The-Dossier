@@ -10,8 +10,10 @@
         <!-- Unified Compact Header: Date & Actions -->
         <div class="p-2 border-b border-white/10 flex items-center gap-2 shrink-0 bg-surface z-20">
             <!-- Date (Small) -->
-            <form method="get" id="dateForm" class="mb-0 flex-1 min-w-0">
-                <input type="date" name="date" value="{{ today_date }}"
+            <!-- Date (Small) -->
+            <form method="get" id="dateForm" class="mb-0 flex-1 min-w-0 flex items-center gap-2">
+                <label for="occurrenceDateInput" class="text-[10px] text-text-sub font-mono shrink-0">発生日</label>
+                <input type="date" id="occurrenceDateInput" name="date" value="{{ today_date }}"
                     class="w-full bg-background border border-white/10 rounded px-2 py-1 text-[10px] md:text-xs text-text-sub focus:border-primary transition h-8"
                     onchange="this.form.submit()">
             </form>
@@ -49,16 +51,40 @@
                 </div>
 
                 <!-- Info -->
-                <div class="flex-1 min-w-0 flex flex-col justify-center pointer-events-none">
+                <div class="flex-1 min-w-0 flex flex-col justify-center pointer-events-none gap-0.5">
                     <div class="flex items-center gap-2">
-                        <span class="text-sm text-text-main font-medium truncate group-hover:text-primary transition-colors">{{ item.obj.nickname }}</span>
-                        <!-- Status Badges Inline -->
-                        {% if not item.has_entry %}
-                        <span class="w-1.5 h-1.5 rounded-full bg-yellow-500/50 block"></span>
-                        {% endif %}
-                        {% if item.is_anniversary %}
-                        <span class="text-[10px] text-red-400 animate-pulse"><i class="fas fa-gift"></i></span>
-                        {% endif %}
+                        <span class="text-sm text-text-main font-bold truncate group-hover:text-primary transition-colors">{{ item.obj.nickname }}</span>
+                    </div>
+                    <!-- Full Name & Age -->
+                    <div class="text-[10px] text-text-sub truncate font-sans">
+                        {{ item.obj.last_name }} {{ item.obj.first_name }} <span class="opacity-70">({{ item.age }})</span>
+                    </div>
+
+                    <!-- Status Lines -->
+                    <div class="flex flex-wrap gap-2 mt-0.5">
+                       {% if item.is_anniversary %}
+                       <span class="text-[10px] text-red-400 font-bold animate-pulse flex items-center gap-1">
+                           <i class="fas fa-gift"></i> {{ item.anniversary_label }}
+                       </span>
+                       {% endif %}
+                       
+                       {% if item.is_upcoming_anniversary %}
+                       <span class="text-[10px] text-yellow-500/80 flex items-center gap-1">
+                           <i class="fas fa-bullhorn transform -rotate-12"></i> {{ item.upcoming_anniversary_label }}
+                       </span>
+                       {% endif %}
+                    </div>
+                </div>
+
+                <!-- Right Side Stats -->
+                <div class="flex flex-col items-end gap-1 text-[9px] text-text-sub font-mono mr-2">
+                    <div title="Last Contact">
+                        <i class="fas fa-history opacity-50 mr-1"></i>
+                        {% if item.last_contact_date %}{{ item.last_contact_date|date:"m/d" }}{% else %}-{% endif %}
+                    </div>
+                    <div title="Logs Today" class="{% if item.log_count > 0 %}text-primary{% else %}opacity-30{% endif %}">
+                        <i class="fas fa-file-alt opacity-50 mr-1"></i>
+                        {{ item.log_count }}
                     </div>
                 </div>
 

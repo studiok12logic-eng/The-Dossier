@@ -398,6 +398,30 @@ class IntelligenceLogView(LoginRequiredMixin, View):
             anniv_labels.setdefault(ca.target.id, []).append(ca.label)
         
         anniv_ids = set(anniv_labels.keys())
+        
+        # 3.5 Upcoming Anniversaries (Next 10 days)
+        upcoming_anniv_labels = {}
+        upcoming_dates = [current_date + datetime.timedelta(days=i) for i in range(1, 11)]
+        
+        # Check upcoming birthdays
+        for d in upcoming_dates:
+            u_bday_targets = Target.objects.filter(
+                user=request.user,
+                birth_month=d.month,
+                birth_day=d.day
+            )
+            for t in u_bday_targets:
+                 label = f"もうすぐ誕生日 ({d.month}/{d.day})"
+                 upcoming_anniv_labels.setdefault(t.id, []).append(label)
+            
+            u_custom_annivs = CustomAnniversary.objects.filter(
+                target__user=request.user,
+                date__month=d.month,
+                date__day=d.day
+            )
+            for ca in u_custom_annivs:
+                 label = f"もうすぐ{ca.label} ({d.month}/{d.day})"
+                 upcoming_anniv_labels.setdefault(ca.target.id, []).append(label)
 
         # 4. Manual State Handling
         daily_states = DailyTargetState.objects.filter(target__user=request.user, date=current_date)
@@ -419,14 +443,19 @@ class IntelligenceLogView(LoginRequiredMixin, View):
         target_list = []
         for t in targets:
             has_entry = TimelineItem.objects.filter(target=t, date=current_date).exists()
+            log_count = TimelineItem.objects.filter(target=t, date=current_date).count()
             labels = anniv_labels.get(t.id, [])
+            upcoming_labels = upcoming_anniv_labels.get(t.id, [])
             age = t.age
             
             target_list.append({
                 'obj': t,
                 'has_entry': has_entry,
+                'log_count': log_count,
                 'is_anniversary': bool(labels),
                 'anniversary_label': ", ".join(labels),
+                'is_upcoming_anniversary': bool(upcoming_labels),
+                'upcoming_anniversary_label': ", ".join(upcoming_labels),
                 'age': age,
                 'last_contact_date': t.real_last_contact
             })
