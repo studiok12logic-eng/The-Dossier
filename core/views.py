@@ -113,7 +113,9 @@ def target_list(request):
         from django.db.models import F
         targets = targets.order_by(F('last_contact').desc(nulls_last=True), 'nickname')
 
-    return render(request, 'target_list.html', {'targets': targets, 'current_sort': sort_by})
+    # HTMX: Return partial template for smooth updates
+    template_name = '_target_list_partial.html' if request.htmx else 'target_list.html'
+    return render(request, template_name, {'targets': targets, 'current_sort': sort_by})
 
 # FormSet for Anniversaries
 AnniversaryFormSet = inlineformset_factory(
@@ -634,6 +636,12 @@ class QuestionListView(LoginRequiredMixin, ListView):
     model = Question
     template_name = 'question_list.html'
     context_object_name = 'questions'
+
+    def get_template_names(self):
+        # HTMX: Return partial template for smooth updates
+        if self.request.htmx:
+            return ['_question_list_partial.html']
+        return [self.template_name]
 
     def get_queryset(self):
         from django.db.models import Q, Count
