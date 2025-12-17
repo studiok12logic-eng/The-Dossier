@@ -128,42 +128,57 @@
         <!-- 1. HEADER: Chat Header -->
         <div class="h-14 px-4 border-b border-white/10 bg-surface flex justify-between items-center shrink-0 z-10 shadow-md">
             <!-- Left: Back & Target Name (No Avatar) -->
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3 min-w-0">
                 <!-- Back Button (Mobile) -->
-                <button id="mobileBackBtn" class="md:hidden w-8 h-8 flex items-center justify-center rounded-full active:bg-white/10 text-white transition">
+                <button id="mobileBackBtn" class="md:hidden w-8 h-8 flex items-center justify-center rounded-full active:bg-white/10 text-white transition shrink-0">
                     <i class="fas fa-chevron-left"></i>
                 </button>
                 
-                <h2 class="text-text-main font-bold text-base" id="selectedName">--</h2>
+                <h2 class="text-text-main font-bold text-sm truncate max-w-[120px]" id="selectedName">--</h2>
             </div>
 
             <!-- Right: Tools -->
-            <div class="flex items-center gap-3">
-                 <!-- Occurrence Date (Calendar Icon) -->
+            <div class="flex items-center gap-1">
+                 <!-- 1. Occurrence Date (Calendar Icon) -->
                  <div class="relative">
                      <input type="date" id="occurrenceDate" value="{{ today_date }}"
-                         class="absolute inset-0 opacity-0 cursor-pointer z-10 w-full h-full">
+                         class="absolute inset-0 opacity-0 cursor-pointer z-20 w-8 h-8">
                      <button class="w-8 h-8 flex items-center justify-center text-text-sub hover:text-primary transition rounded-full hover:bg-white/5" title="発生日">
                          <i class="far fa-calendar-alt text-lg"></i>
                      </button>
                 </div>
 
-                <!-- Search Toggle -->
+                <!-- 2. Search Popover -->
                 <div class="relative group flex items-center">
-                     <input type="text" id="timelineSearch" placeholder="検索..."
-                         class="w-0 focus:w-32 bg-transparent border-b border-primary text-xs px-2 py-1 transition-all opacity-0 focus:opacity-100 outline-none text-text-main">
-                     <button id="toggleSearchBtn" class="w-8 h-8 flex items-center justify-center text-text-sub hover:text-primary transition rounded-full hover:bg-white/5" 
-                        onclick="const el=document.getElementById('timelineSearch'); el.classList.toggle('w-0'); el.classList.toggle('w-32'); el.classList.toggle('opacity-0'); el.focus()">
+                     <button id="toggleSearchBtn" class="w-8 h-8 flex items-center justify-center text-text-sub hover:text-primary transition rounded-full hover:bg-white/5 z-20">
                          <i class="fas fa-search text-lg"></i>
                      </button>
+                     
+                     <!-- Popover Input (Hidden by default) -->
+                     <div id="searchPopover" class="hidden absolute top-10 right-0 w-48 bg-surface border border-white/10 rounded-lg p-2 shadow-xl z-30">
+                        <input type="text" id="timelineSearch" placeholder="検索..."
+                             class="w-full bg-background border border-primary/30 text-xs px-2 py-1.5 rounded focus:border-primary focus:outline-none text-text-main">
+                     </div>
                 </div>
 
-                <!-- Answer Button -->
-                <button id="openAnswerModalBtn" class="bg-primary hover:bg-primary/90 text-black px-4 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1 shadow-lg shadow-primary/20">
-                    <i class="fas fa-comment-dots"></i> 回答
+                <!-- 3. Answer Button (Question Mark) -->
+                <button id="openAnswerModalBtn" class="w-8 h-8 flex items-center justify-center text-text-sub hover:text-primary transition rounded-full hover:bg-white/5" title="質問に回答">
+                    <i class="fas fa-question text-lg"></i>
                 </button>
             </div>
         </div>
+
+        <!-- Style to Hide Mobile Bottom Nav when this view is active (Chat View) -->
+        <style>
+            @media (max-width: 768px) {
+                /* Hide global nav when this page is loaded/active */
+                /* Assuming global nav has a specific class or we target 'nav.fixed.bottom-0' */
+                nav.fixed.bottom-0 { display: none !important; }
+                
+                /* Adjust pb safety if needed since nav is gone */
+                #rightPanel { padding-bottom: env(safe-area-inset-bottom); }
+            }
+        </style>
 
         <!-- 2. TIMELINE: Infinite Scroll Area -->
         <div id="timelineContainer" class="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth bg-surface/50">
@@ -670,6 +685,26 @@ document.addEventListener('DOMContentLoaded', function() {
         timelineSearch.addEventListener('input', () => {
             clearTimeout(searchDebounce);
             searchDebounce = setTimeout(() => { resetTimeline(); fetchTimeline(); }, 500);
+        });
+    }
+
+    // Toggle Search Popover
+    const toggleSearchBtn = document.getElementById('toggleSearchBtn');
+    const searchPopover = document.getElementById('searchPopover');
+    if(toggleSearchBtn && searchPopover) {
+        toggleSearchBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            searchPopover.classList.toggle('hidden');
+            if(!searchPopover.classList.contains('hidden')) {
+                timelineSearch.focus();
+            }
+        });
+        
+        // Close on click outside
+        document.addEventListener('click', (e) => {
+             if(!searchPopover.classList.contains('hidden') && !searchPopover.contains(e.target) && !toggleSearchBtn.contains(e.target)) {
+                 searchPopover.classList.add('hidden');
+             }
         });
     }
 
