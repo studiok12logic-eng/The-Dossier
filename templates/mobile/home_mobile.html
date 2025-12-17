@@ -1,0 +1,78 @@
+{% extends "mobile/base_mobile.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="flex flex-col h-full bg-background pb-20">
+
+    <!-- Header -->
+    <header class="h-14 px-4 flex items-center justify-between bg-surface/50 backdrop-blur sticky top-0 z-30">
+        <h1 class="text-xl font-bold text-text-main tracking-wide">DOSSIER</h1>
+        <div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary border border-primary/30">
+            <i class="fas fa-user-secret"></i>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-4 space-y-6">
+        
+        <!-- 1. Anniversary / Upcoming (Horizontal Scroll) -->
+        {% if upcoming_anniversaries %}
+        <section>
+            <div class="flex items-center justify-between mb-3 px-1">
+                <h2 class="text-xs font-bold text-text-sub uppercase tracking-wider">Upcoming</h2>
+            </div>
+            <div class="flex gap-3 overflow-x-auto pb-2 snap-x">
+                {% for anniv in upcoming_anniversaries %}
+                <div class="snap-start shrink-0 w-32 bg-surface rounded-xl p-3 border border-white/5 flex flex-col items-center text-center">
+                    <div class="w-10 h-10 rounded-full bg-surface-2 mb-2 flex items-center justify-center overflow-hidden">
+                        {% if anniv.target.avatar %}<img src="{{ anniv.target.avatar.url }}" class="w-full h-full object-cover">
+                        {% else %}{{ anniv.target.nickname|slice:":1" }}{% endif %}
+                    </div>
+                    <span class="text-xs font-bold truncate w-full mb-1">{{ anniv.target.nickname }}</span>
+                    <span class="text-[10px] text-accent-gold">{{ anniv.name }}</span>
+                    <span class="text-[10px] text-text-sub">{{ anniv.date|date:"m/d" }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- 2. Statistics / Ranking -->
+        <section>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-surface rounded-xl p-4 border border-white/5 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-2 opacity-10"><i class="fas fa-trophy text-4xl"></i></div>
+                    <div class="text-[10px] text-text-sub uppercase">Total Score</div>
+                    <div class="text-2xl font-bold text-primary mt-1">{{ stats.total_points }}</div>
+                </div>
+                <div class="bg-surface rounded-xl p-4 border border-white/5 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-2 opacity-10"><i class="fas fa-book text-4xl"></i></div>
+                    <div class="text-[10px] text-text-sub uppercase">Logs</div>
+                    <div class="text-2xl font-bold text-white mt-1">{{ stats.total_logs }}</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Recent Answers (Simplified) -->
+        <section>
+            <div class="flex items-center justify-between mb-3 px-1">
+                <h2 class="text-xs font-bold text-text-sub uppercase tracking-wider">Latest Intel</h2>
+                <a href="{% url 'question_list' %}" class="text-[10px] text-primary">View All</a>
+            </div>
+            <div class="space-y-3">
+                <!-- Mockup Data or Real Data if passed -->
+                 <!-- Since dashboard view logic wasn't fully refactored for "Timeline", we use what's available or static placeholder per "Design Only" request if data missing -->
+                 <!-- Reuse 'events' context if dashboard view provides it (It currently provides 'stats', 'upcoming_annivs', 'groups', 'tags') -->
+                 <!-- It doesn't seem to provide a timeline feed. I will add a placeholder card. -->
+                <div class="bg-surface rounded-xl p-4 border border-white/5">
+                    <p class="text-center text-xs text-text-sub opacity-50 py-4">
+                        Recent activity timeline will appear here.
+                    </p>
+                </div>
+            </div>
+        </section>
+        
+    </div>
+
+</div>
+{% endblock %}

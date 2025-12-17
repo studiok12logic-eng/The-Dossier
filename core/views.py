@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import CreateView, UpdateView, View, DeleteView, DetailView
+from core.mixins import MobileTemplateMixin
 from django.urls import reverse_lazy
 from django.db import transaction
 from django.http import JsonResponse
@@ -96,6 +97,10 @@ def dashboard(request):
         'groups': groups,
         'tags': top_tags,
     }
+    
+    if getattr(request, 'is_mobile', False):
+        return render(request, 'mobile/home_mobile.html', context)
+        
     return render(request, 'dashboard.html', context)
 
 @login_required
@@ -113,8 +118,14 @@ def target_list(request):
         from django.db.models import F
         targets = targets.order_by(F('last_contact').desc(nulls_last=True), 'nickname')
 
-    # HTMX: Return partial template for smooth updates
-    template_name = '_target_list_partial.html' if request.htmx else 'target_list.html'
+    # Template Selection
+    if request.htmx:
+        template_name = '_target_list_partial.html'
+    elif getattr(request, 'is_mobile', False):
+        template_name = 'mobile/target_list_mobile.html'
+    else:
+        template_name = 'target_list.html'
+
     return render(request, template_name, {'targets': targets, 'current_sort': sort_by})
 
 # FormSet for Anniversaries
@@ -123,9 +134,10 @@ AnniversaryFormSet = inlineformset_factory(
     extra=0, can_delete=True
 )
 
-class TargetDetailView(LoginRequiredMixin, DetailView):
+class TargetDetailView(LoginRequiredMixin, MobileTemplateMixin, DetailView):
     model = Target
     template_name = 'target_detail.html'
+    mobile_template_name = 'mobile/target_detail_mobile.html'
     context_object_name = 'target'
 
     def get_object(self):
@@ -339,6 +351,9 @@ class IntelligenceLogView(LoginRequiredMixin, View):
         import datetime
         from django.db.models import Q
         
+        is_mobile = getattr(request, 'is_mobile', False)
+        target_id_param = request.GET.get('target_id')
+        
         # 1. Date Handling
         date_str = request.GET.get('date')
         if date_str:
@@ -348,6 +363,27 @@ class IntelligenceLogView(LoginRequiredMixin, View):
                 current_date = datetime.date.today()
         else:
             current_date = datetime.date.today()
+
+        # [MOBILE OPTIMIZATION] Timeline View - Short Circuit
+        if is_mobile and target_id_param:
+            target = get_object_or_404(Target, pk=target_id_param, user=request.user)
+            
+            # Auto-Add Logic (Ensure it's marked as active for today)
+            state, _ = DailyTargetState.objects.get_or_create(
+                target=target, date=current_date,
+                defaults={'is_manual_add': True, 'is_hidden': False}
+            )
+            if not state.is_manual_add and state.is_hidden:
+                    state.is_hidden = False
+                    state.save()
+            elif not state.is_manual_add:
+                    state.is_manual_add = True
+                    state.save()
+            
+            return render(request, 'mobile/intelligence_timeline_mobile.html', {
+                'target': target,
+                'today_date': current_date, # For passing to date picker defaults if needed
+            })
 
         weekday = current_date.weekday() # 0=Mon
         weekday_map = ['is_mon', 'is_tue', 'is_wed', 'is_thu', 'is_fri', 'is_sat', 'is_sun']
@@ -482,6 +518,9 @@ class IntelligenceLogView(LoginRequiredMixin, View):
             'today_date': current_date.strftime('%Y-%m-%d'),
             'weekday_jp': ['月','火','水','木','金','土','日'][weekday]
         }
+        if is_mobile:
+            return render(request, 'mobile/intelligence_select_mobile.html', context)
+        
         return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
@@ -661,9 +700,10 @@ from intelligence.forms import QuestionForm, QuestionCategoryForm, QuestionRankF
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 
-class QuestionListView(LoginRequiredMixin, ListView):
+class QuestionListView(LoginRequiredMixin, MobileTemplateMixin, ListView):
     model = Question
     template_name = 'question_list.html'
+    mobile_template_name = 'mobile/question_list_mobile.html'
     context_object_name = 'questions'
 
     def get_template_names(self):
@@ -746,8 +786,9 @@ class QuestionDeleteView(LoginRequiredMixin, DeleteView):
     def get_queryset(self):
         return Question.objects.filter(user=self.request.user)
 
-class QuestionDetailView(LoginRequiredMixin, View):
+class QuestionDetailView(LoginRequiredMixin, MobileTemplateMixin, View):
     template_name = 'question_detail.html'
+    mobile_template_name = 'mobile/question_detail_mobile.html'
     
     def get(self, request, pk=None):
         from django.db.models import Q, Count, Max, Prefetch

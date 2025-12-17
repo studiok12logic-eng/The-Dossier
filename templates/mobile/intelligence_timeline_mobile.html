@@ -1,0 +1,305 @@
+{% extends "mobile/base_mobile.html" %}
+
+{% block title %}{{ target.nickname }} - Log{% endblock %}
+
+{% block bottom_nav %}{% endblock %} <!-- Hide standard bottom nav -->
+
+{% block content %}
+<div class="flex flex-col h-full bg-background relative overflow-hidden">
+
+    <!-- 1. Header (Minimalist) -->
+    <header class="h-14 px-4 flex items-center justify-between border-b border-white/10 bg-surface z-30 shrink-0">
+        <div class="flex items-center gap-3">
+            <button onclick="window.location.href='{% url 'intelligence_log' %}'" class="w-10 h-10 flex items-center justify-center text-text-sub hover:text-white rounded-full hover:bg-white/5 active:bg-white/10">
+                <i class="fas fa-chevron-left text-lg"></i>
+            </button>
+            
+            <div class="flex items-center gap-2">
+                 <div class="w-8 h-8 rounded-full bg-surface-2 border border-white/10 overflow-hidden">
+                     {% if target.avatar %}
+                        <img src="{{ target.avatar.url }}" class="w-full h-full object-cover">
+                     {% else %}
+                        <div class="w-full h-full flex items-center justify-center text-xs font-bold">{{ target.nickname|slice:":1" }}</div>
+                     {% endif %}
+                 </div>
+                 <div>
+                     <h1 class="font-bold text-sm text-text-main leading-tight">{{ target.nickname }}</h1>
+                     <span class="text-[10px] text-text-sub block leading-none opacity-70">
+                        {% if target.last_contact %}Last: {{ target.last_contact|date:"m/d" }}{% else %}New Target{% endif %}
+                    </span>
+                 </div>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-1">
+             <!-- Date Picker (Native) -->
+            <div class="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/5 text-text-sub">
+                <i class="far fa-calendar text-lg pointer-events-none"></i>
+                <input type="date" id="datePicker" class="absolute inset-0 opacity-0 w-full h-full z-10" onchange="changeDate(this.value)">
+            </div>
+            
+            <!-- Search Toggle -->
+            <button id="searchToggleBtn" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/5 text-text-sub">
+                <i class="fas fa-search text-lg"></i>
+            </button>
+            
+            <!-- Answer Modal Trigger -->
+            <button id="openAnswerModalBtn" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/5 text-text-sub">
+                <i class="far fa-question-circle text-lg"></i>
+            </button>
+        </div>
+    </header>
+    
+    <!-- Popover Search Bar (Hidden by default) -->
+    <div id="searchPopover" class="absolute top-16 left-4 right-4 z-40 hidden animate-fade-in origin-top">
+        <div class="bg-surface border border-white/10 rounded-full shadow-2xl flex items-center px-4 py-2">
+            <i class="fas fa-search text-text-sub text-sm mr-3"></i>
+            <input type="text" id="timelineSearchInput" placeholder="Search logs..." class="bg-transparent border-none focus:ring-0 text-sm text-text-main w-full placeholder-text-sub/50">
+            <button onclick="document.getElementById('searchPopover').classList.add('hidden')" class="text-text-sub ml-2"><i class="fas fa-times"></i></button>
+        </div>
+    </div>
+
+    <!-- 2. Timeline Area -->
+    <div id="timelineContainer" class="flex-1 overflow-y-auto bg-black scroll-smooth p-4 space-y-6">
+        <!-- Javascript will populate this -->
+        <div id="loadingIndicator" class="text-center py-10 opacity-50">
+             <i class="fas fa-spinner fa-spin"></i> Loading...
+        </div>
+    </div>
+
+    <!-- 3. Chat Input Bar -->
+    <div class="bg-surface border-t border-white/10 shrink-0 z-30 pb-safe">
+        <div class="p-2 flex items-end gap-2 bg-surface">
+            <!-- Tools Left -->
+             <div class="flex items-center pb-2 gap-1">
+                 <!-- Tag -->
+                <button id="toggleTagMenuBtn" class="w-9 h-9 flex items-center justify-center text-text-sub hover:text-primary transition rounded-full active:bg-white/5">
+                    <i class="fas fa-hashtag text-lg"></i>
+                </button>
+                <!-- Image -->
+                <button id="uploadImageBtn" class="w-9 h-9 flex items-center justify-center text-text-sub hover:text-primary transition rounded-full active:bg-white/5">
+                    <i class="far fa-image text-lg"></i>
+                </button>
+                 <!-- Contact -->
+                <button id="contactFlagBtn" class="w-9 h-9 flex items-center justify-center text-text-sub transition rounded-full active:bg-white/5 border border-transparent">
+                    <i class="fas fa-handshake text-lg"></i>
+                </button>
+             </div>
+    
+            <!-- Input -->
+            <textarea id="chatInput" rows="1" class="flex-1 bg-surface-2 text-text-main placeholder-text-sub/50 border-none focus:ring-1 focus:ring-primary/50 rounded-2xl py-2.5 px-4 resize-none transition-all duration-200" style="min-height: 44px; max-height: 120px;" placeholder="Message..."></textarea>
+            
+            <!-- Submit / Detail Toggle -->
+            <div class="pb-1">
+                 <button id="saveLogBtn" class="w-10 h-10 flex items-center justify-center rounded-full bg-primary text-black transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:bg-surface-2 disabled:text-text-sub" disabled>
+                    <!-- Default: Detail Icon (Ellipsis) -->
+                    <i id="actionIconDetail" class="fas fa-ellipsis-h text-lg"></i>
+                    <!-- Active: Send Icon (Paper Plane) -->
+                    <i id="actionIconSend" class="fas fa-paper-plane text-lg hidden translate-x-[-1px] translate-y-[1px]"></i>
+                </button>
+            </div>
+            
+            <!-- Hidden inputs -->
+            <input type="checkbox" id="contactFlag" class="hidden">
+            <input type="file" id="imageInput" class="hidden" accept="image/*">
+        </div>
+    </div>
+
+</div>
+
+<!-- Answer Modal -->
+{% include "intelligence_log_answer_modal.html" %} 
+<!-- Tag Modal -->
+{% include "intelligence_log_tag_modal.html" %}
+
+<!-- Scripts match main intelligence logic but simplified for mobile context -->
+<script>
+    const targetId = "{{ target.id }}";
+    const timelineContainer = document.getElementById('timelineContainer');
+    const chatInput = document.getElementById('chatInput');
+    const saveLogBtn = document.getElementById('saveLogBtn');
+    const contactFlagBtn = document.getElementById('contactFlagBtn');
+    const contactFlag = document.getElementById('contactFlag');
+    const searchToggleBtn = document.getElementById('searchToggleBtn');
+    const searchPopover = document.getElementById('searchPopover');
+    const searchInput = document.getElementById('timelineSearchInput');
+    
+    // --- LOAD DATA ---
+    document.addEventListener('DOMContentLoaded', () => {
+        loadTimeline();
+        
+        // Auto-focus input if coming from edit/intent? Maybe not on mobile to avoid keyboard popup covering view.
+    });
+    
+    // --- UI INTERACTIONS ---
+    
+    // Input Auto-Resize & Button Toggle
+    chatInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+        
+        const hasText = this.value.trim().length > 0;
+        saveLogBtn.disabled = !hasText; // Actually button shouldn't be disabled if it's "Details", but logic requires text for SEND.
+        // Wait, logic:
+        // Empty -> "..." (Goes to Detail)
+        // Text -> "Send" (Submits)
+        
+        const iconDetail = document.getElementById('actionIconDetail');
+        const iconSend = document.getElementById('actionIconSend');
+        
+        if (hasText) {
+             saveLogBtn.classList.remove('bg-surface-2', 'text-text-sub');
+             saveLogBtn.classList.add('bg-primary', 'text-black');
+             saveLogBtn.disabled = false;
+             
+             iconDetail.classList.add('hidden');
+             iconSend.classList.remove('hidden');
+        } else {
+             // Revert to "Detail" button state
+             saveLogBtn.classList.remove('bg-surface-2', 'text-text-sub', 'disabled:opacity-50'); // Reset 
+             saveLogBtn.classList.add('bg-surface-2', 'text-text-sub'); // Make it look like secondary action
+             saveLogBtn.disabled = false; // Always enabled for navigation
+             
+             iconDetail.classList.remove('hidden');
+             iconSend.classList.add('hidden');
+        }
+    });
+
+    // Action Button Click
+    saveLogBtn.addEventListener('click', () => {
+        const text = chatInput.value.trim();
+        if (text) {
+            saveLog(text);
+        } else {
+            // Navigate to Detail
+            window.location.href = "{% url 'target_detail' %}?target_id=" + targetId;
+        }
+    });
+    
+    // Contact Toggle
+    contactFlagBtn.addEventListener('click', () => {
+        contactFlag.checked = !contactFlag.checked;
+        if(contactFlag.checked) {
+            contactFlagBtn.classList.add('text-primary', 'bg-primary/10', 'border-primary/30');
+            contactFlagBtn.classList.remove('text-text-sub', 'border-transparent');
+        } else {
+            contactFlagBtn.classList.remove('text-primary', 'bg-primary/10', 'border-primary/30');
+            contactFlagBtn.classList.add('text-text-sub', 'border-transparent');
+        }
+    });
+    
+    // Search Toggle
+    searchToggleBtn.addEventListener('click', () => {
+        searchPopover.classList.toggle('hidden');
+        if(!searchPopover.classList.contains('hidden')) {
+            searchInput.focus();
+        }
+    });
+    
+    searchInput.addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        const items = timelineContainer.querySelectorAll('.timeline-item');
+        items.forEach(item => {
+            const text = item.innerText.toLowerCase();
+            item.style.display = text.includes(term) ? 'flex' : 'none';
+        });
+    });
+
+    // --- API CALLS ---
+    function loadTimeline() {
+        fetch(`/api/timeline/?target_id=${targetId}`)
+        .then(res => res.json())
+        .then(data => {
+            renderTimeline(data.results);
+        });
+    }
+
+    function renderTimeline(items) {
+        timelineContainer.innerHTML = '';
+        let lastDate = null;
+        
+        // Reverse to show newest at bottom? Chat usually newest at bottom.
+        // But traditional timeline is newest top. 
+        // User requested "Chat Style". Chat usually has newest at bottom and scrolls to bottom.
+        // Let's assume standard chat order (Oldest -> Newest) for Render, but API usually returns Newest first.
+        // If API returns desc, we likely need to reverse for chat view (append) or insertAdjacentHTML('afterbegin').
+        // Let's stick to user's existing visual: Timeline Order (Newest Top) or Chat Order?
+        // "Target LOG Timeline" -> Usually implies chronological. "Chat-style input" implies bottom input.
+        // Most apps like LINE show newest at bottom. 
+        // I will render items reverse-chronological (Newest Top) which is standard for timelines, 
+        // BUT user said "Chat style". 
+        // Let's stick to Newest Top for now as it's easier to read history without scrolling miles.
+        
+        items.forEach(item => {
+            const date = new Date(item.date).toLocaleDateString();
+            if (date !== lastDate) {
+                // Date Separator
+                timelineContainer.innerHTML += `
+                    <div class="flex items-center justify-center my-4 opacity-50">
+                        <div class="h-px bg-white/10 w-16"></div>
+                        <span class="text-[10px] mx-2 font-mono">${date}</span>
+                        <div class="h-px bg-white/10 w-16"></div>
+                    </div>
+                `;
+                lastDate = date;
+            }
+            
+            const isQuestion = item.type === 'Question';
+            const html = `
+                <div class="timeline-item flex gap-3 text-text-main mb-4 group">
+                    <div class="flex flex-col items-center pt-1 w-10 shrink-0">
+                        <span class="text-[10px] opacity-50 font-mono">${item.time_display||'--:--'}</span>
+                        ${item.contact_made ? '<i class="fas fa-handshake text-primary text-xs mt-1"></i>' : ''}
+                    </div>
+                    
+                    <div class="flex-1 bg-surface-2 rounded-lg rounded-tl-none p-3 relative max-w-[85%]">
+                        ${isQuestion ? `<div class="font-bold text-xs text-primary mb-1">${item.question_text || 'Question'}</div>` : ''}
+                        <div class="text-sm whitespace-pre-wrap leading-relaxed">${item.content}</div>
+                        
+                        <!-- Mini Edit Button -->
+                        <button class="absolute top-2 right-2 text-text-sub opacity-0 group-hover:opacity-100 p-1" onclick="editLog('${item.id}', '${item.content|escapejs}')">
+                             <i class="fas fa-pen text-[10px]"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            timelineContainer.innerHTML += html;
+        });
+        
+        document.getElementById('loadingIndicator').remove();
+    }
+
+    function saveLog(content) {
+        const payload = {
+            target_id: targetId,
+            content: content, // or description
+            description: content,
+            contact_made: contactFlag.checked,
+            date: new Date().toISOString().split('T')[0] // Today
+            // tags handled by backend regex
+        };
+        
+        fetch('', { // POST to current URL handled by View
+             method: 'POST',
+             headers: {
+                 'Content-Type': 'application/json',
+                 'X-CSRFToken': '{{ csrf_token }}'
+             },
+             body: JSON.stringify(payload)
+        }).then(res => res.json()).then(data => {
+            if(data.success) {
+                chatInput.value = '';
+                chatInput.dispatchEvent(new Event('input')); // Reset height
+                loadTimeline(); // Refresh
+                contactFlag.checked = false;
+                contactFlagBtn.dispatchEvent(new Event('click')); // Reset UI
+            }
+        });
+    }
+</script>
+
+<style>
+    @keyframes fade-in { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    .animate-fade-in { animation: fade-in 0.1s ease-out; }
+</style>
+{% endblock %}

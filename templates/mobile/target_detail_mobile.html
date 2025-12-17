@@ -1,0 +1,145 @@
+{% extends "mobile/base_mobile.html" %}
+
+{% block title %}{{ target.nickname }} - Detail{% endblock %}
+
+{% block content %}
+<div class="flex flex-col h-full bg-background pb-20 relative">
+
+    <!-- Top Navigation (Transparent) -->
+    <div class="fixed top-0 left-0 right-0 h-14 px-4 flex items-center justify-between z-40 bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
+        <button onclick="history.back()" class="w-10 h-10 flex items-center justify-center text-white/80 hover:text-white pointer-events-auto rounded-full bg-black/20 backdrop-blur">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <a href="{% url 'target_edit' target.id %}" class="w-10 h-10 flex items-center justify-center text-white/80 hover:text-white pointer-events-auto rounded-full bg-black/20 backdrop-blur">
+            <i class="fas fa-pen"></i>
+        </a>
+    </div>
+
+    <!-- Hero Section (Avatar & Basic Info) -->
+    <div class="relative shrink-0 pt-20 pb-6 px-6 flex flex-col items-center bg-surface-2 border-b border-white/5">
+        
+        <!-- Avatar -->
+        <div class="w-24 h-24 rounded-full border-2 border-white/10 mb-4 overflow-hidden relative shadow-xl">
+             {% if target.avatar %}
+                <img src="{{ target.avatar.url }}" class="w-full h-full object-cover">
+             {% else %}
+                <div class="w-full h-full flex items-center justify-center bg-surface text-4xl text-text-sub font-bold">
+                    {{ target.nickname|slice:":1" }}
+                </div>
+             {% endif %}
+        </div>
+        
+        <!-- Name -->
+        <h1 class="text-2xl font-bold text-text-main mb-1">{{ target.nickname }}</h1>
+        <p class="text-sm text-text-sub mb-4">{{ target.full_name|default:'' }}</p>
+        
+        <!-- Quick Stats Row -->
+        <div class="flex items-center gap-6 text-xs text-text-sub">
+            <div class="flex flex-col items-center">
+                <span class="font-bold text-lg text-text-main">{{ log_count }}</span>
+                <span>Logs</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <span class="font-bold text-lg text-text-main">{{ contact_count }}</span>
+                <span>Contacts</span>
+            </div>
+             {% if target.birth_month %}
+            <div class="flex flex-col items-center">
+                <span class="font-bold text-lg text-text-main">{{ age }}</span>
+                <span>Age</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Tabs content container -->
+    <div class="flex-1 overflow-y-auto" x-data="{ tab: 'timeline' }">
+        
+        <!-- Sticky Tab Header -->
+        <div class="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-white/10 flex text-sm font-bold">
+            <button @click="tab = 'timeline'" :class="{'text-primary border-b-2 border-primary': tab==='timeline', 'text-text-sub border-b-2 border-transparent': tab!=='timeline'}" class="flex-1 py-3 text-center transition">
+                Timeline
+            </button>
+            <button @click="tab = 'questions'" :class="{'text-primary border-b-2 border-primary': tab==='questions', 'text-text-sub border-b-2 border-transparent': tab!=='questions'}" class="flex-1 py-3 text-center transition">
+                Q&A
+            </button>
+        </div>
+
+        <!-- 1. Timeline Tab -->
+        <div x-show="tab === 'timeline'" class="p-4 space-y-4">
+             <!-- Simplified Search Bar -->
+             <div class="relative mb-4">
+                 <input type="text" placeholder="Search timeline..." class="w-full bg-surface border border-white/10 rounded-full py-2 pl-9 pr-4 text-sm text-text-main focus:border-primary focus:outline-none placeholder-text-sub/50">
+                 <i class="fas fa-search absolute left-3 top-2.5 text-text-sub text-xs"></i>
+             </div>
+
+             <!-- Timeline Items -->
+             {% for item in events %}
+             <div class="flex gap-3">
+                 <!-- Date Column -->
+                 <div class="flex flex-col items-center shrink-0 w-10 pt-1">
+                     <span class="text-[10px] text-text-sub font-mono">{{ item.date|date:"H:i" }}</span>
+                     {% if item.contact_made %}
+                     <div class="mt-1 w-5 h-5 flex items-center justify-center rounded-full bg-primary/20 text-primary border border-primary/30">
+                         <i class="fas fa-handshake text-[10px]"></i>
+                     </div>
+                     {% endif %}
+                     <!-- Line -->
+                     <div class="w-px flex-1 bg-white/5 my-1 min-h-[20px]"></div>
+                 </div>
+                 
+                 <!-- Content -->
+                 <div class="flex-1 pb-4 border-b border-white/5 last:border-0">
+                     <div class="text-xs text-text-sub mb-1 opacity-70">{{ item.date|date:"Y/m/d (D)" }}</div>
+                     <p class="text-sm text-text-main whitespace-pre-wrap leading-relaxed">{{ item.content }}</p>
+                     
+                     <!-- Tags -->
+                     {% if item.tags.all %}
+                     <div class="flex flex-wrap gap-1 mt-2">
+                         {% for tag in item.tags.all %}
+                         <span class="text-[10px] px-2 py-0.5 rounded-full bg-surface border border-white/10 text-text-sub">#{{ tag.name }}</span>
+                         {% endfor %}
+                     </div>
+                     {% endif %}
+                 </div>
+             </div>
+             {% empty %}
+             <div class="text-center py-8 text-text-sub text-sm">No timeline entries.</div>
+             {% endfor %}
+             
+             <div class="text-center py-4">
+                 <a href="{% url 'intelligence_log' %}?target_id={{ target.id }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-black text-xs font-bold shadow-lg">
+                     <i class="fas fa-plus"></i> Add Entry
+                 </a>
+             </div>
+        </div>
+
+        <!-- 2. Q&A Tab -->
+        <div x-show="tab === 'questions'" class="p-4 space-y-2" style="display: none;">
+            {% for cat_data in qa_data %}
+            <div class="mb-4">
+                <h3 class="text-xs font-bold text-text-sub uppercase tracking-wider mb-2 px-1">{{ cat_data.category.name }}</h3>
+                <div class="space-y-2">
+                    {% for q_info in cat_data.questions %}
+                    <div class="bg-surface rounded-lg p-3 border border-white/5">
+                        <div class="text-xs text-primary font-bold mb-1">{{ q_info.question.title }}</div>
+                        {% if q_info.is_answered %}
+                        <p class="text-sm text-text-main">{{ q_info.answer }}</p>
+                        <div class="text-[10px] text-text-sub text-right mt-1 opacity-50">{{ q_info.answer_date|timesince }} ago</div>
+                        {% else %}
+                        <p class="text-sm text-text-sub italic opacity-50">Not answered yet</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+    </div>
+
+</div>
+
+<!-- Alpine.js for Tabs (assuming it's loaded in base, if not we add it) -->
+<script src="//unpkg.com/alpinejs" defer></script>
+{% endblock %}

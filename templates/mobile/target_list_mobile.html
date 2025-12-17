@@ -1,0 +1,117 @@
+{% extends "mobile/base_mobile.html" %}
+
+{% block title %}Targets{% endblock %}
+
+{% block content %}
+<div class="flex flex-col h-full bg-background pb-20"> <!-- Padding for bottom nav -->
+    
+    <!-- Header -->
+    <header class="h-14 px-4 flex items-center justify-between border-b border-white/10 bg-surface/50 backdrop-blur sticky top-0 z-30">
+        <h1 class="text-lg font-bold text-text-main tracking-wide">TARGETS</h1>
+        <a href="{% url 'target_add' %}" class="w-9 h-9 flex items-center justify-center rounded-full bg-primary text-black shadow-lg hover:scale-105 transition">
+            <i class="fas fa-plus"></i>
+        </a>
+    </header>
+
+    <!-- List -->
+    <div class="flex-1 overflow-y-auto p-4 space-y-3">
+        {% for target in targets %}
+        <div class="target-card bg-surface rounded-lg p-3 border border-white/5 active:bg-white/5 transition relative group"
+             onclick="window.location.href='{% url 'target_detail' %}?target_id={{ target.id }}'"
+             oncontextmenu="showContextMenu(event, '{{ target.id }}'); return false;">
+            
+            <div class="flex items-center gap-3">
+                <!-- Avatar -->
+                <div class="w-12 h-12 rounded-full bg-surface-2 border border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
+                     {% if target.avatar %}
+                        <img src="{{ target.avatar.url }}" class="w-full h-full object-cover">
+                     {% else %}
+                        <span class="text-xl opacity-50">{{ target.nickname|slice:":1" }}</span>
+                     {% endif %}
+                </div>
+                
+                <!-- Info -->
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between mb-0.5">
+                        <h3 class="font-bold text-base text-text-main truncate">{{ target.nickname }}</h3>
+                        {% if target.last_contact %}
+                        <span class="text-[10px] text-text-sub">{{ target.last_contact|date:"m/d" }}</span>
+                        {% endif %}
+                    </div>
+                    <p class="text-xs text-text-sub truncate">{{ target.full_name|default:'' }}</p>
+                </div>
+                
+                <!-- Arrow -->
+                <i class="fas fa-chevron-right text-white/10 text-xs"></i>
+            </div>
+            
+            <!-- Long Press Indicator (Visual Hint) -->
+            <div class="absolute inset-0 rounded-lg bg-primary/10 opacity-0 group-active:opacity-100 transition duration-300 pointer-events-none"></div>
+        </div>
+        {% empty %}
+        <div class="text-center py-10 opacity-50">
+            <p>No targets yet.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<!-- Context Menu Modal (Hidden by default) -->
+<div id="contextMenu" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm" onclick="hideContextMenu()">
+    <div class="absolute bottom-0 left-0 right-0 bg-surface rounded-t-xl overflow-hidden animate-slide-up pb-safe">
+        <div class="p-4 border-b border-white/10 text-center">
+            <span class="text-sm font-bold opacity-70">Options</span>
+        </div>
+        <div class="flex flex-col">
+            <button onclick="goToLog()" class="p-4 text-left hover:bg-white/5 flex items-center gap-3 border-b border-white/5">
+                <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary"><i class="fas fa-pen"></i></div>
+                <span>Create Log</span>
+            </button>
+            <button onclick="goToEdit()" class="p-4 text-left hover:bg-white/5 flex items-center gap-3 border-b border-white/5">
+                <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center"><i class="fas fa-cog"></i></div>
+                <span>Edit Target</span>
+            </button>
+        </div>
+        <button class="w-full p-4 text-center text-text-sub bg-surface active:bg-white/5" onclick="hideContextMenu()">Cancel</button>
+    </div>
+</div>
+
+<script>
+    let currentTargetId = null;
+    const contextMenu = document.getElementById('contextMenu');
+
+    function showContextMenu(e, id) {
+        e.preventDefault();
+        currentTargetId = id;
+        contextMenu.classList.remove('hidden');
+        // Vibrate if supported
+        if(navigator.vibrate) navigator.vibrate(50);
+    }
+
+    function hideContextMenu() {
+        contextMenu.classList.add('hidden');
+        currentTargetId = null;
+    }
+    
+    function goToLog() {
+        if(currentTargetId) window.location.href = "{% url 'intelligence_log' %}?target_id=" + currentTargetId;
+    }
+    
+    function goToEdit() {
+        // Need to fix this URL pattern to match updated urls.py later
+        if(currentTargetId) window.location.href = "/targets/" + currentTargetId + "/edit/"; 
+    }
+    
+    // Add slide-up animation
+    const style = document.createElement('style');
+    style.innerHTML = `
+        @keyframes slide-up {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        .animate-slide-up { animation: slide-up 0.2s ease-out; }
+    `;
+    document.head.appendChild(style);
+</script>
+{% endblock %}

@@ -1,0 +1,154 @@
+{% extends "mobile/base_mobile.html" %}
+
+{% block title %}Log Selection{% endblock %}
+
+{% block content %}
+<div class="flex flex-col h-full bg-background pb-20">
+
+    <!-- Header -->
+    <header class="h-14 px-4 flex items-center justify-between border-b border-white/10 bg-surface/50 backdrop-blur sticky top-0 z-30">
+        <h1 class="text-lg font-bold text-text-main tracking-wide">LOG ENTRY</h1>
+        <div class="flex items-center gap-4">
+             <!-- Date Display -->
+             <span class="text-sm font-mono text-primary">{{ today_date|date:"Y/m/d" }} ({{ weekday_jp }})</span>
+        </div>
+    </header>
+
+    <!-- Selection List -->
+    <div class="flex-1 overflow-y-auto p-4 space-y-3">
+        {% for item in todays_targets %}
+        <div class="target-card bg-surface rounded-lg p-3 border border-white/5 active:bg-white/5 transition relative group flex items-center gap-3"
+             onclick="window.location.href='{% url 'intelligence_log' %}?target_id={{ item.obj.id }}'"
+             oncontextmenu="showContextMenu(event, '{{ item.obj.id }}'); return false;">
+            
+            <!-- Avatar -->
+            <div class="w-12 h-12 rounded-full bg-surface-2 border border-white/10 flex items-center justify-center shrink-0 overflow-hidden relative">
+                 {% if item.obj.avatar %}
+                    <img src="{{ item.obj.avatar.url }}" class="w-full h-full object-cover">
+                 {% else %}
+                    <span class="text-xl opacity-50">{{ item.obj.nickname|slice:":1" }}</span>
+                 {% endif %}
+                 
+                 <!-- Checkmark Badge (Has Entry) -->
+                 {% if item.has_entry %}
+                 <div class="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-primary border border-black flex items-center justify-center">
+                     <i class="fas fa-check text-[8px] text-black font-bold"></i>
+                 </div>
+                 {% endif %}
+            </div>
+            
+            <!-- Info -->
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between mb-0.5">
+                    <h3 class="font-bold text-base text-text-main truncate">{{ item.obj.nickname }}</h3>
+                    <!-- Log Count Badge -->
+                    {% if item.log_count > 0 %}
+                    <span class="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-white/70">{{ item.log_count }} Logs</span>
+                    {% endif %}
+                </div>
+                
+                <div class="flex items-center gap-2 text-xs text-text-sub truncate">
+                    {% if item.is_anniversary %}
+                        <span class="text-accent-gold"><i class="fas fa-birthday-cake mr-1"></i>{{ item.anniversary_label }}</span>
+                    {% elif item.last_contact_date %}
+                        <span><i class="fas fa-history mr-1"></i>Last: {{ item.last_contact_date|date:"m/d" }}</span>
+                    {% else %}
+                        <span class="opacity-50">No recent contact</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Arrow -->
+            <i class="fas fa-chevron-right text-white/10 text-xs"></i>
+            
+            <!-- Long Press Indicator -->
+            <div class="absolute inset-0 rounded-lg bg-primary/10 opacity-0 group-active:opacity-100 transition duration-300 pointer-events-none"></div>
+        </div>
+        {% empty %}
+        <div class="text-center py-10 opacity-50">
+            <p>No targets suggested for today.</p>
+            <p class="text-xs mt-2">Add logs from Target List to see them here.</p>
+        </div>
+        {% endfor %}
+        
+        <!-- Add More Button -->
+        <a href="{% url 'target_list' %}" class="block text-center py-4 text-xs text-primary opacity-70 hover:opacity-100">
+            <i class="fas fa-plus mr-1"></i> Select from All Targets
+        </a>
+    </div>
+
+</div>
+
+<!-- Context Menu Modal -->
+<div id="contextMenu" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm" onclick="hideContextMenu()">
+    <div class="absolute bottom-0 left-0 right-0 bg-surface rounded-t-xl overflow-hidden animate-slide-up pb-safe">
+        <div class="p-4 border-b border-white/10 text-center">
+            <span class="text-sm font-bold opacity-70">Options</span>
+        </div>
+        <div class="flex flex-col">
+            <button onclick="goToDetail()" class="p-4 text-left hover:bg-white/5 flex items-center gap-3 border-b border-white/5">
+                <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center"><i class="fas fa-user"></i></div>
+                <span>View Detail</span>
+            </button>
+            <button onclick="hideTarget()" class="p-4 text-left hover:bg-white/5 flex items-center gap-3 border-b border-white/5 text-red-400">
+                <div class="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center text-red-500"><i class="fas fa-eye-slash"></i></div>
+                <span>Exclude (Hide)</span>
+            </button>
+        </div>
+        <button class="w-full p-4 text-center text-text-sub bg-surface active:bg-white/5" onclick="hideContextMenu()">Cancel</button>
+    </div>
+</div>
+
+<script>
+    let currentTargetId = null;
+    const contextMenu = document.getElementById('contextMenu');
+
+    function showContextMenu(e, id) {
+        e.preventDefault();
+        currentTargetId = id;
+        contextMenu.classList.remove('hidden');
+        if(navigator.vibrate) navigator.vibrate(50);
+    }
+
+    function hideContextMenu() {
+        contextMenu.classList.add('hidden');
+        currentTargetId = null;
+    }
+    
+    function goToDetail() {
+        if(currentTargetId) window.location.href = "{% url 'target_detail' %}?target_id=" + currentTargetId;
+    }
+    
+    function hideTarget() {
+        if(!currentTargetId) return;
+        
+        // Call Toggle API
+        fetch("{% url 'target_state_toggle' %}", {
+             method: 'POST',
+             headers: {
+                 'Content-Type': 'application/json',
+                 'X-CSRFToken': '{{ csrf_token }}'
+             },
+             body: JSON.stringify({
+                 target_id: currentTargetId,
+                 action: 'hide'
+             })
+        }).then(res => res.json()).then(data => {
+            if(data.success) {
+                location.reload();
+            }
+        });
+    }
+    
+    // Animation
+    const style = document.createElement('style');
+    style.innerHTML = `
+        @keyframes slide-up {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        .animate-slide-up { animation: slide-up 0.2s ease-out; }
+    `;
+    document.head.appendChild(style);
+</script>
+{% endblock %}
