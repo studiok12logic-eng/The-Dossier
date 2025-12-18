@@ -385,7 +385,7 @@ class IntelligenceLogView(LoginRequiredMixin, View):
             # User wants "Timeline items content". Usually full history or recent.
             # Let's pass all for now, ordered by date desc (or match render logic).
             # renderJS does sort. Let's pass objects.
-            timeline_items = TimelineItem.objects.filter(target=target).order_by('date', 'time') 
+            timeline_items = TimelineItem.objects.filter(target=target).order_by('date', 'created_at') 
             
             return render(request, 'mobile/intelligence_timeline_mobile.html', {
                 'target': target,
