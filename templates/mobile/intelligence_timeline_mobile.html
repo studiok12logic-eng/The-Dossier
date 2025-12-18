@@ -82,7 +82,7 @@
                 </div>
 
                 <!-- Items -->
-                <div class="px-2 space-y-3">
+                <div class="px-2 space-y-1">
                 {% for item in group.items %} 
                     <!-- Date Header if different from Occurrence Date (and Changed) -->
                     {% if item.created_at|date:"Y-m-d" != date_str %}
