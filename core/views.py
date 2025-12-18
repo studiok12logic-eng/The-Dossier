@@ -1139,14 +1139,19 @@ class QuestionListAPIView(LoginRequiredMixin, View):
                 return JsonResponse({'success': False, 'error': 'Target ID required'})
             
             # Fetch all categories
-            categories = QuestionCategory.objects.filter(user=request.user).order_by('id') # Or name
             # Including 'Uncategorized'? Maybe handling null category questions separately or generic
-            
-            # Fetch Questions with Answer Count for this Target
-            # We want ALL questions that user can see.
+            # Fetch Questions first to know which categories are needed
             questions_qs = Question.objects.filter(
                 Q(is_shared=True) | Q(user=request.user)
             ).select_related('category', 'rank').order_by('category__id', 'order', 'title')
+            
+            # Get IDs of categories used by these questions
+            category_ids = questions_qs.values_list('category_id', flat=True).distinct()
+
+            # Fetch Categories (User's OR Used by Questions)
+            categories = QuestionCategory.objects.filter(
+                Q(user=request.user) | Q(id__in=category_ids)
+            ).order_by('id').distinct()
             
             # We can't easily annotate a filtered count inside a related manager query for serialization 
             # without complex Prefetch or annotation.
