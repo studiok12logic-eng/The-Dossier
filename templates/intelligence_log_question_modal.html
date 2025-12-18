@@ -239,7 +239,7 @@
         const payload = {
             target_id: targetId,
             content: answerContent,
-            description: answerContent, # Compatible field
+            description: answerContent, // Compatible field
             event_type: 'QUESTION',
             question_id: currentQuestion.id,
             date: currentDateFilter || new Date().toISOString().split('T')[0]
