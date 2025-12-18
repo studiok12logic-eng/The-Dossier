@@ -6,19 +6,20 @@
 <div class="flex flex-col h-full bg-background pb-20"> 
     
     <!-- Header -->
-    <header class="h-14 px-4 flex items-center justify-between border-b border-white/10 bg-surface/90 backdrop-blur-xl sticky top-0 z-50 transition-all" id="mainHeader">
+    <header class="h-14 px-4 flex items-center justify-end border-b border-white/10 bg-surface/90 backdrop-blur-xl sticky top-0 z-50 transition-all" id="mainHeader">
         <!-- Center Title -->
         <span class="text-xs font-bold text-text-sub uppercase tracking-wider absolute left-1/2 -translate-x-1/2">TARGETS</span>
         
-        <!-- Left: Search Toggle -->
-        <button onclick="toggleSearch()" class="w-10 h-10 flex items-center justify-center text-text-sub hover:text-white rounded-full hover:bg-white/5 relative z-10">
-            <i class="fas fa-search"></i>
-        </button>
-
-        <!-- Right: Add Button -->
-        <button onclick="openAddModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors relative z-10">
-            <i class="fas fa-plus text-xs"></i>
-        </button>
+        <!-- Right: Actions (Search + Add) -->
+        <div class="flex items-center gap-3 relative z-10">
+            <button onclick="toggleSearch()" class="w-10 h-10 flex items-center justify-center text-text-sub hover:text-white rounded-full hover:bg-white/5">
+                <i class="fas fa-search"></i>
+            </button>
+            
+            <button onclick="openAddModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors">
+                <i class="fas fa-plus text-xs"></i>
+            </button>
+        </div>
     </header>
 
     <!-- Search Bar (Hidden by default) -->
