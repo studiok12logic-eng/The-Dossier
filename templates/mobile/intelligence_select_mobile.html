@@ -52,7 +52,7 @@
                 
                 <!-- Nearest Anniversary -->
                 {% if item.nearest_anniversary %}
-                <div class="mt-1 flex items-center gap-1.5 text-xs truncate {{ item.nearest_anniversary.color_class }}">
+                <div class="mt-1 flex items-center gap-1.5 text-xs truncate {{ item.nearest_anniversary.color_class }}" style="{{ item.nearest_anniversary.style }}">
                     <i class="fas {{ item.nearest_anniversary.icon }}"></i>
                     <span>{{ item.nearest_anniversary.label }}: {{ item.nearest_anniversary.date_str }}</span>
                 </div>
