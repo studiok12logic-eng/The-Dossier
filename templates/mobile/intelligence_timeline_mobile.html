@@ -46,7 +46,7 @@
             </button>
             
             <!-- Answer Modal Trigger -->
-            <button id="openAnswerModalBtn" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/5 text-text-sub">
+            <button onclick="openQuestionModal()" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/5 text-text-sub">
                 <i class="far fa-question-circle text-lg"></i>
             </button>
         </div>
@@ -639,13 +639,7 @@
         });
     }
 
-    // Question Modal Toggle
-    const openAnswerModalBtn = document.getElementById('openAnswerModalBtn');
-    if(openAnswerModalBtn) {
-        openAnswerModalBtn.addEventListener('click', () => {
-             if(typeof openQuestionModal === 'function') openQuestionModal();
-        });
-    }
+
 </script>
 
 <style>
