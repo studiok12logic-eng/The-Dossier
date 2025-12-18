@@ -15,13 +15,14 @@
             </button>
             <span class="text-xs font-bold text-text-sub uppercase tracking-wider">QUESTION DETAIL</span>
         </div>
-        <!-- Right side empty as requested -->
-        <div class="w-10"></div> 
+        <button onclick="document.getElementById('targetSelectModal').classList.remove('hidden')" class="w-10 h-10 flex items-center justify-center text-primary rounded-full hover:bg-white/5 active:bg-white/10">
+            <i class="fas fa-plus"></i>
+        </button>
     </header>
 
     <!-- Scrollable Content -->
     <div class="flex-1 overflow-y-auto scroll-smooth">
-        <!-- Question Info (Not a card, just info) -->
+        <!-- Question Info -->
         <div class="p-6 pb-2">
             <!-- Badges Row -->
             <div class="flex flex-wrap items-center gap-2 mb-3">
@@ -47,7 +48,7 @@
             <p class="text-sm text-text-sub mb-2 leading-relaxed opacity-90">{{ question.description }}</p>
             {% endif %}
 
-            <!-- Example (Smaller, no box, no header) -->
+            <!-- Example -->
             {% if question.example %}
             <p class="text-xs text-text-sub opacity-50">{{ question.example }}</p>
             {% endif %}
@@ -55,12 +56,22 @@
         
         <div class="h-px bg-white/5 mx-6 mb-4"></div>
 
-        <!-- Answers List (Flows in same scroll container) -->
+        <!-- Filter Area -->
+        <div class="px-4 mb-3">
+             <select onchange="updateGroupFilter(this.value)" class="w-full bg-surface border border-white/10 rounded-lg text-sm text-text-sub px-3 py-2 outline-none focus:border-primary">
+                 <option value="">All Groups</option>
+                 {% for g in groups %}
+                 <option value="{{ g.id }}" {% if request.GET.group|add:"0" == g.id %}selected{% endif %}>{{ g.name }}</option>
+                 {% endfor %}
+             </select>
+        </div>
+
+        <!-- Answers List -->
         <div class="px-4 pb-20 space-y-4"> 
             {% for item in answer_data %}
             <div class="bg-surface rounded-xl p-3 border border-white/5">
                 <div class="flex items-start gap-3 mb-2">
-                    <!-- Avatar (Small) -->
+                    <!-- Avatar -->
                     <div class="w-8 h-8 rounded-full bg-surface-2 border border-white/10 flex items-center justify-center text-xs font-bold overflow-hidden shrink-0">
                         {% if item.target.avatar %}
                         <img src="{{ item.target.avatar.url }}" class="w-full h-full object-cover">
@@ -72,6 +83,7 @@
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center justify-between">
                             <span class="font-bold text-sm text-text-main">{{ item.target.nickname }}</span>
+                            <!-- Use latest_answer.date for sorting display -->
                             <span class="text-[10px] text-text-sub">{{ item.latest_answer.date|date:"Y/m/d" }}</span>
                         </div>
                         <div class="mt-1 text-sm text-primary leading-relaxed whitespace-pre-wrap">{{ item.latest_answer.content }}</div>
@@ -102,4 +114,42 @@
         </div>
     </div>
 </div>
+
+<!-- Target Selection Modal -->
+<div id="targetSelectModal" class="fixed inset-0 z-[60] hidden bg-black/80 backdrop-blur flex flex-col pt-10 pb-safe">
+    <div class="flex items-center justify-between px-4 pb-4 border-b border-white/10 shrink-0">
+        <h2 class="text-lg font-bold">Select Target</h2>
+        <button onclick="document.getElementById('targetSelectModal').classList.add('hidden')" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="flex-1 overflow-y-auto p-4 space-y-2">
+        {% for t in all_targets %}
+        <button onclick="logForTarget('{{ t.id }}')" class="w-full bg-surface p-3 rounded-xl border border-white/10 flex items-center gap-3 active:bg-primary/20">
+             <div class="w-10 h-10 rounded-full bg-surface-2 overflow-hidden">
+                 {% if t.avatar %}<img src="{{ t.avatar.url }}" class="w-full h-full object-cover">
+                 {% else %}<span class="flex items-center justify-center w-full h-full font-bold text-xs">{{ t.nickname|slice:":1" }}</span>{% endif %}
+             </div>
+             <span class="font-bold">{{ t.nickname }}</span>
+        </button>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    function updateGroupFilter(groupId) {
+        const url = new URL(window.location.href);
+        if(groupId) {
+            url.searchParams.set('group', groupId);
+        } else {
+            url.searchParams.delete('group');
+        }
+        window.location.href = url.toString();
+    }
+
+    function logForTarget(targetId) {
+        // Redirect to Log with target, question, and TODAY's date (implicit/current)
+        // User requested: input day is today.
+        const today = new Date().toISOString().split('T')[0];
+        window.location.href = `{% url 'intelligence_log' %}?target_id=${targetId}&question_id={{ question.id }}&date=${today}`;
+    }
+</script>
 {% endblock %}

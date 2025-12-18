@@ -1072,6 +1072,10 @@ class QuestionDetailView(LoginRequiredMixin, MobileTemplateMixin, TemplateView):
         # Get groups for filter
         from intelligence.models import TargetGroup
         groups = TargetGroup.objects.filter(user=request.user)
+
+        # Get all targets for Add Modal
+        from intelligence.models import Target
+        all_targets = Target.objects.filter(user=request.user).order_by('nickname')
         
         context = {
             'question': question,
@@ -1079,6 +1083,7 @@ class QuestionDetailView(LoginRequiredMixin, MobileTemplateMixin, TemplateView):
             'questions': questions_json,
             'categories': categories,
             'groups': groups,
+            'all_targets': all_targets,
             'total_answers': sum(x['answer_count'] for x in answer_data) if answer_data else 0,
             'total_targets': len(answer_data)
         }
