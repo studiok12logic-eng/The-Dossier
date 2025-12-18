@@ -241,17 +241,9 @@
         const activeSection = document.getElementById('activeDateSection');
         if(activeSection) {
             setTimeout(() => {
-                activeSection.scrollIntoView({ block: 'end', behavior: 'auto' });
-                // But the chat bar is covering it.
-                // We actually want the bottom of activeSection to be ABOVE the chat bar.
-                // The `pb-32` is on the container content.
-                // If activeSection is the last one, it's fine.
-                // If it's in the middle, we want to scroll it up.
-                
+                // Robust Scroll to Align Bottom of Section with Top of Chat Bar
+                const rect = activeSection.getBoundingClientRect();
                 const chatBarHeight = chatInputBar.offsetHeight;
-                window.scrollBy(0, chatBarHeight); // Global scroll? No, container scroll.
-                // timelineContainer.scrollTop += chatBarHeight; 
-                // Actually 'block: end' puts it at the bottom of the VIEWPORT usually? No, container.
                 // If container is 100vh, 'end' puts it at 100vh. Chat bar is at 100vh-60px.
                 // So it is covered.
                 // We need to scroll DOWN more (push content up).
