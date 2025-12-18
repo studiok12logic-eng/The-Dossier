@@ -385,7 +385,28 @@ class IntelligenceLogView(LoginRequiredMixin, View):
             # User wants "Timeline items content". Usually full history or recent.
             # Let's pass all for now, ordered by date desc (or match render logic).
             # renderJS does sort. Let's pass objects.
-            timeline_items = TimelineItem.objects.filter(target=target).order_by('date', 'created_at') 
+            # [SSR] Fetch and Group Timeline Items
+            raw_items = TimelineItem.objects.filter(target=target).order_by('date', 'created_at')
+            
+            grouped_timeline = []
+            current_group = None
+            for item in raw_items:
+                date_str = item.date.strftime('%Y-%m-%d')
+                if current_group and current_group['date_str'] == date_str:
+                    current_group['items'].append(item)
+                    if item.contact_made: current_group['has_contact'] = True
+                else:
+                    if current_group: grouped_timeline.append(current_group)
+                    current_group = {
+                        'date': item.date,
+                        'date_str': date_str,
+                        'items': [item],
+                        'has_contact': item.contact_made
+                    }
+            if current_group: grouped_timeline.append(current_group)
+
+            timeline_items = grouped_timeline # Pass as 'timeline_items' but structure changed
+ 
             
             return render(request, 'mobile/intelligence_timeline_mobile.html', {
                 'target': target,
