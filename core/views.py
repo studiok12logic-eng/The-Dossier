@@ -676,18 +676,30 @@ class IntelligenceLogView(LoginRequiredMixin, View):
             # Let's support both.
             if hasattr(request.POST, 'getlist') and 'tags' in request.POST:
                  tag_ids = request.POST.getlist('tags')
-            
-            if tag_ids:
-                item.tags.add(*tag_ids)
-            
             from intelligence.models import Tag
-            # If content is empty (images only), regex returns empty. Safe.
-            hashtags = re.findall(r'#(\S+)', content or '')
+            # 2. Extract Hashtags from Content (Legacy/Text-based)
+            hashtags = re.findall(r'#(\w+)', content)
             for tag_name in hashtags:
-                clean_tag = tag_name.split()[0]
-                if clean_tag:
-                    tag_obj, _ = Tag.objects.get_or_create(name=clean_tag, user=request.user)
-                    item.tags.add(tag_obj)
+                tag, _ = Tag.objects.get_or_create(user=request.user, name=tag_name)
+                item.tags.add(tag)
+
+            # 3. Handle Explicit Tag IDs (New UI)
+            explicit_tags = data.get('tags', []) # Expecting list of IDs
+            if explicit_tags:
+                 # If explicit_tags is string (from FormData), split/parse
+                 if isinstance(explicit_tags, str):
+                     try:
+                         explicit_tags = json.loads(explicit_tags)
+                     except:
+                         explicit_tags = [] # Or split by comma if comma-separated
+                 
+                 if isinstance(explicit_tags, list):
+                     for tag_id in explicit_tags:
+                         try:
+                             tag = Tag.objects.get(id=tag_id, user=request.user)
+                             item.tags.add(tag)
+                         except Tag.DoesNotExist:
+                             pass
             
             if item.contact_made:
                 item.target.last_contact = timezone.now()

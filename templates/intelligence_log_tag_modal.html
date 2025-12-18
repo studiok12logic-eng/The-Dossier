@@ -204,30 +204,27 @@
     }
 
     function confirmTagSelection() {
-        // Collect names of selected tags
-        const selectedNames = [];
-        allTagsCache.forEach(t => {
-            if(currentSelectedTags.has(String(t.id))) selectedNames.push(t.name);
-        });
+        // Did not ask to append to text.
+        // User requested: "Do not put tags in text".
+        // We just close. The global currentSelectedTags Set is used by saveLog.
         
-        // Also handle newly created tags (if any)? 
-        // For simplicity, let's just use existing ones or allow Create API.
-        // But simpler: just insert text #Tag into input!
+        // Optional: Update a visual badge on the main UI? 
+        // For now, just close.
         
-        const input = document.getElementById('chatInput');
-        let currentText = input.value;
-        if(currentText && !currentText.endsWith(' ')) currentText += ' ';
-        
-        // Only append tags NOT already in text?
-        selectedNames.forEach(name => {
-             if(!currentText.includes('#' + name)) {
-                 currentText += `#${name} `;
-             }
-        });
-        
-        input.value = currentText;
         updateInputState(); // Resize
         closeTagModal();
+        
+        // Update main button state to show active tags?
+        const mainBtn = document.getElementById('toggleTagMenuBtn');
+        if(mainBtn) {
+            if(currentSelectedTags.size > 0) {
+                mainBtn.classList.add('text-primary');
+                mainBtn.classList.remove('text-text-sub');
+            } else {
+                mainBtn.classList.remove('text-primary');
+                mainBtn.classList.add('text-text-sub');
+            }
+        }
     }
     
     // Override Create New Tag to just append to "Selected" list as a temp item?
