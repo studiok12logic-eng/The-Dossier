@@ -622,7 +622,7 @@ class IntelligenceLogView(LoginRequiredMixin, View):
             'all_targets': all_targets,
             'questions': questions,
             'tags': top_tags,
-            'today_date': current_date.strftime('%Y-%m-%d'),
+            'today_date': current_date,
             'weekday_jp': ['月','火','水','木','金','土','日'][weekday]
         }
         if is_mobile:
