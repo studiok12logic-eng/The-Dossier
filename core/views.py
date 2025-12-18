@@ -1157,7 +1157,7 @@ class QuestionListAPIView(LoginRequiredMixin, View):
             # TimelineItem has 'question' FK. So 'timelineitem'.
             
             questions_qs = questions_qs.annotate(
-                answer_count=Count('timelineitem', filter=Q(timelineitem__target_id=target_id))
+                answer_count=Count('timelineitem_set', filter=Q(timelineitem_set__target_id=target_id))
             )
 
             # Structure by Category

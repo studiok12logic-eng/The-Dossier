@@ -117,7 +117,12 @@
                            {% if image_list %}
                            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; width: 100%; margin-top: 4px;">
                                {% for img in image_list %}
-                               <div class="relative w-full cursor-pointer overflow-hidden rounded-md active:opacity-80 transition-opacity" onclick="openLightbox('{{ img.image.url }}', [{% for i in image_list %}'{{ i.image.url }}',{% endfor %}], {{ forloop.counter0 }})" style="aspect-ratio: 1.618/1;">
+                               <div class="relative w-full cursor-pointer overflow-hidden rounded-md active:opacity-80 transition-opacity lightbox-trigger" 
+                                    data-src="{{ img.image.url }}"
+                                    data-gallery='[{% for i in image_list %}"{{ i.image.url }}"{% if not forloop.last %},{% endif %}{% endfor %}]'
+                                    data-index="{{ forloop.counter0 }}"
+                                    onclick="handleLightboxClick(this)"
+                                    style="aspect-ratio: 1.618/1;">
                                    <img src="{{ img.image.url }}" class="w-full h-full object-cover pointer-events-none">
                                </div>
                                {% endfor %}
@@ -592,6 +597,13 @@
         // Reset Filter (Show all)
         const items = timelineContainer.querySelectorAll('.timeline-item');
         items.forEach(item => item.style.display = 'flex');
+    }
+
+    function handleLightboxClick(el) {
+        const src = el.getAttribute('data-src');
+        const gallery = JSON.parse(el.getAttribute('data-gallery'));
+        const index = parseInt(el.getAttribute('data-index'));
+        openLightbox(src, gallery, index);
     }
 
     function searchForTag(tagName) {
