@@ -1102,3 +1102,32 @@ class TagListAPIView(LoginRequiredMixin, View):
             })
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+    def post(self, request, *args, **kwargs):
+        try:
+             import json
+             from intelligence.models import Tag
+             
+             if request.content_type == 'application/json':
+                 data = json.loads(request.body)
+             else:
+                 data = request.POST
+             
+             name = data.get('name', '').strip()
+             if not name:
+                 return JsonResponse({'success': False, 'error': 'Tag name required'})
+             
+             # Create or Get (Case insensitive?)
+             # Assuming case-sensitive for now or use name__iexact check if stricter
+             # But get_or_create is strictly case sensitive by default in Postgres/Sqlite usually unless configured.
+             # Let's clean it up slightly (e.g. strip #)
+             if name.startswith('#'): name = name[1:]
+             
+             tag, created = Tag.objects.get_or_create(user=request.user, name=name)
+             
+             return JsonResponse({
+                 'success': True,
+                 'tag': {'id': tag.id, 'name': tag.name, 'count': 0} # Count 0 for new, or actual if exists
+             })
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)

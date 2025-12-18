@@ -16,7 +16,6 @@
             
             <!-- 1. Frequently Used for Target -->
             <div id="targetTagsSection" class="hidden">
-                <label class="text-xs font-mono text-primary mb-2 block uppercase tracking-wider opacity-80">Frequent for this Target</label>
                 <div id="targetTagsList" class="flex flex-wrap gap-2">
                     <!-- Loaded via JS -->
                 </div>
@@ -24,18 +23,16 @@
 
             <!-- 2. Create Tag -->
             <div>
-                 <label class="text-xs font-mono text-text-sub mb-2 block uppercase tracking-wider opacity-50">Create New</label>
                  <div class="flex gap-2">
                      <input type="text" id="newTagInput" placeholder="New tag name..." class="flex-1 bg-surface-2 border border-white/10 rounded-lg px-3 py-2 text-sm text-text-main focus:border-primary/50 focus:ring-0 outline-none">
-                     <button onclick="createNewTag()" class="px-4 py-2 bg-primary/10 text-primary hover:bg-primary/20 rounded-lg text-sm font-bold transition-colors">
-                         Add
+                     <button onclick="createNewTag()" class="px-4 py-2 bg-primary/10 text-primary hover:bg-primary/20 rounded-lg text-lg font-bold transition-colors w-12 flex items-center justify-center">
+                         +
                      </button>
                  </div>
             </div>
 
             <!-- 3. All Tags (By Frequency) -->
             <div>
-                <label class="text-xs font-mono text-text-sub mb-2 block uppercase tracking-wider opacity-50">All Tags</label>
                 <div id="allTagsList" class="flex flex-wrap gap-2">
                     <!-- Loaded via JS -->
                     <div class="text-xs text-text-sub italic">Loading...</div>
@@ -177,30 +174,65 @@
         const name = input.value.trim();
         if(!name) return;
 
-        // Optimistic UI? Or assume valid?
-        // Let's ensure no dupe in cache
+        // Check cache first
         const exists = allTagsCache.find(t => t.name.toLowerCase() === name.toLowerCase());
         if(exists) {
-            toggleTagSelection(exists.id, document.querySelector(`.tag-chip[data-tag-id="${exists.id}"]`));
+            // Select existing
+            const btn = document.querySelector(`.tag-chip[data-tag-id="${exists.id}"]`);
+            if(btn && !currentSelectedTags.has(String(exists.id))) {
+                 toggleTagSelection(exists.id, btn);
+            }
             input.value = '';
             return;
         }
 
-        // Just add to selection list visually? No, we need ID for backend.
-        // But user wants to CREATE here.
-        // We probably need a simplified "Add Tag" if it doesn't exist.
-        // Wait, core/views.py has `post` logic that creates tags from hashtag regex.
-        // But here we want to select it officially.
-        // I will assume the name is passed to backend if ID is missing?
-        // Or better: Use regex hashtags in content.
-        // USER REQUEST: "Select button returns to message input".
-        // Maybe "Select" just inserts hashtags into input?
-        // "Message + ... + sent together".
-        // If I insert `#Tag` into input, it solves everything easily!
-        // User asked: "Select button returns to *message input*".
-        // This strongly suggests appending `#Tag` to the text area.
-        
-        // Let's implement that: Confirmation appends tags to text area.
+        // Create via API
+        fetch('/api/tags/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}' // Ensure this template has access or use cookie
+            },
+            body: JSON.stringify({ name: name })
+        }).then(res => res.json()).then(data => {
+            if(data.success) {
+                const newTag = data.tag;
+                // Add to cache
+                allTagsCache.unshift(newTag); // Add to top? Or re-sort? Just add to top for now
+                
+                // Re-render All Tags logic partially or append?
+                // Easiest is to append to container or clear and re-render.
+                // Re-rendering all is safe.
+                // But we need to make sure we select it.
+                currentSelectedTags.add(String(newTag.id));
+                
+                // Hack: Pass updated list to render.
+                // We don't have targetTags here locally unless we cached them too.
+                // Using global var for targetTags?
+                // Let's just append the new chip to "All Tags" and select it.
+                
+                const allContainer = document.getElementById('allTagsList');
+                // Create chip
+                const chipHTML = createTagChip(newTag);
+                // Prepend or Append? User surely wants to see it. Prepend.
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = chipHTML;
+                const newBtn = tempDiv.firstElementChild;
+                
+                // Visual select
+                newBtn.classList.remove('bg-surface-2', 'text-text-sub', 'border-transparent');
+                newBtn.classList.add('bg-primary', 'text-black', 'border-primary', 'font-bold');
+                
+                allContainer.insertBefore(newBtn, allContainer.firstChild);
+                
+                updateBadge();
+                input.value = '';
+            } else {
+                alert('Error processing tag: ' + (data.error || 'Unknown error'));
+            }
+        }).catch(err => {
+            console.error(err);
+        });
     }
 
     function confirmTagSelection() {
