@@ -105,15 +105,13 @@
                         </div>
 
                         <!-- Time / Icon Column (Right, Bottom Aligned with Bubble) -->
-                        <div class="flex flex-col justify-end items-start pb-1 gap-0.5" style="min-width: 40px;">
+                        <div class="flex flex-col justify-end items-start pb-2 gap-0.5" style="min-width: 40px;">
                             <!-- Contact Icon -->
                             {% if item.contact_made %}
                             <i class="fas fa-handshake text-primary text-[10px] opacity-80"></i>
                             {% endif %}
                             
                             <!-- Time -->
-                            <!-- Logic: If Input Date != Occurrence Date, show full date? User said: "Header above... then time". -->
-                            <!-- So just time here. Header handled above. -->
                             <span class="text-[9px] font-mono text-text-sub opacity-50 whitespace-nowrap">{{ item.created_at|date:"H:i" }}</span>
                         </div>
 
@@ -241,13 +239,24 @@
         const activeSection = document.getElementById('activeDateSection');
         if(activeSection) {
             setTimeout(() => {
-                // Robust Scroll to Align Bottom of Section with Top of Chat Bar
-                const rect = activeSection.getBoundingClientRect();
+                // Calculate Exact Scroll Position
+                // Goal: Bottom of Active Section = Top of Chat Bar
                 const chatBarHeight = chatInputBar.offsetHeight;
-                // If container is 100vh, 'end' puts it at 100vh. Chat bar is at 100vh-60px.
-                // So it is covered.
-                // We need to scroll DOWN more (push content up).
-                timelineContainer.scrollTop += chatBarHeight + 10;
+                const windowHeight = window.innerHeight;
+                
+                // We want the element's bottom edge to be at (windowHeight - chatBarHeight)
+                // scrollTop = (elementBottomPositionRelativeTopContainer) - (targetVisibleBottom)
+                // elementBottomPositionRelativeTopContainer = activeSection.offsetTop + activeSection.offsetHeight
+                
+                const elementBottom = activeSection.offsetTop + activeSection.offsetHeight;
+                const targetVisibleBottom = windowHeight - chatBarHeight;
+                
+                // If elementBottom is 2000, and targetVisibleBottom is 600 (height 800 - bar 200)
+                // We want 2000 to be at 600. So top must be at 1400.
+                // scrollTop = 2000 - 600 = 1400.
+                
+                timelineContainer.scrollTop = elementBottom - targetVisibleBottom;
+                
             }, 100);
         } else {
              // Default scroll bottom
