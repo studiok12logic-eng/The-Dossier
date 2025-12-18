@@ -102,6 +102,19 @@
                            {% endif %}
                            
                            <div class="text-sm whitespace-pre-wrap leading-relaxed break-words">{{ item.content }}</div>
+
+                           <!-- Image Grid -->
+                           {% with image_list=item.images.all %}
+                           {% if image_list %}
+                           <div class="grid grid-cols-4 gap-1 w-full mt-1">
+                               {% for img in image_list %}
+                               <div class="relative w-full cursor-pointer overflow-hidden rounded-md active:opacity-80 transition-opacity" onclick="openLightbox('{{ img.image.url }}', [{% for i in image_list %}'{{ i.image.url }}',{% endfor %}], {{ forloop.counter0 }})" style="aspect-ratio: 1.618/1;">
+                                   <img src="{{ img.image.url }}" class="w-full h-full object-cover pointer-events-none">
+                               </div>
+                               {% endfor %}
+                           </div>
+                           {% endif %}
+                           {% endwith %}
                         </div>
 
                         <!-- Time / Icon Column (Right, Bottom Aligned with Bubble) -->
