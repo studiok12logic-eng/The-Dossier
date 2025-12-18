@@ -705,7 +705,7 @@ class IntelligenceLogView(LoginRequiredMixin, View):
                 
                 current_ids = self.get_daily_target_ids(request.user, date)
                 
-                from django.db.models import Max
+                from django.db.models import Max, Q
                 candidates = Target.objects.filter(user=request.user).exclude(id__in=current_ids).annotate(
                     last_contact=Max('timelineitem__date', filter=Q(timelineitem__contact_made=True))
                 ).order_by('last_contact', 'nickname') # Nulls first (never contacted)? or last? Django defaults. ASC means old dates first.

@@ -120,7 +120,7 @@
 
 <!-- Add Candidate Modal -->
 <div id="addCandidateModal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm" onclick="if(event.target === this) closeAddModal()">
-    <div class="absolute inset-x-4 top-20 bottom-20 bg-surface rounded-xl overflow-hidden flex flex-col border border-white/10 animate-scale-in">
+    <div class="absolute inset-x-0 bottom-0 top-20 bg-surface rounded-t-xl overflow-hidden flex flex-col border-t border-white/10 animate-slide-up">
         <!-- Modal Header -->
         <div class="p-4 border-b border-white/10 flex items-center justify-between bg-surface-2">
             <h3 class="font-bold text-lg">Select Target</h3>
@@ -131,10 +131,10 @@
         
         <!-- Search -->
         <div class="p-4 border-b border-white/5 bg-surface">
-            <div class="relative">
-                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-text-sub"></i>
+            <div class="flex items-center gap-3 bg-black/30 rounded-lg px-4 py-3 border border-white/10 focus-within:border-primary/50 transition-colors">
+                <i class="fas fa-search text-text-sub"></i>
                 <input type="text" id="candidateSearch" placeholder="Search (Name, Kana)..." 
-                       class="w-full bg-black/30 outline-none p-3 pl-10 rounded-lg text-text-main placeholder-white/20 border border-white/5 focus:border-primary/50 transition-colors"
+                       class="flex-1 bg-transparent outline-none text-text-main placeholder-white/20 h-full"
                        oninput="filterCandidates(this.value)">
             </div>
         </div>
