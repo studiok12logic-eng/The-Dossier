@@ -32,8 +32,9 @@
     <!-- Selection List -->
     <div class="flex-1 overflow-y-auto space-y-0">
         {% for item in todays_targets %}
-        <div class="target-card w-full bg-surface border-b border-white/5 active:bg-white/5 transition flex items-center gap-4 px-4 py-3"
-             onclick="window.location.href='{% url 'intelligence_log' %}?target_id={{ item.obj.id }}&date={{ today_date|date:'Y-m-d' }}'"
+        <div class="target-card w-full bg-surface border-b border-white/5 active:bg-white/5 transition flex items-center gap-4 px-4 py-3 cursor-pointer"
+             data-url="{% url 'intelligence_log' %}?target_id={{ item.obj.id }}&date={{ today_date|date:'Y-m-d' }}"
+             onclick="window.location.href=this.dataset.url"
              oncontextmenu="showContextMenu(event, '{{ item.obj.id }}'); return false;">
             
             <!-- Avatar -->
@@ -52,7 +53,8 @@
                 
                 <!-- Nearest Anniversary -->
                 {% if item.nearest_anniversary %}
-                <div class="mt-1 flex items-center gap-1.5 text-xs truncate {{ item.nearest_anniversary.color_class }}" style="{{ item.nearest_anniversary.style }}">
+                <div class="mt-1 flex items-center gap-1.5 text-xs truncate {{ item.nearest_anniversary.color_class }}"
+                     data-anniv-style="{{ item.nearest_anniversary.style }}">
                     <i class="fas {{ item.nearest_anniversary.icon }}"></i>
                     <span>{{ item.nearest_anniversary.label }}: {{ item.nearest_anniversary.date_str }}</span>
                 </div>
@@ -280,6 +282,16 @@
             }
         });
     }
+
+    // Apply Anniversary Styles
+    document.addEventListener("DOMContentLoaded", () => {
+        document.querySelectorAll('[data-anniv-style]').forEach(el => {
+            const style = el.getAttribute('data-anniv-style');
+            if(style && style.trim() !== "") {
+                 el.style.cssText += style;
+            }
+        });
+    });
 
     // --- Helper ---
     function postAction(payload) {
