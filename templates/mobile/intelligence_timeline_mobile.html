@@ -607,6 +607,14 @@
             }
         });
     }
+    // Tag Menu Toggle
+    const toggleTagMenuBtn = document.getElementById('toggleTagMenuBtn');
+    if(toggleTagMenuBtn) {
+        toggleTagMenuBtn.addEventListener('click', () => {
+             // Assuming openTagModal is defined in the included modal file
+             if(typeof openTagModal === 'function') openTagModal();
+        });
+    }
 </script>
 
 <style>
