@@ -910,7 +910,8 @@ class QuestionListView(LoginRequiredMixin, MobileTemplateMixin, ListView):
         # HTMX: Return partial template for smooth updates
         if self.request.htmx:
             return ['_question_list_partial.html']
-        return [self.template_name]
+        # Delegate to Mixin for Mobile check
+        return super().get_template_names()
 
     def get_queryset(self):
         from django.db.models import Q, Count
