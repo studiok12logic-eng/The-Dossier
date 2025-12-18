@@ -996,7 +996,9 @@ class QuestionDeleteView(LoginRequiredMixin, DeleteView):
     def get_queryset(self):
         return Question.objects.filter(user=self.request.user)
 
-class QuestionDetailView(LoginRequiredMixin, MobileTemplateMixin, View):
+from django.views.generic import TemplateView
+
+class QuestionDetailView(LoginRequiredMixin, MobileTemplateMixin, TemplateView):
     template_name = 'question_detail.html'
     mobile_template_name = 'mobile/question_detail_mobile.html'
     
