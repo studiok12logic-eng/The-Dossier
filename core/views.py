@@ -1117,17 +1117,91 @@ class TagListAPIView(LoginRequiredMixin, View):
              if not name:
                  return JsonResponse({'success': False, 'error': 'Tag name required'})
              
-             # Create or Get (Case insensitive?)
-             # Assuming case-sensitive for now or use name__iexact check if stricter
-             # But get_or_create is strictly case sensitive by default in Postgres/Sqlite usually unless configured.
-             # Let's clean it up slightly (e.g. strip #)
              if name.startswith('#'): name = name[1:]
              
              tag, created = Tag.objects.get_or_create(user=request.user, name=name)
              
              return JsonResponse({
                  'success': True,
-                 'tag': {'id': tag.id, 'name': tag.name, 'count': 0} # Count 0 for new, or actual if exists
+                 'tag': {'id': tag.id, 'name': tag.name, 'count': 0}
              })
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+class QuestionListAPIView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        try:
+            from intelligence.models import Question, QuestionCategory, TimelineItem
+            from django.db.models import Count, Q
+            
+            target_id = request.GET.get('target_id')
+            if not target_id:
+                return JsonResponse({'success': False, 'error': 'Target ID required'})
+            
+            # Fetch all categories
+            categories = QuestionCategory.objects.filter(user=request.user).order_by('id') # Or name
+            # Including 'Uncategorized'? Maybe handling null category questions separately or generic
+            
+            # Fetch Questions with Answer Count for this Target
+            # We want ALL questions that user can see.
+            questions_qs = Question.objects.filter(
+                Q(is_shared=True) | Q(user=request.user)
+            ).select_related('category', 'rank').order_by('category__id', 'order', 'title')
+            
+            # We can't easily annotate a filtered count inside a related manager query for serialization 
+            # without complex Prefetch or annotation.
+            # Simpler approach: Fetch log counts separately or use subquery.
+            
+            # Use annotation with Q filter on TimelineItem
+            # But Question -> TimelineItem (reverse relation name defaults to 'timelineitem_set' or similar?)
+            # TimelineItem has 'question' FK. So 'timelineitem'.
+            
+            questions_qs = questions_qs.annotate(
+                answer_count=Count('timelineitem', filter=Q(timelineitem__target_id=target_id))
+            )
+
+            # Structure by Category
+            categorized_data = {}
+            # Initialize with categories
+            for cat in categories:
+                categorized_data[cat.id] = {
+                    'id': cat.id,
+                    'name': cat.name,
+                    'questions': []
+                }
+            # Special bucket for 'No Category'
+            categorized_data['none'] = {'id': 'none', 'name': 'Uncategorized', 'questions': []}
+
+            for q in questions_qs:
+                q_data = {
+                    'id': q.id,
+                    'title': q.title,
+                    'rank': q.rank.name if q.rank else '',
+                    'answer_type': q.answer_type,
+                    'choices': q.choices,
+                    'description': q.description,
+                    'example': q.example,
+                    'count': q.answer_count
+                }
+                
+                if q.category:
+                    if q.category.id in categorized_data:
+                         categorized_data[q.category.id]['questions'].append(q_data)
+                    else:
+                         categorized_data['none']['questions'].append(q_data) # Fallback
+                else:
+                    categorized_data['none']['questions'].append(q_data)
+            
+            # Convert to list, removing empty if desired? Or keep all.
+            result_list = []
+            # Order: Categories then None
+            for cat in categories:
+                if categorized_data[cat.id]['questions']:
+                    result_list.append(categorized_data[cat.id])
+            if categorized_data['none']['questions']:
+                result_list.append(categorized_data['none'])
+                
+            return JsonResponse({'success': True, 'categories': result_list})
+
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)}, status=500)

@@ -1,0 +1,267 @@
+<!-- Question Modal -->
+<div id="questionModal" class="hidden fixed inset-0 z-[60] bg-black/80 flex items-end sm:items-center justify-center sm:p-4 backdrop-blur-sm transition-opacity duration-300 opacity-0 pointer-events-none">
+    <div class="bg-surface border-t sm:border border-white/10 rounded-t-2xl sm:rounded-xl w-full max-w-md h-[85vh] sm:h-[650px] flex flex-col shadow-2xl transform transition-transform duration-300 translate-y-full sm:translate-y-0 scale-95 sm:scale-100 relative">
+        
+        <!-- Main View: Question List -->
+        <div id="questionListView" class="flex flex-col h-full w-full">
+            <!-- Header -->
+            <div class="p-4 border-b border-white/10 shrink-0 bg-surface z-10 rounded-t-2xl sm:rounded-t-xl">
+                 <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-sm font-bold tracking-wider text-text-main">QUESTIONS</h3>
+                    <button onclick="closeQuestionModal()" class="w-8 h-8 flex items-center justify-center text-text-sub hover:text-white rounded-full bg-white/5">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <!-- Search -->
+                <div class="relative">
+                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-text-sub opacity-50 text-xs"></i>
+                    <input type="text" id="questionSearchInput" placeholder="Search questions..." oninput="filterQuestions()" 
+                        class="w-full bg-surface-2 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm text-text-main focus:border-primary/50 focus:ring-0 outline-none placeholder-text-sub/40">
+                </div>
+            </div>
+
+            <!-- Scrollable Content -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-6" id="questionListContainer">
+                <div class="text-center text-text-sub text-xs mt-10">Loading questions...</div>
+            </div>
+        </div>
+
+        <!-- Sub View: Answer Form -->
+        <div id="questionAnswerView" class="absolute inset-0 bg-surface rounded-t-2xl sm:rounded-xl flex flex-col z-20 translate-x-full transition-transform duration-300">
+             <!-- Header -->
+             <div class="p-4 border-b border-white/10 shrink-0 flex items-center gap-3">
+                 <button onclick="backToQuestionList()" class="w-8 h-8 flex items-center justify-center text-text-sub hover:text-white rounded-full bg-white/5">
+                     <i class="fas fa-chevron-left"></i>
+                 </button>
+                 <h3 class="text-sm font-bold text-text-main truncate flex-1" id="answerPageTitle">Answer</h3>
+             </div>
+             
+             <!-- Content -->
+             <div class="flex-1 overflow-y-auto p-4">
+                 <div id="answerPageMeta" class="mb-4">
+                     <!-- Rank / Description injected here -->
+                 </div>
+                 
+                 <div id="answerFormContainer">
+                     <!-- Input injected here -->
+                 </div>
+             </div>
+             
+             <!-- Footer -->
+             <div class="p-4 border-t border-white/10 shrink-0">
+                 <button onclick="submitAnswer()" class="w-full py-3 bg-primary text-black font-bold rounded-xl shadow-lg hover:bg-primary-light transition-transform active:scale-95 flex items-center justify-center gap-2">
+                     <i class="fas fa-paper-plane"></i> Submit Answer
+                 </button>
+             </div>
+        </div>
+        
+        <!-- Padding for mobile safe area -->
+        <div class="h-6 sm:hidden shrink-0"></div> 
+    </div>
+</div>
+
+<script>
+    const qModal = document.getElementById('questionModal');
+    let allCategories = []; // Cached data
+    let currentQuestion = null;
+
+    function openQuestionModal() {
+        qModal.classList.remove('hidden', 'pointer-events-none');
+        // Trigger reflow
+        void qModal.offsetWidth;
+        qModal.classList.remove('opacity-0');
+        qModal.firstElementChild.classList.remove('translate-y-full', 'scale-95');
+        
+        // Reset View
+        backToQuestionList(false);
+        fetchQuestions();
+    }
+
+    function closeQuestionModal() {
+        qModal.classList.add('opacity-0', 'pointer-events-none');
+        qModal.firstElementChild.classList.add('translate-y-full', 'scale-95');
+        setTimeout(() => {
+            qModal.classList.add('hidden');
+        }, 300);
+    }
+
+    function fetchQuestions() {
+        if(!targetId) return;
+        fetch(`/api/questions/?target_id=${targetId}`)
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                allCategories = data.categories;
+                renderQuestions(allCategories);
+            } else {
+                document.getElementById('questionListContainer').innerHTML = `<div class="text-red-500 text-center text-xs">${data.error}</div>`;
+            }
+        });
+    }
+
+    function renderQuestions(categories) {
+        const container = document.getElementById('questionListContainer');
+        container.innerHTML = '';
+        
+        if(categories.length === 0) {
+            container.innerHTML = '<div class="text-center text-text-sub text-xs mt-4">No questions found.</div>';
+            return;
+        }
+
+        categories.forEach(cat => {
+            // Category Header
+            const section = document.createElement('div');
+            section.className = 'mb-6';
+            section.innerHTML = `<h4 class="text-xs font-mono text-primary mb-3 uppercase tracking-wider opacity-80 pl-1 border-l-2 border-primary/30">${cat.name}</h4>`;
+            
+            const list = document.createElement('div');
+            list.className = 'space-y-2';
+            
+            cat.questions.forEach(q => {
+                const item = document.createElement('div');
+                item.className = 'flex items-center justify-between p-3 rounded-lg bg-surface-2 border border-white/5 hover:border-primary/30 active:bg-white/5 cursor-pointer transition-colors';
+                item.onclick = () => openAnswerView(q);
+                
+                // Rank Badge Color
+                let rankColor = 'bg-white/10 text-text-sub';
+                // You can add logic for rank colors if passed from backend
+                
+                const rankHtml = q.rank ? `<span class="${rankColor} px-1.5 py-0.5 rounded text-[10px] mr-2 font-mono">${q.rank}</span>` : '';
+                
+                item.innerHTML = `
+                    <div class="flex items-center overflow-hidden mr-3">
+                        ${rankHtml}
+                        <span class="text-sm text-text-main truncate">${q.title}</span>
+                    </div>
+                    <div class="shrink-0 flex items-center gap-1 text-xs text-text-sub">
+                        <i class="fas fa-check opacity-50"></i>
+                        <span>${q.count}</span>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+            
+            section.appendChild(list);
+            container.appendChild(section);
+        });
+    }
+
+    function filterQuestions() {
+        const term = document.getElementById('questionSearchInput').value.toLowerCase();
+        
+        // Filter in memory
+        const filtered = allCategories.map(cat => {
+            const matchingQs = cat.questions.filter(q => q.title.toLowerCase().includes(term) || (q.rank && q.rank.toLowerCase().includes(term)));
+            if(matchingQs.length > 0) {
+                return { ...cat, questions: matchingQs };
+            }
+            return null;
+        }).filter(c => c !== null);
+        
+        renderQuestions(filtered);
+    }
+
+    function openAnswerView(question) {
+        currentQuestion = question;
+        const answerView = document.getElementById('questionAnswerView');
+        const listView = document.getElementById('questionListView');
+        
+        // Populate Meta
+        document.getElementById('answerPageTitle').innerText = question.title;
+        let metaHtml = '';
+        if(question.description) metaHtml += `<p class="text-xs text-text-sub mb-2">${question.description}</p>`;
+        if(question.example) metaHtml += `<div class="bg-primary/5 p-2 rounded text-[10px] text-primary mb-2 border border-primary/10">Ex: ${question.example}</div>`;
+        document.getElementById('answerPageMeta').innerHTML = metaHtml;
+        
+        // Build Form
+        const formContainer = document.getElementById('answerFormContainer');
+        formContainer.innerHTML = '';
+        
+        if(question.answer_type === 'SELECTION') {
+            const choices = question.choices.split(',').map(s => s.trim()).filter(s => s);
+            const choiceGroup = document.createElement('div');
+            choiceGroup.className = 'space-y-2';
+            
+            choices.forEach((c, idx) => {
+                const label = document.createElement('label');
+                label.className = 'flex items-center p-3 rounded-lg border border-white/10 bg-surface-2 cursor-pointer hover:border-primary/50 transition-colors';
+                label.innerHTML = `
+                    <input type="radio" name="answerChoice" value="${c}" class="text-primary focus:ring-primary bg-black border-white/20">
+                    <span class="ml-3 text-sm text-text-main">${c}</span>
+                `;
+                choiceGroup.appendChild(label);
+            });
+            formContainer.appendChild(choiceGroup);
+        } else {
+            // Text
+            formContainer.innerHTML = `
+                <textarea id="answerTextInput" rows="5" class="w-full bg-surface-2 border border-white/10 rounded-lg p-3 text-sm text-text-main focus:border-primary focus:ring-0 outline-none placeholder-text-sub/30" placeholder="Enter your answer..."></textarea>
+            `;
+        }
+        
+        // Slide In
+        answerView.classList.remove('translate-x-full');
+    }
+
+    function backToQuestionList(animate = true) {
+        const answerView = document.getElementById('questionAnswerView');
+        if(animate) {
+            answerView.classList.add('translate-x-full');
+        } else {
+            // Disable transition temporarily? Or just force style?
+            answerView.classList.add('translate-x-full');
+        }
+        currentQuestion = null;
+    }
+
+    function submitAnswer() {
+        if(!currentQuestion) return;
+        
+        let answerContent = '';
+        if(currentQuestion.answer_type === 'SELECTION') {
+            const selected = document.querySelector('input[name="answerChoice"]:checked');
+            if(selected) answerContent = selected.value;
+        } else {
+            const textInput = document.getElementById('answerTextInput');
+            if(textInput) answerContent = textInput.value.trim();
+        }
+        
+        if(!answerContent) {
+            alert('Please enter an answer.');
+            return;
+        }
+        
+        // POST to /intelligence/log/ (Main view)
+        // Use existing saveLog logic but modified?
+        // Or manual fetch. Manual fetch is cleaner.
+        
+        // Construct payload mimicking `IntelligenceLogView.post` expectations
+        const payload = {
+            target_id: targetId,
+            content: answerContent,
+            description: answerContent, # Compatible field
+            event_type: 'QUESTION',
+            question_id: currentQuestion.id,
+            date: currentDateFilter || new Date().toISOString().split('T')[0]
+        };
+
+        fetch(window.location.pathname, { // Post to same URL
+             method: 'POST',
+             headers: {
+                 'Content-Type': 'application/json',
+                 'X-CSRFToken': '{{ csrf_token }}'
+             },
+             body: JSON.stringify(payload)
+        }).then(res => res.json()).then(data => {
+            if(data.success) {
+                // Done. Close modal and reload page.
+                window.location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        }).catch(err => {
+            alert('Network error');
+            console.error(err);
+        });
+    }
+</script>

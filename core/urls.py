@@ -29,6 +29,7 @@ urlpatterns = [
     # Timeline
     path('api/timeline/', views.TimelineListAPIView.as_view(), name='timeline_list'),
     path('api/tags/', views.TagListAPIView.as_view(), name='tag_list_api'),
+    path('api/questions/', views.QuestionListAPIView.as_view(), name='api_questions'),
 ]
 
 if settings.DEBUG:

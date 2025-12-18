@@ -96,7 +96,7 @@
                     <div class="timeline-item flex gap-1 text-text-main group relative justify-start items-end" id="log-{{ item.id }}" data-log-id="{{ item.id }}" data-log-content="{{ item.content }}">
                         
                         <!-- Content Bubble (Left, Max 90%) -->
-                        <div class="timeline-content-bubble bg-surface-2 rounded-2xl rounded-tl-none px-3 py-2 relative active:scale-[0.98] transition-transform select-none" style="max-width: 90%;">
+                        <div class="timeline-content-bubble bg-surface-2 rounded-2xl rounded-tl-none px-3 relative active:scale-[0.98] transition-transform select-none" style="max-width: 90%;">
                            {% if item.type == 'Question' %}
                            <div class="font-bold text-xs text-primary mb-1 border-b border-primary/20 pb-1">{{ item.question_text|default:'Question' }}</div>
                            {% endif %}
@@ -127,7 +127,7 @@
                         </div>
 
                         <!-- Time / Icon Column (Right, Bottom Aligned with Bubble) -->
-                        <div class="flex flex-col justify-end items-start pb-2 gap-0.5" style="min-width: 40px;">
+                        <div class="flex flex-col justify-end items-start gap-0.5" style="min-width: 40px;">
                             <!-- Contact Icon -->
                             {% if item.contact_made %}
                             <i class="fas fa-handshake text-primary text-[10px] opacity-80"></i>
@@ -248,9 +248,11 @@
     const uploadImageBtn = document.getElementById('uploadImageBtn');
     const imageInput = document.getElementById('imageInput');
     
-    // Lightbox State
-    const lightboxModal = document.getElementById('lightboxModal');
-    const lightboxImg = document.getElementById('lightboxImg');
+    // Global Access (if needed) but local file scripts usually run in scope.
+    
+    // Lightbox Logic
+    const lbModal = document.getElementById('lightboxModal');
+    const lbImg = document.getElementById('lightboxImg');
     let currentLbImages = [];
     let currentLbIndex = 0;
 
@@ -634,6 +636,14 @@
         toggleTagMenuBtn.addEventListener('click', () => {
              // Assuming openTagModal is defined in the included modal file
              if(typeof openTagModal === 'function') openTagModal();
+        });
+    }
+
+    // Question Modal Toggle
+    const openAnswerModalBtn = document.getElementById('openAnswerModalBtn');
+    if(openAnswerModalBtn) {
+        openAnswerModalBtn.addEventListener('click', () => {
+             if(typeof openQuestionModal === 'function') openQuestionModal();
         });
     }
 </script>
