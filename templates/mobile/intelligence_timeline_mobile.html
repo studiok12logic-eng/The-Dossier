@@ -151,13 +151,12 @@
         loadTimeline(); // Reload to highlight/scroll
     });
 
-    // Input Auto-Resize & Button Toggle
-    chatInput.addEventListener('input', function() {
-        this.style.height = 'auto';
-        const newHeight = Math.min(this.scrollHeight, 120);
-        this.style.height = (newHeight > 40 ? newHeight : 40) + 'px';
+    function updateInputState() {
+        chatInput.style.height = 'auto';
+        const newHeight = Math.min(chatInput.scrollHeight, 120);
+        chatInput.style.height = (newHeight > 40 ? newHeight : 40) + 'px';
         
-        const hasText = this.value.trim().length > 0;
+        const hasText = chatInput.value.trim().length > 0;
         
         const iconDetail = document.getElementById('actionIconDetail');
         const iconSend = document.getElementById('actionIconSend');
@@ -167,17 +166,25 @@
              saveLogBtn.classList.remove('bg-surface-2', 'text-primary'); 
              saveLogBtn.classList.add('bg-primary', 'text-black'); 
              
-             iconDetail.classList.add('hidden');
+             iconDetail.style.display = 'none';
              iconSend.classList.remove('hidden');
+             iconSend.style.display = 'inline-block';
         } else {
              // Show Detail
              saveLogBtn.classList.remove('bg-primary', 'text-black');
              saveLogBtn.classList.add('bg-surface-2', 'text-primary'); 
              
-             iconDetail.classList.remove('hidden');
+             iconDetail.style.display = 'inline-block';
              iconSend.classList.add('hidden');
+             iconSend.style.display = 'none';
         }
-    });
+    }
+
+    // Input Auto-Resize & Button Toggle
+    chatInput.addEventListener('input', updateInputState);
+    
+    // Initial State Check
+    updateInputState();
 
     // Action Button Click
     saveLogBtn.addEventListener('click', () => {
