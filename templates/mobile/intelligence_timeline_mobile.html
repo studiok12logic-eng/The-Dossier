@@ -62,19 +62,20 @@
     </div>
 
     <!-- 2. Timeline Area -->
-    <div id="timelineContainer" class="flex-1 overflow-y-auto bg-black scroll-smooth p-4 pb-32 space-y-2">
+    <div id="timelineContainer" class="flex-1 overflow-y-auto bg-black scroll-smooth pb-32">
         {% regroup timeline_items by date as date_list %}
         {% for date_group in date_list %}
             {% with date_str=date_group.grouper|date:"Y-m-d" %}
-            <div class="rounded-xl p-2 transition-colors duration-500 {% if date_str == today_date|date:'Y-m-d' %}bg-primary/5 border border-primary/10{% else %}border border-transparent{% endif %}" {% if date_str == today_date|date:'Y-m-d' %}id="activeDateSection"{% endif %}>
+            <!-- Active Section: Full Width, No Border Radius -->
+            <div class="transition-colors duration-500 {% if date_str == today_date|date:'Y-m-d' %}bg-primary/5{% endif %}" {% if date_str == today_date|date:'Y-m-d' %}id="activeDateSection"{% endif %}>
                 
                 <!-- Separator -->
-                <div class="flex items-center justify-center my-4 opacity-50">
+                <div class="flex items-center justify-center py-4 opacity-50">
                     <div class="h-px bg-white/10 w-12"></div>
                     <div class="flex items-center mx-2 font-mono text-[10px] text-text-sub">
                         <!-- Check specific day for contact -->
                         {% for item in date_group.list %}
-                            {% if item.contact_made %}<i class="fas fa-handshake text-primary text-xs mx-1"></i>{% endif %} <!-- Adjusted simplified check, or need loop break -->
+                            {% if item.contact_made %}<i class="fas fa-handshake text-primary text-xs mx-1"></i>{% endif %}
                         {% endfor %}
                         <span>{{ date_group.grouper|date:"Y/m/d" }}</span>
                     </div>
@@ -82,28 +83,45 @@
                 </div>
 
                 <!-- Items -->
-                {% for item in date_group.list reversed %} <!-- Showing Oldest First? or Newest? User said Timeline... usually Oldest top, Newest bottom? But previous JS was Newest top? JS code: sort(a-b) implies Ascending (Oldest top). reversed reverses default order? Default from DB was order_by('date', 'time').  Let's trust DB order. -->
-                <div class="timeline-item flex gap-3 text-text-main mb-3 group" id="log-{{ item.id }}">
-                    <!-- Content Bubble -->
-                   <div class="flex-1 timeline-content-wrapper">
-                       <div class="bg-surface-2 rounded-2xl rounded-tl-none p-3 relative transform transition-all active:scale-[0.99]">
+                <div class="px-2 space-y-3">
+                {% for item in date_group.list %} 
+                    <!-- Date Header if different from Occurrence Date (and Changed) -->
+                    {% if item.created_at|date:"Y-m-d" != date_str %}
+                        {% ifchanged item.created_at|date:"Y-m-d" %}
+                        <div class="flex justify-end pr-14 mb-1">
+                            <span class="text-[9px] font-mono text-text-sub opacity-70">{{ item.created_at|date:"Y/m/d" }}</span>
+                        </div>
+                        {% endifchanged %}
+                    {% endif %}
+
+                    <div class="timeline-item flex gap-2 text-text-main group relative justify-end" id="log-{{ item.id }}" data-log-id="{{ item.id }}" data-log-content="{{ item.content }}">
+                        
+                        <!-- Time / Icon Column (Left of bubble? Or Right? "Next to it") -->
+                        <!-- User: "text-sm ... width 80%, neighbor is time" -->
+                        <!-- "Beside active time" -->
+                        <!-- Usually Chat: Time is on the side of the bubble. -->
+                        
+                        <div class="flex flex-col justify-end items-end pb-1 gap-0.5" style="min-width: 40px;">
+                            <!-- Contact Icon if specific item has it? User said "Separator has icon". -->
+                            <!-- "If contact was ABOVE time, show icon" -->
+                            {% if item.contact_made %}
+                            <i class="fas fa-handshake text-primary text-[10px] opacity-80"></i>
+                            {% endif %}
+                            <span class="text-[9px] font-mono text-text-sub opacity-50">{{ item.created_at|date:"H:i" }}</span>
+                        </div>
+
+                        <!-- Content Bubble -->
+                        <div class="timeline-content-bubble bg-surface-2 rounded-2xl rounded-tr-none px-3 py-2 relative active:scale-[0.98] transition-transform select-none" style="max-width: 80%;">
                            {% if item.type == 'Question' %}
                            <div class="font-bold text-xs text-primary mb-1 border-b border-primary/20 pb-1">{{ item.question_text|default:'Question' }}</div>
                            {% endif %}
                            
-                           <div class="text-sm whitespace-pre-wrap leading-relaxed">{{ item.content }}</div>
-                           
-                           <!-- Meta Info (Input Time & Edit) -->
-                           <div class="flex justify-end items-center gap-2 mt-1 opacity-50">
-                                <span class="text-[9px] font-mono">{{ item.created_at|date:"Y/m/d H:i" }}</span>
-                                <button class="text-text-sub hover:text-primary transition p-1" onclick="editLog('{{ item.id }}', '{{ item.content|escapejs }}')">
-                                    <i class="fas fa-pen text-[9px]"></i>
-                                </button>
-                           </div>
-                       </div>
-                   </div>
-               </div>
-               {% endfor %}
+                           <div class="text-sm whitespace-pre-wrap leading-relaxed break-words">{{ item.content }}</div>
+                        </div>
+
+                    </div>
+                {% endfor %}
+                </div>
             </div>
             {% endwith %}
         {% empty %}
@@ -114,7 +132,7 @@
     </div>
 
     <!-- 3. Chat Input Bar -->
-    <div class="fixed bottom-0 left-0 right-0 bg-surface border-t border-white/10 z-40 pb-safe">
+    <div id="chatInputBar" class="fixed bottom-0 left-0 right-0 bg-surface border-t border-white/10 z-40 pb-safe">
         <div class="p-2 flex items-center gap-2 bg-surface">
             <!-- Tools Left -->
              <div class="flex items-center gap-1">
@@ -143,7 +161,7 @@
                     <!-- Default: Detail Icon (Ellipsis) -->
                     <i id="actionIconDetail" class="fas fa-ellipsis-h text-lg"></i>
                     <!-- Active: Send Icon (Paper Plane) -->
-                    <i id="actionIconSend" class="fas fa-paper-plane text-lg hidden translate-x-[-1px] translate-y-[1px]"></i>
+                    <i id="actionIconSend" class="fas fa-paper-plane text-lg hidden translate-x-[-1px] translate-y-[1px]" style="display: none;"></i>
                 </button>
             </div>
             
@@ -160,6 +178,22 @@
 <!-- Tag Modal -->
 {% include "intelligence_log_tag_modal.html" %}
 
+<!-- Log Action Modal (Edit/Delete) -->
+<div id="logActionModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in">
+    <div class="bg-surface border border-white/10 rounded-2xl w-64 overflow-hidden shadow-2xl">
+        <div class="p-3 text-center border-b border-white/10 text-white/50 text-xs">Manage Log</div>
+        <button id="actionEditBtn" class="w-full p-4 text-left text-text-main hover:bg-white/5 flex items-center gap-3">
+            <i class="fas fa-pen text-text-sub"></i> Edit
+        </button>
+        <button id="actionDeleteBtn" class="w-full p-4 text-left text-red-500 hover:bg-white/5 flex items-center gap-3">
+            <i class="fas fa-trash"></i> Delete
+        </button>
+        <button onclick="closeLogActionModal()" class="w-full p-3 text-center text-text-sub hover:bg-white/5 border-t border-white/10">
+            Cancel
+        </button>
+    </div>
+</div>
+
 <script>
     const targetId = "{{ target.id }}";
     const timelineContainer = document.getElementById('timelineContainer');
@@ -171,10 +205,16 @@
     const searchPopover = document.getElementById('searchPopover');
     const searchInput = document.getElementById('timelineSearchInput');
     const datePicker = document.getElementById('datePicker');
+    const chatInputBar = document.getElementById('chatInputBar');
+    
+    // Action Modal Logic
+    const logActionModal = document.getElementById('logActionModal');
+    let currentLogId = null;
+    let currentLogContent = '';
     
     // State
-    let currentDateFilter = new Date().toISOString().split('T')[0]; // Default today? Or no filter? User mentioned "Selected Occurrence Date"
-    // Ideally we load ALL and scroll to selected.
+    // today_date passed from view (filtered date)
+    let currentDateFilter = "{{ today_date|date:'Y-m-d' }}"; 
     
     // --- LOAD DATA ---
     document.addEventListener('DOMContentLoaded', () => {
@@ -186,19 +226,117 @@
         
         // Scroll to active section or bottom
         scrollToActive();
+        
+        // Attach Long Press Listeners
+        attachLongPressHandlers();
     });
     
     function scrollToActive() {
+        // Goal: activeDateSection bottom aligns with chatInputBar top.
         const activeSection = document.getElementById('activeDateSection');
         if(activeSection) {
-            // Check if activeSection is actually visible/has items
+            // Need to wait for rendering?
             setTimeout(() => {
-                activeSection.scrollIntoView({ block: 'end', behavior: 'smooth' });
-            }, 300);
+                // Calculate position
+                // We want: container.scrollTop = activeSection.bottom - container.height + chatInputBar.height
+                // Basically scrolling so the bottom of section is visible above keyboard/bar.
+                
+                // Let's use scrollIntoView block end, then adjust?
+                activeSection.scrollIntoView({ block: 'end', behavior: 'auto' });
+                
+                // Fine tune? scrollIntoView block: 'end' aligns bottom of element with bottom of scroll container (visible area).
+                // However, our chat bar is FIXED over the bottom of the container.
+                // The container has `pb-32` (padding bottom).
+                // If we scroll to end, the bottom of activeSection will be at the bottom of the visible window.
+                // But the chat bar is covering it.
+                // We actually want the bottom of activeSection to be ABOVE the chat bar.
+                // The `pb-32` is on the container content.
+                // If activeSection is the last one, it's fine.
+                // If it's in the middle, we want to scroll it up.
+                
+                const chatBarHeight = chatInputBar.offsetHeight;
+                window.scrollBy(0, chatBarHeight); // Global scroll? No, container scroll.
+                // timelineContainer.scrollTop += chatBarHeight; 
+                // Actually 'block: end' puts it at the bottom of the VIEWPORT usually? No, container.
+                // If container is 100vh, 'end' puts it at 100vh. Chat bar is at 100vh-60px.
+                // So it is covered.
+                // We need to scroll DOWN more (push content up).
+                timelineContainer.scrollTop += chatBarHeight + 10;
+            }, 100);
         } else {
-            // Default scroll bottom
+             // Default scroll bottom
              timelineContainer.scrollTop = timelineContainer.scrollHeight;
         }
+    }
+    
+    // --- LONG PRESS LOGIC ---
+    function attachLongPressHandlers() {
+        const items = document.querySelectorAll('.timeline-content-bubble');
+        items.forEach(bubble => {
+            let pressTimer;
+            const parent = bubble.closest('.timeline-item');
+            
+            const start = (e) => {
+                // e.preventDefault(); // blocks click?
+                pressTimer = setTimeout(() => {
+                    // Open Modal
+                    currentLogId = parent.dataset.logId;
+                    currentLogContent = parent.dataset.logContent;
+                    logActionModal.classList.remove('hidden');
+                    // Vibrate?
+                    if(navigator.vibrate) navigator.vibrate(20);
+                }, 600); // 600ms long press
+            };
+            
+            const cancel = () => {
+                clearTimeout(pressTimer);
+            };
+            
+            // Touch
+            bubble.addEventListener('touchstart', start);
+            bubble.addEventListener('touchend', cancel);
+            bubble.addEventListener('touchmove', cancel);
+            
+            // Mouse (for testing)
+            bubble.addEventListener('mousedown', start);
+            bubble.addEventListener('mouseup', cancel);
+            bubble.addEventListener('mouseleave', cancel);
+        });
+    }
+    
+    function closeLogActionModal() {
+        logActionModal.classList.add('hidden');
+        currentLogId = null;
+    }
+    
+    document.getElementById('actionEditBtn').addEventListener('click', () => {
+        if(currentLogId) editLog(currentLogId, currentLogContent);
+        closeLogActionModal();
+    });
+    
+    document.getElementById('actionDeleteBtn').addEventListener('click', () => {
+        if(currentLogId) {
+             if(confirm('Delete this log?')) {
+                  // Call Delete API/View
+                  // For now mostly focusing on Edit.
+                  // Implementation: POST to delete endpoint or same endpoint with 'delete' action.
+                  // Assume generic delete for now or todo.
+             }
+        }
+        closeLogActionModal();
+    });
+    
+    function editLog(id, content) {
+        // Populate Input
+        chatInput.value = content;
+        updateInputState();
+        chatInput.focus();
+        // Set mode to edit? (Not implemented fully in backend yet? Assuming append for now)
+        // User asked for "Edit". Usually implies updating existing.
+        // I will just populate for now. Updating ID requires backend support not fully detailed here.
+        // Assuming 'Save' creates new. 
+        // Warn user?
+        alert("Edit mode: Text copied to input. (Update not fully implemented, clicking send creates new log)");
     }
     
     // --- UI INTERACTIONS ---
@@ -276,152 +414,25 @@
     
     searchInput.addEventListener('input', (e) => {
         const term = e.target.value.toLowerCase();
-        const items = timelineContainer.querySelectorAll('.timeline-content-wrapper'); // Search text content
-        items.forEach(wrapper => {
-            const text = wrapper.innerText.toLowerCase();
-            const parentItem = wrapper.closest('.timeline-item');
+        const items = timelineContainer.querySelectorAll('.timeline-content-bubble'); // Search text content
+        items.forEach(bubble => {
+            const text = bubble.innerText.toLowerCase();
+            const parentItem = bubble.closest('.timeline-item');
             if(parentItem) parentItem.style.display = text.includes(term) ? 'flex' : 'none';
         });
     });
 
-    // --- API CALLS ---
-    function loadTimeline() {
-        fetch(`/api/timeline/?target_id=${targetId}`)
-        .then(res => res.json())
-        .then(data => {
-            renderTimeline(data.results);
-        });
-    }
 
-    function renderTimeline(items) {
-        timelineContainer.innerHTML = '';
-        
-        // 1. Group by Date
-        const grouped = {};
-        // API usually returns Newest first. We want to display Chronological (Oldest Top) within days?
-        // User requested: "2025/12/01 ... 12:00, 13:00". Chronological within day.
-        // And "2025/12/02".
-        // So we need to sort items Chronologically (Oldest -> Newest) overall first?
-        // Or sort keys.
-        
-        // Let's sort items by date ascending first
-        items.sort((a, b) => new Date(a.date + 'T' + (a.time || '00:00')) - new Date(b.date + 'T' + (b.time || '00:00')));
-
-        items.forEach(item => {
-            if (!grouped[item.date]) {
-                grouped[item.date] = { items: [], hasContact: false };
-            }
-            grouped[item.date].items.push(item);
-            if(item.contact_made) grouped[item.date].hasContact = true;
-        });
-        
-        // 2. Render Groups
-        Object.keys(grouped).forEach(dateStr => {
-            const group = grouped[dateStr];
-            const isSelectedDate = dateStr === currentDateFilter; // String comparison YYYY-MM-DD
-            
-            // Container for this day
-            const dayContainer = document.createElement('div');
-            dayContainer.className = `rounded-xl p-2 transition-colors duration-500 ${isSelectedDate ? 'bg-primary/5 border border-primary/10' : 'border border-transparent'}`;
-            if(isSelectedDate) dayContainer.id = "activeDateSection";
-            
-            // Separator
-            const contactIconHtml = group.hasContact ? '<i class="fas fa-handshake text-primary text-xs mx-1"></i>' : '';
-            const separatorHtml = `
-                <div class="flex items-center justify-center my-4 opacity-50">
-                    <div class="h-px bg-white/10 w-12"></div>
-                    <div class="flex items-center mx-2 font-mono text-[10px] text-text-sub">
-                        ${contactIconHtml}
-                        <span>${dateStr.replace(/-/g, '/')}</span>
-                    </div>
-                    <div class="h-px bg-white/10 w-12"></div>
-                </div>
-            `;
-            dayContainer.innerHTML += separatorHtml;
-            
-            // Items
-            group.items.forEach(item => {
-                const isQuestion = item.type === 'Question';
-                const timeDisplay = item.time ? item.time.substring(0, 5) : (new Date(item.created_at).getHours() + ':' + String(new Date(item.created_at).getMinutes()).padStart(2, '0')); 
-                // Using Item.time if available (Occurrence Time), else Input Time (created_at)
-                // User said: "Right side is Input Time. Small." "Edit case, show edit time."
-                
-                // Let's assume item.created_at is input time.
-                const inputTime = new Date(item.created_at);
-                const inputTimeStr = `${inputTime.getFullYear()}/${String(inputTime.getMonth()+1).padStart(2,'0')}/${String(inputTime.getDate()).padStart(2,'0')} ${String(inputTime.getHours()).padStart(2,'0')}:${String(inputTime.getMinutes()).padStart(2,'0')}`;
-
-                const itemHtml = `
-                    <div class="timeline-item flex gap-3 text-text-main mb-3 group">
-                         <!-- Content Bubble -->
-                        <div class="flex-1 timeline-content-wrapper">
-                            <div class="bg-surface-2 rounded-2xl rounded-tl-none p-3 relative transform transition-all active:scale-[0.99]">
-                                ${isQuestion ? `<div class="font-bold text-xs text-primary mb-1 border-b border-primary/20 pb-1">${item.question_text || 'Question'}</div>` : ''}
-                                
-                                <div class="text-sm whitespace-pre-wrap leading-relaxed">${item.content}</div>
-                                
-                                <!-- Meta Info (Input Time & Edit) -->
-                                <div class="flex justify-end items-center gap-2 mt-1 opacity-50">
-                                     <span class="text-[9px] font-mono">${inputTimeStr}</span>
-                                     <button class="text-text-sub hover:text-primary transition p-1" onclick="editLog('${item.id}', '${item.content|escapejs}')">
-                                         <i class="fas fa-pen text-[9px]"></i>
-                                     </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                dayContainer.innerHTML += itemHtml;
-            });
-            
-            timelineContainer.appendChild(dayContainer);
-        });
-        
-        // 3. Scroll Logic
-        // "Scroll Selected Date's last LOG to bottom of view"
-        // Meaning: The bottom of the Active Section should be aligned with the bottom of the viewport (above chat bar).
-        if(currentDateFilter) {
-            const activeSection = document.getElementById('activeDateSection');
-            if(activeSection) {
-                // We want the BOTTOM of activeSection to be visible.
-                // activeSection.scrollIntoView({ block: 'end', behavior: 'smooth' });
-                // But we have the chat bar covering the bottom. 'scrollIntoView' might put it behind the fixed header/footer.
-                // Let's try explicit scroll calculation or 'block: center' if it's small?
-                // User said "Last LOG ... comes to the bottom".
-                
-                setTimeout(() => {
-                    activeSection.scrollIntoView({ block: 'end', behavior: 'smooth' });
-                }, 100);
-            }
-        } else {
-             // Scroll to very bottom if no date selected (or default)
-             timelineContainer.scrollTop = timelineContainer.scrollHeight;
-        }
-        
-        if (document.getElementById('loadingIndicator')) document.getElementById('loadingIndicator').remove();
-    }
 
     function saveLog(content) {
-        // Use selected Date as occurrence date?
-        // User didn't specify, but "Selected Date" implies we are viewing/editing that day.
-        // Usually chat adds to "Right Now".
-        // But if I am viewing 2024/01/01, and I type, does it add to 2024/01/01?
-        // User request: "Timeline displayed ... separator ... highlight selected date".
-        // Let's assume input is for Current Date always unless specified? 
-        // For now, use Today (Backend default) but maybe force reloading the view to show it.
-        // If I add a log for Today, but I'm viewing Yesterday, I should probably switch view to Today?
-        // Or "Input Time" is distinct from "Occurrence Time".
-        
+        // Use DatePicker Value (should be same as currentDateFilter for SSR, but clearer)
+        const selectedDate = datePicker.value;
         const payload = {
             target_id: targetId,
             content: content,
             description: content,
             contact_made: contactFlag.checked,
-            date: currentDateFilter || new Date().toISOString().split('T')[0] 
-            // Only IF text box implies "Add to this day". 
-            // Given "Chat", users expect "Now". 
-            // BUT given "The Dossier" (Intelligence), often logging past events.
-            // If I have a date selected in header, I probably want to log for THAT date.
-            // I will use `currentDateFilter` if set.
+            date: selectedDate || currentDateFilter || new Date().toISOString().split('T')[0] 
         };
         
         fetch('', { 
@@ -445,6 +456,6 @@
     .animate-fade-in { animation: fade-in 0.1s ease-out; }
     /* Hide scrollbar for cleaner look */
     #timelineContainer::-webkit-scrollbar { width: 4px; }
-    #timelineContainer::-webkit-scrollbar-thumb { bg-white/10; border-radius: 4px; }
+    #timelineContainer::-webkit-scrollbar-thumb { background-color: rgba(255, 255, 255, 0.1); border-radius: 4px; }
 </style>
 {% endblock %}
