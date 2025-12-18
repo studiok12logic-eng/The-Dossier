@@ -6,9 +6,9 @@
 <div class="flex flex-col h-full bg-background pb-20"> 
     
     <!-- Header -->
-    <header class="h-14 px-4 flex items-center justify-end border-b border-white/10 bg-surface/90 backdrop-blur-xl sticky top-0 z-50 transition-all" id="mainHeader">
-        <!-- Center Title -->
-        <span class="text-xs font-bold text-text-sub uppercase tracking-wider absolute left-1/2 -translate-x-1/2">TARGETS</span>
+    <header class="h-14 px-4 flex items-center justify-between border-b border-white/10 bg-surface/90 backdrop-blur-xl sticky top-0 z-50 transition-all" id="mainHeader">
+        <!-- Title Left -->
+        <span class="text-xs font-bold text-text-sub uppercase tracking-wider">TARGETS</span>
         
         <!-- Right: Actions (Search + Add) -->
         <div class="flex items-center gap-3 relative z-10">
@@ -51,7 +51,7 @@
              onclick="window.location.href='{% url 'target_detail' %}?target_id={{ target.pk }}'"
              oncontextmenu="showContextMenu(event, '{{ target.pk }}')">
             
-            <!-- 1. Header Row: Rank, Points, Count -->
+            <!-- 1. Header Row: Rank, Points, Count, Last Contact -->
             <div class="flex items-center gap-3 mb-3 text-[10px] font-mono border-b border-white/5 pb-2 -mx-4 px-4 bg-white/[0.02]">
                 {% with pts=target.total_points|default:0 %}
                 <span class="font-bold flex items-center gap-1">
@@ -68,11 +68,17 @@
                     {% endif %}
                 </span>
                 
-                <span class="text-text-sub flex items-center gap-1 ml-auto">
+                <span class="text-text-sub flex items-center gap-1">
                     <i class="fas fa-star text-yellow-500/50"></i> {{ pts }}pt
                 </span>
                 <span class="text-text-sub flex items-center gap-1">
-                    <i class="fas fa-history text-blue-400/50"></i> {{ target.log_count }}
+                    <i class="fas fa-comment text-blue-400/50"></i> {{ target.log_count }}
+                </span>
+
+                <!-- Last Contact (Right Aligned) -->
+                <span class="text-text-sub flex items-center gap-1 ml-auto">
+                    <i class="fas fa-history text-emerald-500/50"></i> 
+                    {% if target.last_contact %}{{ target.last_contact|date:"Y/m/d" }}{% else %}-{% endif %}
                 </span>
                 {% endwith %}
             </div>
