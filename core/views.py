@@ -1058,15 +1058,35 @@ class TimelineListAPIView(LoginRequiredMixin, View):
 class TagListAPIView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         try:
-            from django.db.models import Count
+            from django.db.models import Count, Q
             from intelligence.models import Tag
             
-            # Get all tags OWNED by the user, ordered by count
-            tags = Tag.objects.filter(
-                user=request.user
-            ).annotate(count=Count('timelineitem')).order_by('-count')
+            target_id = request.GET.get('target_id')
             
-            data = [{'id': t.id, 'name': t.name, 'count': t.count} for t in tags]
-            return JsonResponse({'success': True, 'tags': data})
+            # 1. All Tags (Global frequency)
+            all_tags_qs = Tag.objects.filter(user=request.user).annotate(
+                count=Count('timelineitem')
+            ).order_by('-count')
+            
+            all_tags_data = [{'id': t.id, 'name': t.name, 'count': t.count} for t in all_tags_qs]
+            
+            # 2. Target Specific Tags (Top 5)
+            target_tags_data = []
+            if target_id:
+                target_tags = Tag.objects.filter(
+                    user=request.user,
+                    timelineitem__target_id=target_id
+                ).annotate(
+                    target_count=Count('timelineitem', filter=Q(timelineitem__target_id=target_id))
+                ).order_by('-target_count')[:5]
+                
+                target_tags_data = [{'id': t.id, 'name': t.name, 'count': t.target_count} for t in target_tags]
+
+            return JsonResponse({
+                'success': True, 
+                'tags': all_tags_data, # Legacy support if needed, or main list
+                'all_tags': all_tags_data,
+                'target_tags': target_tags_data
+            })
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)}, status=500)
