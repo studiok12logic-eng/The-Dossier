@@ -25,7 +25,7 @@
     <div class="flex-1 overflow-y-auto p-4 space-y-3">
         {% for item in todays_targets %}
         <div class="target-card bg-surface rounded-lg p-3 border border-white/5 active:bg-white/5 transition relative group flex items-center gap-3"
-             onclick="window.location.href='{% url 'intelligence_log' %}?target_id={{ item.obj.id }}'"
+             onclick="window.location.href='{% url 'intelligence_log' %}?target_id={{ item.obj.id }}&date={{ today_date|date:'Y-m-d' }}'"
              oncontextmenu="showContextMenu(event, '{{ item.obj.id }}'); return false;">
             
             <!-- Avatar -->

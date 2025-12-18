@@ -380,9 +380,17 @@ class IntelligenceLogView(LoginRequiredMixin, View):
                     state.is_manual_add = True
                     state.save()
             
+            # [SSR] Fetch Timeline Items for rendering
+            # Pass ALL items for the target, or filtered?
+            # User wants "Timeline items content". Usually full history or recent.
+            # Let's pass all for now, ordered by date desc (or match render logic).
+            # renderJS does sort. Let's pass objects.
+            timeline_items = TimelineItem.objects.filter(target=target).order_by('date', 'time') 
+            
             return render(request, 'mobile/intelligence_timeline_mobile.html', {
                 'target': target,
-                'today_date': current_date, # For passing to date picker defaults if needed
+                'today_date': current_date, # This is actually specific date from param if set
+                'timeline_items': timeline_items,
             })
 
         weekday = current_date.weekday() # 0=Mon

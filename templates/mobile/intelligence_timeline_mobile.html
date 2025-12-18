@@ -63,10 +63,54 @@
 
     <!-- 2. Timeline Area -->
     <div id="timelineContainer" class="flex-1 overflow-y-auto bg-black scroll-smooth p-4 pb-32 space-y-2">
-        <!-- Javascript will populate this -->
-        <div id="loadingIndicator" class="text-center py-10 opacity-50">
-             <i class="fas fa-spinner fa-spin"></i> Loading...
-        </div>
+        {% regroup timeline_items by date as date_list %}
+        {% for date_group in date_list %}
+            {% with date_str=date_group.grouper|date:"Y-m-d" %}
+            <div class="rounded-xl p-2 transition-colors duration-500 {% if date_str == today_date|date:'Y-m-d' %}bg-primary/5 border border-primary/10{% else %}border border-transparent{% endif %}" {% if date_str == today_date|date:'Y-m-d' %}id="activeDateSection"{% endif %}>
+                
+                <!-- Separator -->
+                <div class="flex items-center justify-center my-4 opacity-50">
+                    <div class="h-px bg-white/10 w-12"></div>
+                    <div class="flex items-center mx-2 font-mono text-[10px] text-text-sub">
+                        <!-- Check specific day for contact -->
+                        {% for item in date_group.list %}
+                            {% if item.contact_made %}<i class="fas fa-handshake text-primary text-xs mx-1"></i>{% endif %} <!-- Adjusted simplified check, or need loop break -->
+                        {% endfor %}
+                        <span>{{ date_group.grouper|date:"Y/m/d" }}</span>
+                    </div>
+                    <div class="h-px bg-white/10 w-12"></div>
+                </div>
+
+                <!-- Items -->
+                {% for item in date_group.list reversed %} <!-- Showing Oldest First? or Newest? User said Timeline... usually Oldest top, Newest bottom? But previous JS was Newest top? JS code: sort(a-b) implies Ascending (Oldest top). reversed reverses default order? Default from DB was order_by('date', 'time').  Let's trust DB order. -->
+                <div class="timeline-item flex gap-3 text-text-main mb-3 group" id="log-{{ item.id }}">
+                    <!-- Content Bubble -->
+                   <div class="flex-1 timeline-content-wrapper">
+                       <div class="bg-surface-2 rounded-2xl rounded-tl-none p-3 relative transform transition-all active:scale-[0.99]">
+                           {% if item.type == 'Question' %}
+                           <div class="font-bold text-xs text-primary mb-1 border-b border-primary/20 pb-1">{{ item.question_text|default:'Question' }}</div>
+                           {% endif %}
+                           
+                           <div class="text-sm whitespace-pre-wrap leading-relaxed">{{ item.content }}</div>
+                           
+                           <!-- Meta Info (Input Time & Edit) -->
+                           <div class="flex justify-end items-center gap-2 mt-1 opacity-50">
+                                <span class="text-[9px] font-mono">{{ item.created_at|date:"Y/m/d H:i" }}</span>
+                                <button class="text-text-sub hover:text-primary transition p-1" onclick="editLog('{{ item.id }}', '{{ item.content|escapejs }}')">
+                                    <i class="fas fa-pen text-[9px]"></i>
+                                </button>
+                           </div>
+                       </div>
+                   </div>
+               </div>
+               {% endfor %}
+            </div>
+            {% endwith %}
+        {% empty %}
+             <div id="emptyState" class="text-center py-10 opacity-50">
+                 <p>No logs found.</p>
+             </div>
+        {% endfor %}
     </div>
 
     <!-- 3. Chat Input Bar -->
@@ -134,21 +178,34 @@
     
     // --- LOAD DATA ---
     document.addEventListener('DOMContentLoaded', () => {
-        loadTimeline();
-        
         // Adjust input height initially
         chatInput.style.height = '40px'; 
         
-        // Set datepicker to today by default
-        datePicker.value = currentDateFilter;
+        // Set datepicker default
+        if(currentDateFilter) datePicker.value = currentDateFilter;
+        
+        // Scroll to active section or bottom
+        scrollToActive();
     });
+    
+    function scrollToActive() {
+        const activeSection = document.getElementById('activeDateSection');
+        if(activeSection) {
+            // Check if activeSection is actually visible/has items
+            setTimeout(() => {
+                activeSection.scrollIntoView({ block: 'end', behavior: 'smooth' });
+            }, 300);
+        } else {
+            // Default scroll bottom
+             timelineContainer.scrollTop = timelineContainer.scrollHeight;
+        }
+    }
     
     // --- UI INTERACTIONS ---
     
-    // Date Picker Change
+    // Date Picker Change -> Reload Page with Param
     datePicker.addEventListener('change', (e) => {
-        currentDateFilter = e.target.value;
-        loadTimeline(); // Reload to highlight/scroll
+        window.location.search = '?target_id=' + targetId + '&date=' + e.target.value;
     });
 
     function updateInputState() {
@@ -376,14 +433,8 @@
              body: JSON.stringify(payload)
         }).then(res => res.json()).then(data => {
             if(data.success) {
-                chatInput.value = '';
-                chatInput.dispatchEvent(new Event('input')); 
-                contactFlag.checked = false;
-                contactFlagBtn.classList.remove('text-primary', 'bg-primary/10', 'border-primary/30');
-                contactFlagBtn.classList.add('text-text-sub', 'border-transparent');
-                
-                // Refresh
-                loadTimeline(); 
+                // Reload to refresh SSR list
+                window.location.reload(); 
             }
         });
     }
