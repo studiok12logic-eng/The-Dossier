@@ -921,7 +921,7 @@ class QuestionListView(LoginRequiredMixin, MobileTemplateMixin, ListView):
             Q(user=self.request.user) | Q(is_shared=True)
         ).annotate(
             answer_count=Count('timelineitem')
-        ).order_by('order', 'created_at')
+        ).order_by('category', 'order', 'created_at')
         
         # Filters
         cat_id = self.request.GET.get('category')
