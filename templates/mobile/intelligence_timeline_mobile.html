@@ -169,7 +169,7 @@
             
             <!-- Hidden inputs -->
             <input type="checkbox" id="contactFlag" class="hidden">
-            <input type="file" id="imageInput" class="hidden" accept="image/*">
+            <input type="file" id="imageInput" class="hidden" accept="image/*" multiple>
         </div>
     </div>
 
@@ -179,6 +179,19 @@
 {% include "intelligence_log_answer_modal.html" %} 
 <!-- Tag Modal -->
 {% include "intelligence_log_tag_modal.html" %}
+
+<!-- Lightbox Modal -->
+<div id="lightboxModal" class="fixed inset-0 z-50 hidden bg-black flex items-center justify-center touch-none">
+    <button onclick="closeLightbox()" class="absolute top-4 right-4 text-white/50 hover:text-white p-2 z-50">
+        <i class="fas fa-times text-2xl"></i>
+    </button>
+    <div class="relative w-full h-full flex items-center justify-center">
+        <img id="lightboxImg" src="" class="max-w-full max-h-full object-contain transition-transform duration-300">
+        <!-- Nav -->
+        <button id="lbPrev" class="absolute left-2 top-1/2 -translate-y-1/2 text-white/50 hover:text-white p-4 hidden"><i class="fas fa-chevron-left text-2xl"></i></button>
+        <button id="lbNext" class="absolute right-2 top-1/2 -translate-y-1/2 text-white/50 hover:text-white p-4 hidden"><i class="fas fa-chevron-right text-2xl"></i></button>
+    </div>
+</div>
 
 <!-- Log Action Modal (Edit/Delete) -->
 <div id="logActionModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in">
@@ -210,7 +223,15 @@
     const chatInputBar = document.getElementById('chatInputBar');
     const toolsLeft = document.getElementById('toolsLeft');
     const toolsCollapseBtn = document.getElementById('toolsCollapseBtn');
+    const uploadImageBtn = document.getElementById('uploadImageBtn');
+    const imageInput = document.getElementById('imageInput');
     
+    // Lightbox State
+    const lightboxModal = document.getElementById('lightboxModal');
+    const lightboxImg = document.getElementById('lightboxImg');
+    let currentLbImages = [];
+    let currentLbIndex = 0;
+
     // Action Modal Logic
     const logActionModal = document.getElementById('logActionModal');
     let currentLogId = null;
@@ -234,6 +255,108 @@
         // Attach Long Press Listeners
         attachLongPressHandlers();
     });
+    
+    // --- IMAGE UPLOAD LOGIC ---
+    uploadImageBtn.addEventListener('click', () => {
+        imageInput.click();
+    });
+
+    imageInput.addEventListener('change', (e) => {
+        const files = e.target.files;
+        if (files.length > 0) {
+            if (files.length > 4) {
+                 alert("You can select up to 4 images at once.");
+                 imageInput.value = ''; // Reset
+                 return;
+            }
+            if (confirm(`Upload ${files.length} images?`)) {
+                uploadImages(files);
+            }
+        }
+    });
+
+    function uploadImages(files) {
+         const selectedDate = datePicker.value;
+         const fd = new FormData();
+         fd.append('target_id', targetId);
+         fd.append('date', selectedDate || currentDateFilter || new Date().toISOString().split('T')[0]);
+         // No content for image upload (User: "Image independent")
+         
+         for (let i = 0; i < files.length; i++) {
+             fd.append('images', files[i]);
+         }
+         
+         fetch('', {
+             method: 'POST',
+             headers: {
+                 'X-CSRFToken': '{{ csrf_token }}'
+             },
+             body: fd
+         }).then(res => res.json()).then(data => {
+             if(data.success) {
+                 window.location.reload();
+             } else {
+                 alert("Upload failed: " + (data.error || 'Unknown error'));
+             }
+         }).catch(err => {
+             alert("Error: " + err);
+         });
+    }
+    
+    // --- LIGHTBOX LOGIC ---
+    function openLightbox(url, gallery, index) {
+        currentLbImages = gallery;
+        currentLbIndex = index;
+        updateLightboxImage();
+        lightboxModal.classList.remove('hidden');
+    }
+    
+    function closeLightbox() {
+        lightboxModal.classList.add('hidden');
+    }
+    
+    function updateLightboxImage() {
+        lightboxImg.src = currentLbImages[currentLbIndex];
+        // Nav visibility
+        document.getElementById('lbPrev').classList.toggle('hidden', currentLbImages.length <= 1);
+        document.getElementById('lbNext').classList.toggle('hidden', currentLbImages.length <= 1);
+    }
+    
+    document.getElementById('lbPrev').addEventListener('click', (e) => {
+        e.stopPropagation();
+        currentLbIndex = (currentLbIndex - 1 + currentLbImages.length) % currentLbImages.length;
+        updateLightboxImage();
+    });
+    
+    document.getElementById('lbNext').addEventListener('click', (e) => {
+        e.stopPropagation();
+        currentLbIndex = (currentLbIndex + 1) % currentLbImages.length;
+        updateLightboxImage();
+    });
+    
+    // Swipe
+    let touchStartX = 0;
+    let touchEndX = 0;
+    lightboxModal.addEventListener('touchstart', e => {
+        touchStartX = e.changedTouches[0].screenX;
+    });
+    lightboxModal.addEventListener('touchend', e => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    });
+    
+    function handleSwipe() {
+        if (touchEndX < touchStartX - 50) {
+            // Swipe Left -> Next
+            currentLbIndex = (currentLbIndex + 1) % currentLbImages.length;
+            updateLightboxImage();
+        }
+        if (touchEndX > touchStartX + 50) {
+            // Swipe Right -> Prev
+            currentLbIndex = (currentLbIndex - 1 + currentLbImages.length) % currentLbImages.length;
+            updateLightboxImage();
+        }
+    }
     
     function scrollToActive() {
         const activeSection = document.getElementById('activeDateSection');

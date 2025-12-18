@@ -149,6 +149,14 @@ class TimelineItem(models.Model):
     def __str__(self):
         return f"{self.target} - {self.type} ({self.date.strftime('%Y-%m-%d')})"
 
+class TimelineImage(models.Model):
+    item = models.ForeignKey(TimelineItem, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='timeline_images/')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Image for {self.item}"
+
 class QuestionCategory(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
