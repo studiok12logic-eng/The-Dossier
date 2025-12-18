@@ -4,6 +4,8 @@
 
 
 
+{% block bottom_nav %}{% endblock %}
+
 {% block content %}
 <div class="flex flex-col h-full bg-background relative overflow-hidden">
 
@@ -33,9 +35,9 @@
         
         <div class="flex items-center gap-1">
              <!-- Date Picker (Native) -->
-            <div class="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/5 text-text-sub">
+            <div class="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/5 text-text-sub transition-colors" id="datePickerContainer">
                 <i class="far fa-calendar text-lg pointer-events-none"></i>
-                <input type="date" id="datePicker" class="absolute inset-0 opacity-0 w-full h-full z-10" style="width: 100%; height: 100%; cursor: pointer;" onchange="changeDate(this.value)">
+                <input type="date" id="datePicker" class="absolute inset-0 opacity-0 w-full h-full z-10" style="cursor: pointer;">
             </div>
             
             <!-- Search Toggle -->
@@ -60,7 +62,7 @@
     </div>
 
     <!-- 2. Timeline Area -->
-    <div id="timelineContainer" class="flex-1 overflow-y-auto bg-black scroll-smooth p-4 pb-32 space-y-6">
+    <div id="timelineContainer" class="flex-1 overflow-y-auto bg-black scroll-smooth p-4 pb-32 space-y-2">
         <!-- Javascript will populate this -->
         <div id="loadingIndicator" class="text-center py-10 opacity-50">
              <i class="fas fa-spinner fa-spin"></i> Loading...
@@ -68,7 +70,7 @@
     </div>
 
     <!-- 3. Chat Input Bar -->
-    <div class="fixed bottom-16 left-0 right-0 bg-surface border-t border-white/10 z-40 pb-safe">
+    <div class="fixed bottom-0 left-0 right-0 bg-surface border-t border-white/10 z-40 pb-safe">
         <div class="p-2 flex items-center gap-2 bg-surface">
             <!-- Tools Left -->
              <div class="flex items-center gap-1">
@@ -114,7 +116,6 @@
 <!-- Tag Modal -->
 {% include "intelligence_log_tag_modal.html" %}
 
-<!-- Scripts match main intelligence logic but simplified for mobile context -->
 <script>
     const targetId = "{{ target.id }}";
     const timelineContainer = document.getElementById('timelineContainer');
@@ -125,6 +126,11 @@
     const searchToggleBtn = document.getElementById('searchToggleBtn');
     const searchPopover = document.getElementById('searchPopover');
     const searchInput = document.getElementById('timelineSearchInput');
+    const datePicker = document.getElementById('datePicker');
+    
+    // State
+    let currentDateFilter = new Date().toISOString().split('T')[0]; // Default today? Or no filter? User mentioned "Selected Occurrence Date"
+    // Ideally we load ALL and scroll to selected.
     
     // --- LOAD DATA ---
     document.addEventListener('DOMContentLoaded', () => {
@@ -132,10 +138,19 @@
         
         // Adjust input height initially
         chatInput.style.height = '40px'; 
+        
+        // Set datepicker to today by default
+        datePicker.value = currentDateFilter;
     });
     
     // --- UI INTERACTIONS ---
     
+    // Date Picker Change
+    datePicker.addEventListener('change', (e) => {
+        currentDateFilter = e.target.value;
+        loadTimeline(); // Reload to highlight/scroll
+    });
+
     // Input Auto-Resize & Button Toggle
     chatInput.addEventListener('input', function() {
         this.style.height = 'auto';
@@ -149,8 +164,8 @@
         
         if (hasText) {
              // Show Send
-             saveLogBtn.classList.remove('bg-surface-2', 'text-primary'); // Remove default style
-             saveLogBtn.classList.add('bg-primary', 'text-black'); // Add active style
+             saveLogBtn.classList.remove('bg-surface-2', 'text-primary'); 
+             saveLogBtn.classList.add('bg-primary', 'text-black'); 
              
              iconDetail.classList.add('hidden');
              iconSend.classList.remove('hidden');
@@ -197,10 +212,11 @@
     
     searchInput.addEventListener('input', (e) => {
         const term = e.target.value.toLowerCase();
-        const items = timelineContainer.querySelectorAll('.timeline-item');
-        items.forEach(item => {
-            const text = item.innerText.toLowerCase();
-            item.style.display = text.includes(term) ? 'flex' : 'none';
+        const items = timelineContainer.querySelectorAll('.timeline-content-wrapper'); // Search text content
+        items.forEach(wrapper => {
+            const text = wrapper.innerText.toLowerCase();
+            const parentItem = wrapper.closest('.timeline-item');
+            if(parentItem) parentItem.style.display = text.includes(term) ? 'flex' : 'none';
         });
     });
 
@@ -215,70 +231,136 @@
 
     function renderTimeline(items) {
         timelineContainer.innerHTML = '';
-        let lastDate = null;
         
-        // Reverse to show newest at bottom? Chat usually newest at bottom.
-        // But traditional timeline is newest top. 
-        // User requested "Chat Style". Chat usually has newest at bottom and scrolls to bottom.
-        // Let's assume standard chat order (Oldest -> Newest) for Render, but API usually returns Newest first.
-        // If API returns desc, we likely need to reverse for chat view (append) or insertAdjacentHTML('afterbegin').
-        // Let's stick to user's existing visual: Timeline Order (Newest Top) or Chat Order?
-        // "Target LOG Timeline" -> Usually implies chronological. "Chat-style input" implies bottom input.
-        // Most apps like LINE show newest at bottom. 
-        // I will render items reverse-chronological (Newest Top) which is standard for timelines, 
-        // BUT user said "Chat style". 
-        // Let's stick to Newest Top for now as it's easier to read history without scrolling miles.
+        // 1. Group by Date
+        const grouped = {};
+        // API usually returns Newest first. We want to display Chronological (Oldest Top) within days?
+        // User requested: "2025/12/01 ... 12:00, 13:00". Chronological within day.
+        // And "2025/12/02".
+        // So we need to sort items Chronologically (Oldest -> Newest) overall first?
+        // Or sort keys.
         
+        // Let's sort items by date ascending first
+        items.sort((a, b) => new Date(a.date + 'T' + (a.time || '00:00')) - new Date(b.date + 'T' + (b.time || '00:00')));
+
         items.forEach(item => {
-            const date = new Date(item.date).toLocaleDateString();
-            if (date !== lastDate) {
-                // Date Separator
-                timelineContainer.innerHTML += `
-                    <div class="flex items-center justify-center my-4 opacity-50">
-                        <div class="h-px bg-white/10 w-16"></div>
-                        <span class="text-[10px] mx-2 font-mono">${date}</span>
-                        <div class="h-px bg-white/10 w-16"></div>
-                    </div>
-                `;
-                lastDate = date;
+            if (!grouped[item.date]) {
+                grouped[item.date] = { items: [], hasContact: false };
             }
-            
-            const isQuestion = item.type === 'Question';
-            const html = `
-                <div class="timeline-item flex gap-3 text-text-main mb-4 group">
-                    <div class="flex flex-col items-center pt-1 w-10 shrink-0">
-                        <span class="text-[10px] opacity-50 font-mono">${item.time_display||'--:--'}</span>
-                        ${item.contact_made ? '<i class="fas fa-handshake text-primary text-xs mt-1"></i>' : ''}
-                    </div>
-                    
-                    <div class="flex-1 bg-surface-2 rounded-lg rounded-tl-none p-3 relative max-w-[85%]">
-                        ${isQuestion ? `<div class="font-bold text-xs text-primary mb-1">${item.question_text || 'Question'}</div>` : ''}
-                        <div class="text-sm whitespace-pre-wrap leading-relaxed">${item.content}</div>
-                        
-                        <!-- Mini Edit Button -->
-                        <button class="absolute top-2 right-2 text-text-sub opacity-0 group-hover:opacity-100 p-1" onclick="editLog('${item.id}', '${item.content|escapejs}')">
-                             <i class="fas fa-pen text-[10px]"></i>
-                        </button>
-                    </div>
-                </div>
-            `;
-            timelineContainer.innerHTML += html;
+            grouped[item.date].items.push(item);
+            if(item.contact_made) grouped[item.date].hasContact = true;
         });
         
-        document.getElementById('loadingIndicator').remove();
+        // 2. Render Groups
+        Object.keys(grouped).forEach(dateStr => {
+            const group = grouped[dateStr];
+            const isSelectedDate = dateStr === currentDateFilter; // String comparison YYYY-MM-DD
+            
+            // Container for this day
+            const dayContainer = document.createElement('div');
+            dayContainer.className = `rounded-xl p-2 transition-colors duration-500 ${isSelectedDate ? 'bg-primary/5 border border-primary/10' : 'border border-transparent'}`;
+            if(isSelectedDate) dayContainer.id = "activeDateSection";
+            
+            // Separator
+            const contactIconHtml = group.hasContact ? '<i class="fas fa-handshake text-primary text-xs mx-1"></i>' : '';
+            const separatorHtml = `
+                <div class="flex items-center justify-center my-4 opacity-50">
+                    <div class="h-px bg-white/10 w-12"></div>
+                    <div class="flex items-center mx-2 font-mono text-[10px] text-text-sub">
+                        ${contactIconHtml}
+                        <span>${dateStr.replace(/-/g, '/')}</span>
+                    </div>
+                    <div class="h-px bg-white/10 w-12"></div>
+                </div>
+            `;
+            dayContainer.innerHTML += separatorHtml;
+            
+            // Items
+            group.items.forEach(item => {
+                const isQuestion = item.type === 'Question';
+                const timeDisplay = item.time ? item.time.substring(0, 5) : (new Date(item.created_at).getHours() + ':' + String(new Date(item.created_at).getMinutes()).padStart(2, '0')); 
+                // Using Item.time if available (Occurrence Time), else Input Time (created_at)
+                // User said: "Right side is Input Time. Small." "Edit case, show edit time."
+                
+                // Let's assume item.created_at is input time.
+                const inputTime = new Date(item.created_at);
+                const inputTimeStr = `${inputTime.getFullYear()}/${String(inputTime.getMonth()+1).padStart(2,'0')}/${String(inputTime.getDate()).padStart(2,'0')} ${String(inputTime.getHours()).padStart(2,'0')}:${String(inputTime.getMinutes()).padStart(2,'0')}`;
+
+                const itemHtml = `
+                    <div class="timeline-item flex gap-3 text-text-main mb-3 group">
+                         <!-- Content Bubble -->
+                        <div class="flex-1 timeline-content-wrapper">
+                            <div class="bg-surface-2 rounded-2xl rounded-tl-none p-3 relative transform transition-all active:scale-[0.99]">
+                                ${isQuestion ? `<div class="font-bold text-xs text-primary mb-1 border-b border-primary/20 pb-1">${item.question_text || 'Question'}</div>` : ''}
+                                
+                                <div class="text-sm whitespace-pre-wrap leading-relaxed">${item.content}</div>
+                                
+                                <!-- Meta Info (Input Time & Edit) -->
+                                <div class="flex justify-end items-center gap-2 mt-1 opacity-50">
+                                     <span class="text-[9px] font-mono">${inputTimeStr}</span>
+                                     <button class="text-text-sub hover:text-primary transition p-1" onclick="editLog('${item.id}', '${item.content|escapejs}')">
+                                         <i class="fas fa-pen text-[9px]"></i>
+                                     </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                dayContainer.innerHTML += itemHtml;
+            });
+            
+            timelineContainer.appendChild(dayContainer);
+        });
+        
+        // 3. Scroll Logic
+        // "Scroll Selected Date's last LOG to bottom of view"
+        // Meaning: The bottom of the Active Section should be aligned with the bottom of the viewport (above chat bar).
+        if(currentDateFilter) {
+            const activeSection = document.getElementById('activeDateSection');
+            if(activeSection) {
+                // We want the BOTTOM of activeSection to be visible.
+                // activeSection.scrollIntoView({ block: 'end', behavior: 'smooth' });
+                // But we have the chat bar covering the bottom. 'scrollIntoView' might put it behind the fixed header/footer.
+                // Let's try explicit scroll calculation or 'block: center' if it's small?
+                // User said "Last LOG ... comes to the bottom".
+                
+                setTimeout(() => {
+                    activeSection.scrollIntoView({ block: 'end', behavior: 'smooth' });
+                }, 100);
+            }
+        } else {
+             // Scroll to very bottom if no date selected (or default)
+             timelineContainer.scrollTop = timelineContainer.scrollHeight;
+        }
+        
+        if (document.getElementById('loadingIndicator')) document.getElementById('loadingIndicator').remove();
     }
 
     function saveLog(content) {
+        // Use selected Date as occurrence date?
+        // User didn't specify, but "Selected Date" implies we are viewing/editing that day.
+        // Usually chat adds to "Right Now".
+        // But if I am viewing 2024/01/01, and I type, does it add to 2024/01/01?
+        // User request: "Timeline displayed ... separator ... highlight selected date".
+        // Let's assume input is for Current Date always unless specified? 
+        // For now, use Today (Backend default) but maybe force reloading the view to show it.
+        // If I add a log for Today, but I'm viewing Yesterday, I should probably switch view to Today?
+        // Or "Input Time" is distinct from "Occurrence Time".
+        
         const payload = {
             target_id: targetId,
-            content: content, // or description
+            content: content,
             description: content,
             contact_made: contactFlag.checked,
-            date: new Date().toISOString().split('T')[0] // Today
-            // tags handled by backend regex
+            date: currentDateFilter || new Date().toISOString().split('T')[0] 
+            // Only IF text box implies "Add to this day". 
+            // Given "Chat", users expect "Now". 
+            // BUT given "The Dossier" (Intelligence), often logging past events.
+            // If I have a date selected in header, I probably want to log for THAT date.
+            // I will use `currentDateFilter` if set.
         };
         
-        fetch('', { // POST to current URL handled by View
+        fetch('', { 
              method: 'POST',
              headers: {
                  'Content-Type': 'application/json',
@@ -288,10 +370,13 @@
         }).then(res => res.json()).then(data => {
             if(data.success) {
                 chatInput.value = '';
-                chatInput.dispatchEvent(new Event('input')); // Reset height
-                loadTimeline(); // Refresh
+                chatInput.dispatchEvent(new Event('input')); 
                 contactFlag.checked = false;
-                contactFlagBtn.dispatchEvent(new Event('click')); // Reset UI
+                contactFlagBtn.classList.remove('text-primary', 'bg-primary/10', 'border-primary/30');
+                contactFlagBtn.classList.add('text-text-sub', 'border-transparent');
+                
+                // Refresh
+                loadTimeline(); 
             }
         });
     }
@@ -300,5 +385,8 @@
 <style>
     @keyframes fade-in { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
     .animate-fade-in { animation: fade-in 0.1s ease-out; }
+    /* Hide scrollbar for cleaner look */
+    #timelineContainer::-webkit-scrollbar { width: 4px; }
+    #timelineContainer::-webkit-scrollbar-thumb { bg-white/10; border-radius: 4px; }
 </style>
 {% endblock %}
