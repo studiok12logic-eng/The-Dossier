@@ -923,6 +923,15 @@ class QuestionListView(LoginRequiredMixin, MobileTemplateMixin, ListView):
             answer_count=Count('timelineitem')
         ).order_by('category', 'order', 'created_at')
         
+        # Search
+        q = self.request.GET.get('q')
+        if q:
+            qs = qs.filter(
+                Q(title__icontains=q) | 
+                Q(description__icontains=q) | 
+                Q(example__icontains=q)
+            )
+
         # Filters
         cat_id = self.request.GET.get('category')
         if cat_id:
