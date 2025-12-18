@@ -237,7 +237,7 @@
         }
         
         candidateList.innerHTML = list.map(c => `
-            <div onclick="selectCandidate(${c.id})" class="p-3 bg-white/5 rounded-lg flex items-center gap-3 active:bg-primary/20 transition border border-white/5">
+            <div onclick="selectCandidate('${c.id}')" class="p-3 bg-white/5 rounded-lg flex items-center gap-3 active:bg-primary/20 transition border border-white/5">
                 <div class="w-10 h-10 rounded-full bg-surface-2 flex items-center justify-center shrink-0 overflow-hidden">
                     ${c.avatar_url ? `<img src="${c.avatar_url}" class="w-full h-full object-cover">` : `<span class="opacity-50">${c.nickname.charAt(0)}</span>`}
                 </div>
