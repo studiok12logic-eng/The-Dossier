@@ -101,14 +101,17 @@
                            <div class="font-bold text-xs text-primary mb-1 border-b border-primary/20 pb-1">{{ item.question_text|default:'Question' }}</div>
                            {% endif %}
                            
-                           <div class="text-sm whitespace-pre-wrap leading-relaxed break-words">
-                               {{ item.content }}
-                               <!-- Explicit Tags (Inline) -->
-                               {% if item.tags.all %}
-                               {% for tag in item.tags.all %}<span class="inline-block bg-surface px-2 py-0.5 rounded-full text-[10px] font-mono text-text-sub border border-white/10 ml-1 mb-0.5 align-middle">#{{ tag.name }}</span>{% endfor %}
-                               {% endif %}
-                           </div>
+                           <div class="text-sm whitespace-pre-wrap leading-relaxed break-words">{{ item.content }}</div>
 
+                           <!-- Explicit Tags (Below Message, Tight Spacing) -->
+                           {% if item.tags.all %}
+                           <div class="mt-1 flex flex-wrap gap-1">
+                               {% for tag in item.tags.all %}
+                               <button onclick="searchForTag('{{ tag.name }}'); event.stopPropagation();" class="inline-block bg-surface px-2 py-0.5 rounded-full text-[10px] font-mono text-text-sub border border-white/10 hover:border-primary/50 transition-colors text-left">#{{ tag.name }}</button>
+                               {% endfor %}
+                           </div>
+                           {% endif %}
+                           
                            <!-- Image Grid -->
                            {% with image_list=item.images.all %}
                            {% if image_list %}
@@ -589,7 +592,15 @@
         items.forEach(item => item.style.display = 'flex');
     }
 
-
+    function searchForTag(tagName) {
+        // Show Popover
+        searchPopover.classList.remove('hidden');
+        // Set Value
+        searchInput.value = '#' + tagName;
+        searchInput.focus();
+        // Trigger Filter
+        searchInput.dispatchEvent(new Event('input'));
+    }
 
     function saveLog(content) {
         // Use DatePicker Value (should be same as currentDateFilter for SSR, but clearer)
