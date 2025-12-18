@@ -347,6 +347,51 @@ class TargetGroupDeleteView(LoginRequiredMixin, View):
 class IntelligenceLogView(LoginRequiredMixin, View):
     template_name = 'intelligence_log.html'
 
+    def get_daily_target_ids(self, user, date):
+        from intelligence.models import Target, DailyTargetState, CustomAnniversary, TargetGroup
+        import datetime
+        from django.db.models import Q
+
+        weekday = date.weekday()
+        
+        # 1. Base Logic (Groups)
+        base_targets = Target.objects.filter(
+            user=user,
+            groups__schedule__day_of_week=weekday
+        ).distinct()
+        
+        # 2. Anniversary Logic
+        anniv_ids = set()
+        
+        # Birthday (Today)
+        birthday_targets = Target.objects.filter(
+            user=user,
+            birth_month=date.month,
+            birth_day=date.day
+        )
+        anniv_ids.update(birthday_targets.values_list('id', flat=True))
+        
+        # Custom Anniv (Today)
+        custom_annivs = CustomAnniversary.objects.filter(
+            target__user=user,
+            date__month=date.month,
+            date__day=date.day
+        )
+        anniv_ids.update(custom_annivs.values_list('target_id', flat=True))
+        
+        # 3. Manual State
+        daily_states = DailyTargetState.objects.filter(target__user=user, date=date)
+        manual_add_ids = set(daily_states.filter(is_manual_add=True).values_list('target_id', flat=True))
+        hidden_ids = set(daily_states.filter(is_hidden=True).values_list('target_id', flat=True))
+        
+        # Combine
+        final_ids = set(base_targets.values_list('id', flat=True))
+        final_ids.update(anniv_ids)
+        final_ids.update(manual_add_ids)
+        final_ids = final_ids - hidden_ids
+        
+        return final_ids
+
     def get(self, request, *args, **kwargs):
         import datetime
         from django.db.models import Q
