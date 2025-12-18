@@ -386,7 +386,7 @@ class IntelligenceLogView(LoginRequiredMixin, View):
             # Let's pass all for now, ordered by date desc (or match render logic).
             # renderJS does sort. Let's pass objects.
             # [SSR] Fetch and Group Timeline Items
-            raw_items = TimelineItem.objects.filter(target=target).order_by('date', 'created_at')
+            raw_items = TimelineItem.objects.filter(target=target).prefetch_related('images').order_by('date', 'created_at')
             
             grouped_timeline = []
             current_group = None
@@ -623,6 +623,7 @@ class IntelligenceLogView(LoginRequiredMixin, View):
                 frontend_type = data.get('event_type', 'NOTE') 
                 content = data.get('description', '')
                 if not content: content = data.get('content', '')
+                if content in ['null', 'undefined', 'None']: content = ''
                 # Handle boolean string from FormData
                 contact_made_raw = data.get('contact_made')
                 contact_made = contact_made_raw == 'true' if isinstance(contact_made_raw, str) else bool(contact_made_raw)
