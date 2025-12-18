@@ -16,7 +16,7 @@
                 <div class="relative">
                     <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-text-sub opacity-50 text-xs"></i>
                     <input type="text" id="questionSearchInput" placeholder="Search questions..." oninput="filterQuestions()" 
-                        class="w-full bg-surface-2 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm text-text-main focus:border-primary/50 focus:ring-0 outline-none placeholder-text-sub/40">
+                        class="w-full bg-surface-2 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm text-text-main focus:border-primary/50 focus:ring-0 outline-none placeholder-text-sub/40" autocomplete="off">
                 </div>
             </div>
 
@@ -195,7 +195,7 @@
         } else {
             // Text
             formContainer.innerHTML = `
-                <textarea id="answerTextInput" rows="5" class="w-full bg-surface-2 border border-white/10 rounded-lg p-3 text-sm text-text-main focus:border-primary focus:ring-0 outline-none placeholder-text-sub/30" placeholder="Enter your answer..."></textarea>
+                <textarea id="answerTextInput" rows="5" class="w-full bg-surface-2 border border-white/10 rounded-lg p-3 text-sm text-text-main focus:border-primary focus:ring-0 outline-none placeholder-text-sub/30" placeholder="Enter your answer..." autocomplete="off"></textarea>
             `;
         }
         

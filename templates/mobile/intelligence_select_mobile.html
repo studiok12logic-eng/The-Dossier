@@ -13,7 +13,7 @@
              <div class="relative flex items-center gap-2">
                  <span class="text-sm font-mono text-primary pointer-events-none">{{ today_date|date:"Y/m/d" }} ({{ weekday_jp }})</span>
                  <i class="fas fa-chevron-down text-primary text-xs"></i>
-                 <input type="date" value="{{ today_date|date:'Y-m-d' }}" 
+                 <input type="date" value="{{ today_date|date:'Y-m-d' }}" autocomplete="off" 
                         class="absolute inset-0 opacity-0 w-full h-full"
                         style="width: 100%; height: 100%; cursor: pointer;"
                         onchange="window.location.search = '?date=' + this.value">

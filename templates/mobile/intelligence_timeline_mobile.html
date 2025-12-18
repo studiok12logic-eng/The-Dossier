@@ -37,7 +37,7 @@
              <!-- Date Picker (Native) -->
             <div class="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/5 text-text-sub transition-colors" id="datePickerContainer">
                 <i class="far fa-calendar text-lg pointer-events-none"></i>
-                <input type="date" id="datePicker" class="absolute inset-0 opacity-0 w-full h-full z-10" style="cursor: pointer;">
+                <input type="date" id="datePicker" class="absolute inset-0 opacity-0 w-full h-full z-10" style="cursor: pointer;" autocomplete="off">
             </div>
             
             <!-- Search Toggle -->
@@ -56,7 +56,7 @@
     <div id="searchPopover" class="absolute top-16 left-4 right-4 z-40 hidden animate-fade-in origin-top">
         <div class="bg-surface border border-white/10 rounded-full shadow-2xl flex items-center px-4 py-2">
             <i class="fas fa-search text-text-sub text-sm mr-3"></i>
-            <input type="text" id="timelineSearchInput" placeholder="Search logs..." class="bg-transparent border-none focus:ring-0 text-sm text-text-main w-full placeholder-text-sub/50" style="height: 2em;">
+            <input type="text" id="timelineSearchInput" placeholder="Search logs..." class="bg-transparent border-none focus:ring-0 text-sm text-text-main w-full placeholder-text-sub/50" style="height: 2em;" autocomplete="off">
             <button onclick="closeSearch()" class="text-text-sub ml-2"><i class="fas fa-times"></i></button>
         </div>
     </div>
