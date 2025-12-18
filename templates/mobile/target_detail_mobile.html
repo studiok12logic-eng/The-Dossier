@@ -1,15 +1,8 @@
 {% extends "mobile/base_mobile.html" %}
 
-{% block title %}{{ target.nickname }} - Detail{% endblock %}
+{% block title %}{{ target.nickname }}{% endblock %}
 
 {% block content %}
-<div class="flex flex-col h-full bg-background pb-20 pt-14 relative">
-
-    <!-- Top Navigation (Transparent) -->
-    <div class="fixed top-0 left-0 right-0 h-14 px-4 flex items-center justify-between z-40 bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
-        <button onclick="history.back()" class="w-10 h-10 flex items-center justify-center text-white/80 hover:text-white pointer-events-auto rounded-full bg-black/20 backdrop-blur">
-            <i class="fas fa-chevron-left"></i>
-        </button>
         <a href="{% url 'target_edit' target.id %}" class="w-10 h-10 flex items-center justify-center text-white/80 hover:text-white pointer-events-auto rounded-full bg-black/20 backdrop-blur">
             <i class="fas fa-pen"></i>
         </a>
