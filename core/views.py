@@ -353,11 +353,14 @@ class IntelligenceLogView(LoginRequiredMixin, View):
         from django.db.models import Q
 
         weekday = date.weekday()
+        weekday_map = ['is_mon', 'is_tue', 'is_wed', 'is_thu', 'is_fri', 'is_sat', 'is_sun']
+        current_weekday_field = weekday_map[weekday]
         
         # 1. Base Logic (Groups)
+        # Filter groups that have the current weekday set to True
         base_targets = Target.objects.filter(
             user=user,
-            groups__schedule__day_of_week=weekday
+            groups__in=TargetGroup.objects.filter(**{current_weekday_field: True})
         ).distinct()
         
         # 2. Anniversary Logic
