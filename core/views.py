@@ -505,8 +505,25 @@ class IntelligenceLogView(LoginRequiredMixin, View):
             real_last_contact=Max('timelineitem__date', filter=Q(timelineitem__contact_made=True))
         ).order_by('nickname')
         
-            # Calculate Nearest Anniversary
-            def get_next_date(month, day, reference_date):
+        target_list = []
+        
+        # Helper for Anniversary
+        def get_next_date(month, day, reference_date):
+            try:
+                this_year = datetime.date(reference_date.year, month, day)
+            except ValueError: # Leap year case
+                this_year = datetime.date(reference_date.year, 3, 1)
+            
+            if this_year >= reference_date:
+                return this_year
+            
+            try:
+                next_year = datetime.date(reference_date.year + 1, month, day)
+            except ValueError:
+                next_year = datetime.date(reference_date.year + 1, 3, 1)
+            return next_year
+
+        for t in targets:
                 try:
                     this_year = datetime.date(reference_date.year, month, day)
                 except ValueError: # Leap year case
