@@ -53,8 +53,7 @@
                 
                 <!-- Nearest Anniversary -->
                 {% if item.nearest_anniversary %}
-                <div class="mt-1 flex items-center gap-1.5 text-xs truncate {{ item.nearest_anniversary.color_class }}"
-                     data-anniv-style="{{ item.nearest_anniversary.style }}">
+                <div class="mt-1 flex items-center gap-1.5 text-xs truncate {{ item.nearest_anniversary.color_class }}">
                     <i class="fas {{ item.nearest_anniversary.icon }}"></i>
                     <span>{{ item.nearest_anniversary.label }}: {{ item.nearest_anniversary.date_str }}</span>
                 </div>
@@ -275,23 +274,15 @@
             date: currentDate
         }).then(data => {
             if(data.success) {
-                // Reload to show in the list
-                window.location.reload();
+                // Navigate to Log Page
+                window.location.href = "{% url 'intelligence_log' %}?target_id=" + id + "&date=" + currentDate;
             } else {
                 alert('Error: ' + data.error);
             }
         });
     }
 
-    // Apply Anniversary Styles
-    document.addEventListener("DOMContentLoaded", () => {
-        document.querySelectorAll('[data-anniv-style]').forEach(el => {
-            const style = el.getAttribute('data-anniv-style');
-            if(style && style.trim() !== "") {
-                 el.style.cssText += style;
-            }
-        });
-    });
+
 
     // --- Helper ---
     function postAction(payload) {

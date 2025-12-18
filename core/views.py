@@ -579,8 +579,7 @@ class IntelligenceLogView(LoginRequiredMixin, View):
                     'date_str': final_anniv_date.strftime('%Y/%m/%d'),
                     'color_class': color_class,
                     'icon': icon,
-                    'is_today': days_until == 0,
-                    'style': 'color: #ff3b3b;' if days_until == 0 else ''
+                    'is_today': days_until == 0
                 }
 
             target_list.append({
