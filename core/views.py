@@ -592,6 +592,7 @@ class IntelligenceLogView(LoginRequiredMixin, View):
             })
 
         # Questions & Tags
+        from intelligence.models import Question, Tag, QuestionCategory
         questions = Question.objects.filter(
             Q(is_shared=True) | Q(user=request.user)
         ).order_by('category', 'order', 'title')
