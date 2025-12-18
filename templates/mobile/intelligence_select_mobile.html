@@ -7,18 +7,23 @@
 
     <!-- Header -->
     <header class="h-14 px-4 flex items-center justify-between border-b border-white/10 bg-surface/95 backdrop-blur sticky top-0 z-30 ring-0">
-        <!-- Left: Date -->
-        <div class="flex items-center gap-3">
-            <div class="flex flex-col">
-                <span class="text-[10px] text-text-sub leading-none">発生日</span>
-                <span class="text-sm font-bold text-text-main font-mono leading-tight">{{ today_date|date:"Y/m/d" }} ({{ weekday_jp }})</span>
-            </div>
-            <div class="relative w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/5 text-primary">
-                <i class="far fa-calendar-alt text-lg pointer-events-none"></i>
-                <input type="date" value="{{ today_date|date:'Y-m-d' }}" autocomplete="off" 
-                       class="absolute inset-0 opacity-0 w-full h-full"
-                       style="cursor: pointer;"
-                       onchange="window.location.search = '?date=' + this.value">
+        <!-- Left: Date Selection -->
+        <div class="flex items-center gap-3 h-full">
+            <span class="text-xs font-bold text-text-sub uppercase tracking-wider">Event Day</span>
+            
+            <div class="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-1.5 h-9 border border-white/10">
+                <!-- Text Display -->
+                <input type="text" readonly 
+                       value="{{ today_date|date:'Y/m/d' }} ({{ weekday_jp }})" 
+                       class="bg-transparent border-none text-sm font-mono text-text-main focus:ring-0 p-0 w-32 cursor-default">
+                
+                <!-- Calendar Trigger -->
+                <div class="relative w-5 h-5 flex items-center justify-center text-primary cursor-pointer hover:text-primary-light">
+                    <i class="far fa-calendar-alt text-lg pointer-events-none"></i>
+                    <input type="date" value="{{ today_date|date:'Y-m-d' }}" autocomplete="off" 
+                           class="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                           onchange="window.location.search = '?date=' + this.value">
+                </div>
             </div>
         </div>
 
