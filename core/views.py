@@ -556,9 +556,17 @@ class IntelligenceLogView(LoginRequiredMixin, View):
         import datetime
         import re
         from django.utils import timezone
+        from intelligence.models import TimelineImage
         
         try:
-            data = json.loads(request.body)
+            # 1. Parse Data (Support JSON & Multipart)
+            images = []
+            if request.content_type == 'application/json':
+                data = json.loads(request.body)
+            else:
+                data = request.POST
+                images = request.FILES.getlist('images')
+
             # Action: 'create' (default), 'update' or 'delete'
             action = data.get('action', 'create')
             
@@ -587,7 +595,7 @@ class IntelligenceLogView(LoginRequiredMixin, View):
                         item.date = datetime.datetime.strptime(data['date'], '%Y-%m-%d').date()
                     except ValueError: pass
                     
-                if 'contact_made' in data: item.contact_made = data.get('contact_made')
+                if 'contact_made' in data: item.contact_made = data.get('contact_made') == 'true' if isinstance(data.get('contact_made'), str) else data.get('contact_made', False)
                 
                 # Bump created_at to now
                 item.created_at = timezone.now()
@@ -615,7 +623,9 @@ class IntelligenceLogView(LoginRequiredMixin, View):
                 frontend_type = data.get('event_type', 'NOTE') 
                 content = data.get('description', '')
                 if not content: content = data.get('content', '')
-                contact_made = data.get('contact_made', False)
+                # Handle boolean string from FormData
+                contact_made_raw = data.get('contact_made')
+                contact_made = contact_made_raw == 'true' if isinstance(contact_made_raw, str) else bool(contact_made_raw)
                 
                 if not target_id: return JsonResponse({'success': False, 'error': 'No target specified'})
                 target = get_object_or_404(Target, pk=target_id, user=request.user)
@@ -627,7 +637,7 @@ class IntelligenceLogView(LoginRequiredMixin, View):
                 else: date_obj = datetime.date.today()
                 
                 if frontend_type == 'QUESTION': item_type = 'Question'
-                else: item_type = 'Event'
+                else: item_type = 'Event' if not images else 'Note' # Default note if images only
                     
                 item = TimelineItem(
                     target=target,
@@ -651,14 +661,27 @@ class IntelligenceLogView(LoginRequiredMixin, View):
                     item.content = content 
                 
                 item.save()
+
+                # Handle Images (Max 4)
+                if images:
+                    for img in images[:4]:
+                        TimelineImage.objects.create(item=item, image=img)
             
             # --- Common Logic for Create & Update: Tags ---
-            tag_ids = data.get('tags', [])
+            tag_ids = data.get('tags', []) # List? FormData uses tags list?
+            # FormData sending array: usually same key multiple times data.getlist('tags')?
+            # Existing code: `tag_ids = data.get('tags', [])` implies JSON list.
+            # If FormData, we might need request.POST.getlist('tags')?
+            # Let's support both.
+            if hasattr(request.POST, 'getlist') and 'tags' in request.POST:
+                 tag_ids = request.POST.getlist('tags')
+            
             if tag_ids:
                 item.tags.add(*tag_ids)
             
             from intelligence.models import Tag
-            hashtags = re.findall(r'#(\S+)', content)
+            # If content is empty (images only), regex returns empty. Safe.
+            hashtags = re.findall(r'#(\S+)', content or '')
             for tag_name in hashtags:
                 clean_tag = tag_name.split()[0]
                 if clean_tag:
@@ -669,8 +692,7 @@ class IntelligenceLogView(LoginRequiredMixin, View):
                 item.target.last_contact = timezone.now()
                 item.target.save()
 
-            # Check has_entry_today (Always true for Create, maybe checked for Update if date changed?)
-            # For simplicity, just check.
+            # Check has_entry_today
             has_entry_today = TimelineItem.objects.filter(target=item.target, date=item.date).exists()
 
             return JsonResponse({'success': True, 'has_entry_today': has_entry_today, 'target_id': item.target.id})
