@@ -437,67 +437,8 @@ class IntelligenceLogView(LoginRequiredMixin, View):
             except Target.DoesNotExist:
                 pass
         
-        # 2. Base Targets (Group Schedule)
-        base_targets = Target.objects.filter(
-            user=request.user,
-            groups__pk__in=TargetGroup.objects.filter(**{current_weekday_field: True}).values('pk')
-        ).distinct()
-
-        # 3. Anniversary/Birthday Targets
-        birthday_targets = Target.objects.filter(
-            user=request.user,
-            birth_month=current_date.month,
-            birth_day=current_date.day
-        )
-        
-        anniv_labels = {}
-        for t in birthday_targets:
-            anniv_labels.setdefault(t.id, []).append("誕生日")
-        
-        custom_annivs = CustomAnniversary.objects.filter(
-            target__user=request.user,
-            date__month=current_date.month,
-            date__day=current_date.day
-        )
-        for ca in custom_annivs:
-            anniv_labels.setdefault(ca.target.id, []).append(ca.label)
-        
-        anniv_ids = set(anniv_labels.keys())
-        
-        # 3.5 Upcoming Anniversaries (Next 10 days)
-        upcoming_anniv_labels = {}
-        upcoming_dates = [current_date + datetime.timedelta(days=i) for i in range(1, 11)]
-        
-        # Check upcoming birthdays
-        for d in upcoming_dates:
-            u_bday_targets = Target.objects.filter(
-                user=request.user,
-                birth_month=d.month,
-                birth_day=d.day
-            )
-            for t in u_bday_targets:
-                 label = f"もうすぐ誕生日 ({d.month}/{d.day})"
-                 upcoming_anniv_labels.setdefault(t.id, []).append(label)
-            
-            u_custom_annivs = CustomAnniversary.objects.filter(
-                target__user=request.user,
-                date__month=d.month,
-                date__day=d.day
-            )
-            for ca in u_custom_annivs:
-                 label = f"もうすぐ{ca.label} ({d.month}/{d.day})"
-                 upcoming_anniv_labels.setdefault(ca.target.id, []).append(label)
-
-        # 4. Manual State Handling
-        daily_states = DailyTargetState.objects.filter(target__user=request.user, date=current_date)
-        manual_add_ids = set(daily_states.filter(is_manual_add=True).values_list('target_id', flat=True))
-        hidden_ids = set(daily_states.filter(is_hidden=True).values_list('target_id', flat=True))
-
-        # 5. Combine Logic
-        final_ids = set(base_targets.values_list('id', flat=True))
-        final_ids.update(anniv_ids)
-        final_ids.update(manual_add_ids)
-        final_ids = final_ids - hidden_ids
+        # Get IDs
+        final_ids = self.get_daily_target_ids(request.user, current_date)
         
         # Fetch Objects & Annotate for UI
         from django.db.models import Max
@@ -561,7 +502,6 @@ class IntelligenceLogView(LoginRequiredMixin, View):
                 if next_bday <= next_custom:
                     final_anniv_date = next_bday
                     final_anniv_label = "誕生日"
-                    final_anniv_type = 'birthday'
                 else:
                     final_anniv_date = next_custom
                     final_anniv_label = next_custom_label
@@ -604,12 +544,17 @@ class IntelligenceLogView(LoginRequiredMixin, View):
             })
 
         # Questions & Tags
-        from intelligence.models import Question, Tag
         questions = Question.objects.filter(
             Q(is_shared=True) | Q(user=request.user)
         ).order_by('category', 'order', 'title')
         
-        all_targets = Target.objects.filter(user=request.user)
+        # Get IDs of categories used by these questions
+        category_ids = questions.values_list('category_id', flat=True).distinct()
+
+        # Fetch Categories (User's OR Used by Questions)
+        categories = QuestionCategory.objects.filter(
+            Q(user=request.user) | Q(id__in=category_ids)
+        ).order_by('id').distinct()
 
         from django.db.models import Count
         # Filter tags used by THIS user's targets
@@ -619,8 +564,8 @@ class IntelligenceLogView(LoginRequiredMixin, View):
 
         context = {
             'todays_targets': target_list,
-            'all_targets': all_targets,
             'questions': questions,
+            'categories': categories, # Add categories to context
             'tags': top_tags,
             'today_date': current_date,
             'weekday_jp': ['月','火','水','木','金','土','日'][weekday]
@@ -660,16 +605,75 @@ class IntelligenceLogView(LoginRequiredMixin, View):
                 has_entry_today = TimelineItem.objects.filter(target=target, date=date).exists()
                 return JsonResponse({'success': True, 'has_entry_today': has_entry_today, 'target_id': target.id})
 
-            elif action == 'delete_unused':
-                # Delete targets with 0 logs (TimelineItems)
-                unused_targets = Target.objects.filter(user=request.user).annotate(
-                    item_count=Count('timelineitem')
-                ).filter(item_count=0)
+            elif action == 'refresh_list':
+                # Remove (Hide) displayed targets with 0 logs from the selection list for this date
+                date_str = data.get('date')
+                try:
+                    date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+                except (ValueError, TypeError):
+                    return JsonResponse({'success': False, 'error': 'Invalid date'})
+
+                displayed_ids = self.get_daily_target_ids(request.user, date)
                 
-                count = unused_targets.count()
-                unused_targets.delete()
+                # Check logs
+                hidden_count = 0
+                for tid in displayed_ids:
+                    has_log = TimelineItem.objects.filter(target_id=tid, date=date).exists()
+                    if not has_log:
+                        DailyTargetState.objects.update_or_create(
+                            target_id=tid,
+                            date=date,
+                            defaults={'is_hidden': True}
+                        )
+                        hidden_count += 1
                 
-                return JsonResponse({'success': True, 'deleted_count': count})
+                return JsonResponse({'success': True, 'hidden_count': hidden_count})
+
+            elif action == 'manual_add':
+                target_id = data.get('target_id')
+                date_str = data.get('date')
+                try:
+                    date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+                except (ValueError, TypeError):
+                    return JsonResponse({'success': False, 'error': 'Invalid date'})
+
+                if not target_id: return JsonResponse({'success': False, 'error': 'Target ID required'})
+                
+                DailyTargetState.objects.update_or_create(
+                    target_id=target_id,
+                    date=date,
+                    defaults={'is_manual_add': True, 'is_hidden': False}
+                )
+                return JsonResponse({'success': True})
+
+            elif action == 'get_candidates':
+                # Return JSON list of targets NOT in current selection, sorted by last contact asc
+                date_str = data.get('date')
+                try:
+                    date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+                except (ValueError, TypeError):
+                    return JsonResponse({'success': False, 'error': 'Invalid date'})
+                
+                current_ids = self.get_daily_target_ids(request.user, date)
+                
+                from django.db.models import Max
+                candidates = Target.objects.filter(user=request.user).exclude(id__in=current_ids).annotate(
+                    last_contact=Max('timelineitem__date', filter=Q(timelineitem__contact_made=True))
+                ).order_by('last_contact', 'nickname') # Nulls first (never contacted)? or last? Django defaults. ASC means old dates first.
+                
+                # Manual serialization for simple list
+                candidate_list = []
+                for c in candidates:
+                    candidate_list.append({
+                        'id': c.id,
+                        'nickname': c.nickname,
+                        'name_kanji': f"{c.last_name} {c.first_name}".strip(),
+                        'name_kana': f"{c.last_name_kana} {c.first_name_kana}".strip(),
+                        'avatar_url': c.avatar.url if c.avatar else None,
+                        'last_contact': c.last_contact.strftime('%Y/%m/%d') if c.last_contact else 'No Contact'
+                    })
+                
+                return JsonResponse({'success': True, 'candidates': candidate_list})
 
             elif action == 'update':
                 item_id = data.get('item_id')
