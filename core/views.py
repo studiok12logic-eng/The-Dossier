@@ -524,19 +524,9 @@ class IntelligenceLogView(LoginRequiredMixin, View):
             return next_year
 
         for t in targets:
-                try:
-                    this_year = datetime.date(reference_date.year, month, day)
-                except ValueError: # Leap year case
-                    this_year = datetime.date(reference_date.year, 3, 1)
-                
-                if this_year >= reference_date:
-                    return this_year
-                
-                try:
-                    next_year = datetime.date(reference_date.year + 1, month, day)
-                except ValueError:
-                    next_year = datetime.date(reference_date.year + 1, 3, 1)
-                return next_year
+            has_entry = TimelineItem.objects.filter(target=t, date=current_date).exists()
+            log_count = TimelineItem.objects.filter(target=t, date=current_date).count()
+            age = t.age
 
             # 1. Birthday
             next_bday = None
