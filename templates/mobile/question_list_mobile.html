@@ -8,8 +8,8 @@
     <!-- Header -->
     <header class="h-14 px-4 flex items-center justify-between border-b border-white/10 bg-surface/50 backdrop-blur sticky top-0 z-30">
         <h1 class="text-lg font-bold text-text-main tracking-wide">QUESTIONS</h1>
-        <a href="{% url 'question_add' %}" class="w-9 h-9 flex items-center justify-center rounded-full bg-primary text-black shadow-lg hover:scale-105 transition">
-            <i class="fas fa-plus"></i>
+        <a href="{% url 'question_add' %}" class="w-12 h-12 flex items-center justify-center rounded-full bg-white text-black shadow-lg hover:scale-105 transition">
+            <i class="fas fa-plus text-lg"></i>
         </a>
     </header>
 
@@ -105,7 +105,7 @@
         {% for t in all_targets %}
         <button onclick="logForTarget('{{ t.id }}')" class="w-full bg-surface p-3 rounded-xl border border-white/10 flex items-center gap-3 active:bg-primary/20">
              <div class="w-10 h-10 rounded-full bg-surface-2 overflow-hidden">
-                 {% if t.avatar %}<img src="{{ t.avatar.url }}" class="w-full h-full object-cover">
+                 {% if t.avatar %}<img src="{{ t.avatar.url }}" class="w-full h-full object-cover avatar-icon-img">
                  {% else %}<span class="flex items-center justify-center w-full h-full font-bold text-xs">{{ t.nickname|slice:":1" }}</span>{% endif %}
              </div>
              <span class="font-bold">{{ t.nickname }}</span>

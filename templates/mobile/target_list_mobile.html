@@ -6,10 +6,10 @@
 <div class="flex flex-col h-full bg-background pb-20"> <!-- Padding for bottom nav -->
     
     <!-- Header -->
-    <header class="h-14 px-4 flex items-center justify-between border-b border-white/10 bg-surface/50 backdrop-blur sticky top-0 z-30">
+    <header class="h-14 px-4 flex items-center justify-between border-b border-white/10 bg-surface/90 backdrop-blur-xl sticky top-0 z-50">
         <h1 class="text-lg font-bold text-text-main tracking-wide">TARGETS</h1>
-        <a href="{% url 'target_add' %}" class="w-9 h-9 flex items-center justify-center rounded-full bg-primary text-black shadow-lg hover:scale-105 transition">
-            <i class="fas fa-plus"></i>
+        <a href="{% url 'target_add' %}" class="w-12 h-12 flex items-center justify-center rounded-full bg-white text-black shadow-lg hover:scale-105 transition">
+            <i class="fas fa-plus text-lg"></i>
         </a>
     </header>
 
@@ -24,7 +24,7 @@
                 <!-- Avatar -->
                 <div class="w-12 h-12 rounded-full bg-surface-2 border border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
                      {% if target.avatar %}
-                        <img src="{{ target.avatar.url }}" class="w-full h-full object-cover">
+                        <img src="{{ target.avatar.url }}" class="w-full h-full object-cover avatar-icon-img">
                      {% else %}
                         <span class="text-xl opacity-50">{{ target.nickname|slice:":1" }}</span>
                      {% endif %}
