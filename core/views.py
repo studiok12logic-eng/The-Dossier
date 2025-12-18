@@ -1081,7 +1081,7 @@ class QuestionDetailView(LoginRequiredMixin, MobileTemplateMixin, View):
             'total_targets': len(answer_data)
         }
         
-        return render(request, self.template_name, context)
+        return render(request, self.get_template_names(), context)
 
 
 # API Views for Dynamic Add

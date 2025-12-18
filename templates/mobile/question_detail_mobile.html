@@ -1,84 +1,98 @@
-{% extends "mobile/base_mobile.html" %}
-
-{% block title %}Question Detail{% endblock %}
-
-{% block content %}
-<div class="flex flex-col h-full bg-background pb-20 relative">
-
-    <!-- Top Navigation (Transparent) -->
-    <div class="fixed top-0 left-0 right-0 h-14 px-4 flex items-center justify-between z-40  bg-surface/90 backdrop-blur border-b border-white/10">
-        <button onclick="history.back()" class="w-10 h-10 flex items-center justify-center text-text-sub hover:text-white rounded-full hover:bg-white/5">
-            <i class="fas fa-chevron-left"></i>
-        </button>
-        <span class="text-sm font-bold truncate max-w-[200px]">{{ question.category.name|default:"Uncategorized" }}</span>
-        <a href="{% url 'question_edit' question.id %}" class="w-10 h-10 flex items-center justify-center text-text-sub hover:text-white rounded-full hover:bg-white/5">
-            <i class="fas fa-pen"></i>
-        </a>
-    </div>
-
-    <!-- Hero / Question Info -->
-    <div class="pt-20 pb-6 px-6 bg-surface-2 border-b border-white/5">
-        <h1 class="text-lg font-bold text-text-main mb-2 leading-snug">{{ question.title }}</h1>
-        {% if question.description %}
-        <p class="text-sm text-text-sub mb-4 opacity-80">{{ question.description }}</p>
-        {% endif %}
-        
-        <div class="flex items-center gap-2 text-xs text-text-sub">
-            {% if question.rank %}
-            <span class="border border-white/10 px-2 py-0.5 rounded">{{ question.rank.name }}</span>
-            {% endif %}
-            <span>Created: {{ question.created_at|date:"Y/m/d" }}</span>
+    <!-- Header -->
+    <header class="h-14 px-4 flex items-center justify-between border-b border-white/10 bg-surface/95 backdrop-blur sticky top-0 z-30 shrink-0">
+        <div class="flex items-center gap-3">
+            <button data-url="{% url 'question_list' %}" 
+                    onclick="window.location.href=this.dataset.url" 
+                    class="w-10 h-10 flex items-center justify-center text-text-sub hover:text-white rounded-full hover:bg-white/5 active:bg-white/10">
+                <i class="fas fa-chevron-left text-lg"></i>
+            </button>
+            <span class="text-xs font-bold text-text-sub uppercase tracking-wider">QUESTION DETAIL</span>
         </div>
-    </div>
+        <!-- Right side empty as requested -->
+        <div class="w-10"></div> 
+    </header>
 
-    <!-- Answers List -->
-    <div class="flex-1 overflow-y-auto p-4 space-y-4">
-        <!-- Loop over answer_data provided by view -->
-        <!-- View logic: answer_data = list of dicts {target, latest_answer, ...} -->
+    <!-- Scrollable Content -->
+    <div class="flex-1 overflow-y-auto scroll-smooth">
+        <!-- Question Info (Not a card, just info) -->
+        <div class="p-6 pb-2">
+            <!-- Badges Row -->
+            <div class="flex flex-wrap items-center gap-2 mb-3">
+                {% if question.category %}
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-white/5 text-text-sub border border-white/10">{{ question.category.name }}</span>
+                {% endif %}
+                {% if question.rank %}
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-white/5 text-text-sub border border-white/10">{{ question.rank.name }}</span>
+                {% endif %}
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-white/5 text-text-sub border border-white/10">{{ question.get_answer_type_display }}</span>
+            </div>
+
+            <!-- Answer Stats -->
+            <div class="text-[10px] text-primary mb-3 font-mono opacity-80">
+                <i class="fas fa-users mr-1"></i> {{ total_targets }} People / {{ total_answers }} Answers
+            </div>
+
+            <!-- Title -->
+            <h1 class="text-xl font-bold text-text-main mb-3 leading-snug">{{ question.title }}</h1>
+            
+            <!-- Description -->
+            {% if question.description %}
+            <p class="text-sm text-text-sub mb-2 leading-relaxed opacity-90">{{ question.description }}</p>
+            {% endif %}
+
+            <!-- Example (Smaller, no box, no header) -->
+            {% if question.example %}
+            <p class="text-xs text-text-sub opacity-50">{{ question.example }}</p>
+            {% endif %}
+        </div>
         
-        {% for item in answer_data %}
-        <div class="bg-surface rounded-xl p-3 border border-white/5">
-            <div class="flex items-start gap-3 mb-2">
-                <!-- Avatar (Small) -->
-                <div class="w-8 h-8 rounded-full bg-surface-2 border border-white/10 flex items-center justify-center text-xs font-bold overflow-hidden shrink-0">
-                    {% if item.target.avatar %}
-                    <img src="{{ item.target.avatar.url }}" class="w-full h-full object-cover">
-                    {% else %}
-                    {{ item.target.nickname|slice:":1" }}
-                    {% endif %}
+        <div class="h-px bg-white/5 mx-6 mb-4"></div>
+
+        <!-- Answers List (Flows in same scroll container) -->
+        <div class="px-4 pb-20 space-y-4"> 
+            {% for item in answer_data %}
+            <div class="bg-surface rounded-xl p-3 border border-white/5">
+                <div class="flex items-start gap-3 mb-2">
+                    <!-- Avatar (Small) -->
+                    <div class="w-8 h-8 rounded-full bg-surface-2 border border-white/10 flex items-center justify-center text-xs font-bold overflow-hidden shrink-0">
+                        {% if item.target.avatar %}
+                        <img src="{{ item.target.avatar.url }}" class="w-full h-full object-cover">
+                        {% else %}
+                        {{ item.target.nickname|slice:":1" }}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-sm text-text-main">{{ item.target.nickname }}</span>
+                            <span class="text-[10px] text-text-sub">{{ item.latest_answer.date|date:"Y/m/d" }}</span>
+                        </div>
+                        <div class="mt-1 text-sm text-primary leading-relaxed whitespace-pre-wrap">{{ item.latest_answer.content }}</div>
+                    </div>
                 </div>
                 
-                <div class="flex-1 min-w-0">
-                    <div class="flex items-center justify-between">
-                        <span class="font-bold text-sm text-text-main">{{ item.target.nickname }}</span>
-                        <span class="text-[10px] text-text-sub">{{ item.latest_answer.date|date:"Y/m/d" }}</span>
-                    </div>
-                    <div class="mt-1 text-sm text-primary leading-relaxed whitespace-pre-wrap">{{ item.latest_answer.content }}</div>
-                </div>
-            </div>
-            
-            {% if item.answer_count > 1 %}
-            <details class="text-[10px] text-text-sub">
-                <summary class="cursor-pointer hover:text-primary transition py-1">View older answers ({{ item.answer_count|add:"-1" }})</summary>
-                <div class="pl-11 border-l-2 border-white/5 mt-2 space-y-2">
-                    {% for old_ans in item.all_answers|slice:"1:" %}
-                    <div>
-                        <div class="flex justify-between opacity-50 mb-0.5">
-                            <span>{{ old_ans.date|date:"Y/m/d" }}</span>
+                {% if item.answer_count > 1 %}
+                <details class="text-[10px] text-text-sub">
+                    <summary class="cursor-pointer hover:text-primary transition py-1">View older answers ({{ item.answer_count|add:"-1" }})</summary>
+                    <div class="pl-11 border-l-2 border-white/5 mt-2 space-y-2">
+                        {% for old_ans in item.all_answers|slice:"1:" %}
+                        <div>
+                            <div class="flex justify-between opacity-50 mb-0.5">
+                                <span>{{ old_ans.date|date:"Y/m/d" }}</span>
+                            </div>
+                            <p class="text-text-main opacity-80">{{ old_ans.content }}</p>
                         </div>
-                        <p class="text-text-main opacity-80">{{ old_ans.content }}</p>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
-                </div>
-            </details>
-            {% endif %}
+                </details>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="text-center py-10 opacity-50">
+                <p>No answers recorded yet.</p>
+            </div>
+            {% endfor %}
         </div>
-        {% empty %}
-        <div class="text-center py-10 opacity-50">
-            <p>No answers recorded yet.</p>
-        </div>
-        {% endfor %}
     </div>
-
 </div>
 {% endblock %}
