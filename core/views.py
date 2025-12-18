@@ -104,19 +104,54 @@ def dashboard(request):
     return render(request, 'dashboard.html', context)
 
 @login_required
+@login_required
 def target_list(request):
+    from django.db.models import Count, Sum, Q, Subquery, OuterRef
+    
     sort_by = request.GET.get('sort', 'last_contact')
+    search_query = request.GET.get('q')
+    group_filter = request.GET.get('group')
+    
+    # Base Query
     targets = Target.objects.filter(user=request.user).prefetch_related('groups')
 
+    # Search Filter
+    if search_query:
+        targets = targets.filter(
+            Q(nickname__icontains=search_query) |
+            Q(first_name__icontains=search_query) |
+            Q(last_name__icontains=search_query) |
+            Q(first_name_kana__icontains=search_query) |
+            Q(last_name_kana__icontains=search_query)
+        )
+
+    # Group Filter
+    if group_filter:
+        targets = targets.filter(groups__id=group_filter)
+
+    # Annotations
+    # Latest Message Subquery
+    latest_msg = TimelineItem.objects.filter(
+        target=OuterRef('pk')
+    ).order_by('-date', '-created_at').values('content')[:1]
+
+    targets = targets.annotate(
+        total_points=Sum('timelineitem__question__rank__points', filter=Q(timelineitem__type='Question')),
+        log_count=Count('timelineitem'),
+        latest_msg_content=Subquery(latest_msg)
+    )
+
+    # Sorting
     if sort_by == 'group':
         targets = targets.order_by('groups__name', 'nickname')
     elif sort_by == 'anniversary':
-        # Sort by birth month and day (Upcoming birthdays/anniversaries rough approx)
-        # Note: This simply sorts Jan -> Dec. For strict "Upcoming", python sorting is often easier for small lists.
         targets = targets.order_by('birth_month', 'birth_day', 'nickname')
     else: # last_contact
         from django.db.models import F
         targets = targets.order_by(F('last_contact').desc(nulls_last=True), 'nickname')
+
+    # Get Groups for Filter UI
+    groups = TargetGroup.objects.filter(user=request.user)
 
     # Template Selection
     if request.htmx:
@@ -126,7 +161,11 @@ def target_list(request):
     else:
         template_name = 'target_list.html'
 
-    return render(request, template_name, {'targets': targets, 'current_sort': sort_by})
+    return render(request, template_name, {
+        'targets': targets, 
+        'current_sort': sort_by,
+        'groups': groups
+    })
 
 # FormSet for Anniversaries
 AnniversaryFormSet = inlineformset_factory(
