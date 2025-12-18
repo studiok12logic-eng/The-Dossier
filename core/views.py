@@ -707,8 +707,8 @@ class IntelligenceLogView(LoginRequiredMixin, View):
                 
                 from django.db.models import Max, Q
                 candidates = Target.objects.filter(user=request.user).exclude(id__in=current_ids).annotate(
-                    last_contact=Max('timelineitem__date', filter=Q(timelineitem__contact_made=True))
-                ).order_by('last_contact', 'nickname') # Nulls first (never contacted)? or last? Django defaults. ASC means old dates first.
+                    real_last_contact=Max('timelineitem__date', filter=Q(timelineitem__contact_made=True))
+                ).order_by('real_last_contact', 'nickname') # Nulls first (never contacted)? or last? Django defaults. ASC means old dates first.
                 
                 # Manual serialization for simple list
                 candidate_list = []
@@ -719,7 +719,7 @@ class IntelligenceLogView(LoginRequiredMixin, View):
                         'name_kanji': f"{c.last_name} {c.first_name}".strip(),
                         'name_kana': f"{c.last_name_kana} {c.first_name_kana}".strip(),
                         'avatar_url': c.avatar.url if c.avatar else None,
-                        'last_contact': c.last_contact.strftime('%Y/%m/%d') if c.last_contact else 'No Contact'
+                        'last_contact': c.real_last_contact.strftime('%Y/%m/%d') if c.real_last_contact else 'No Contact'
                     })
                 
                 return JsonResponse({'success': True, 'candidates': candidate_list})
