@@ -283,14 +283,24 @@
 
     // --- Helper ---
     function postAction(payload) {
-        return fetch('', { // Post to current URL
+        return fetch("{% url 'intelligence_log' %}", { 
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': '{{ csrf_token }}'
             },
             body: JSON.stringify(payload)
-        }).then(res => res.json());
+        }).then(res => {
+            if (!res.ok) throw new Error('Network response was not ok');
+            return res.text().then(text => {
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    console.error('Server returned non-JSON:', text);
+                    throw new Error('Server returned invalid JSON. Check console.');
+                }
+            });
+        });
     }
     
     // Animation

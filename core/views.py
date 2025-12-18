@@ -568,7 +568,7 @@ class IntelligenceLogView(LoginRequiredMixin, View):
                 days_until = (final_anniv_date - current_date).days
                 color_class = "text-text-sub" # Default gray
                 if days_until == 0:
-                    color_class = "text-red-500 font-bold"
+                    color_class = "text-accent-red font-bold"
                 elif days_until <= 10:
                     color_class = "text-yellow-500"
                 
