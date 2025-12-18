@@ -321,14 +321,27 @@
                  'X-CSRFToken': '{{ csrf_token }}'
              },
              body: fd
-         }).then(res => res.json()).then(data => {
+         }).then(res => {
+             if (!res.ok) {
+                 if (res.status === 413) throw new Error("File too large (Max 10MB)");
+                 throw new Error("Server Error " + res.status);
+             }
+             return res.text().then(text => {
+                 try {
+                     return JSON.parse(text);
+                 } catch (e) {
+                     console.error("Invalid JSON:", text);
+                     throw new Error("Invalid Server Response");
+                 }
+             });
+         }).then(data => {
              if(data.success) {
                  window.location.reload();
              } else {
                  alert("Upload failed: " + (data.error || 'Unknown error'));
              }
          }).catch(err => {
-             alert("Error: " + err);
+             alert("Error: " + err.message);
          });
     }
     
