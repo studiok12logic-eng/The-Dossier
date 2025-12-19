@@ -175,34 +175,20 @@
         </div>
 
         <!-- Category Wise Progress -->
-        <div class="space-y-4">
-            <h2 class="text-xs font-bold text-text-sub uppercase tracking-wider mb-2 opacity-70">CATEGORY PROGRESS</h2>
+        <div class="space-y-4 mt-8">
+            <h2 class="text-xs font-bold text-text-sub uppercase tracking-wider mb-3 opacity-70">カテゴリー進捗</h2>
             
-            <!-- Row 1: Base and Category Progress (2 Columns) -->
-            <div class="grid grid-cols-2 gap-x-4 gap-y-5">
-                <!-- Base Profile Bar in Grid -->
-                <div class="flex flex-col gap-1.5">
-                    <div class="flex justify-between items-center text-[10px] font-bold text-text-sub uppercase tracking-tighter">
-                        <span>Base Profile</span>
-                        <span>{{ base_progress }}%</span>
-                    </div>
-                    <div class="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                        <div class="h-full block bg-emerald-500 bar-animate js-progress-bar" 
-                             style="width: 0%; height: 100%; display: block;"
-                             data-width="{{ base_progress }}%"></div>
-                    </div>
-                </div>
-
-                <!-- Category Bars (Excluding Base Info which is hidden from qa_data_progress in view) -->
+            <div class="grid grid-cols-2 gap-x-4 gap-y-6">
+                <!-- Category Bars -->
                 {% for cat in qa_data_progress %}
                 <div class="flex flex-col gap-1.5">
-                    <div class="flex justify-between items-center text-[10px] font-bold text-text-sub uppercase tracking-tighter">
-                        <span class="truncate pr-2">{{ cat.category.name }}</span>
-                        <span>{{ cat.progress }}%</span>
+                    <div class="flex justify-between items-end text-[10px] font-bold text-text-sub">
+                        <span class="truncate pr-1">{{ cat.category.name }} <span class="opacity-70 font-normal">({{ cat.answered_count }}/{{ cat.total_count }})</span></span>
+                        <span class="text-text-main">{{ cat.progress }}%</span>
                     </div>
                     <div class="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                        <div class="h-full block bg-blue-500 opacity-80 bar-animate js-progress-bar" 
-                             style="width: 0%; height: 100%; display: block;"
+                        <div class="h-full block bar-animate js-progress-bar" 
+                             style="width: 0%; height: 100%; display: block; background: linear-gradient(90deg, #ef4444, #22c55e);"
                              data-width="{{ cat.progress }}%"></div>
                     </div>
                 </div>
