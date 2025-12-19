@@ -6,7 +6,7 @@
 {% block content %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
 
-<div class="h-full flex flex-col gap-6 overflow-y-auto p-0 pb-10">
+<div class="h-full flex flex-col overflow-y-auto p-0 pb-10">
     <div class="p-4 border-b border-white/10 shrink-0 flex items-center gap-3">
                  <button onclick="window.location.href='{% url 'target_list' %}';" class="w-8 h-8 flex items-center justify-center text-text-sub hover:text-white rounded-full bg-white/5">
                      <i class="fas fa-chevron-left"></i>
@@ -25,15 +25,43 @@
         input.peer:checked ~ .day-toggle-box { background-color: #22c55e !important; color: black !important; border-color: #22c55e !important; font-weight: bold; }
     </style>
 
-    <form method="post" enctype="multipart/form-data" class="space-y-8" id="targetForm">
+    <form method="post" enctype="multipart/form-data" class="" id="targetForm">
         {% csrf_token %}
         {{ form.non_field_errors }}
 
         <!-- 1. 基本情報 (Basic Identity) -->
         <section class="bg-surface/30 p-6 relative">
-            <h2 class="text-primary font-mono text-sm mb-6 flex items-center gap-2 border-b border-white/5 pb-2">
-                <span class="text-primary/50">01.</span> 基本情報
+            <h2 class="text-primary font-mono text-sm mb-6 flex items-center justify-between gap-2 border-b border-white/5 pb-2">
+                <span class="flex items-center gap-2"><span class="text-primary/50">01.</span> 基本情報</span>
+                <label for="id_avatar" class="text-xs bg-primary/20 text-primary border border-primary/50 px-2 py-1 rounded hover:bg-primary/30 transition shadow-sm cursor-pointer">
+                    + 画像を追加
+                </label>
             </h2>
+            <input type="file" name="avatar" id="id_avatar" accept="image/*" class="hidden">
+
+            <!-- Avatar Preview (Centered) -->
+            <div class="flex flex-col items-center gap-2 mb-6">
+                <div id="avatarPreviewContainer" class="relative">
+                    {% if form.instance.avatar %}
+                    <img src="{{ form.instance.avatar.url }}" id="avatarPreview" class="object-cover rounded-full border border-white/10" style="width: 30vw; height: 30vw;">
+                    {% else %}
+                    <img id="avatarPreview" class="hidden object-cover rounded-full border border-white/10" style="width: 30vw; height: 30vw;">
+                    {% endif %}
+                </div>
+
+                <div class="{% if not form.instance.avatar %}hidden{% endif %}" id="deleteAvatarBtnContainer">
+                    <button type="button" id="deleteAvatarBtn"
+                        class="text-xs text-red-500 hover:text-red-400 border border-red-500/30 px-2 py-1 rounded bg-red-500/10 cursor-pointer">
+                        画像削除
+                    </button>
+                </div>
+
+                {% if form.instance.avatar %}
+                <div class="hidden">
+                    <input type="checkbox" name="avatar-clear" id="avatar-clear_id">
+                </div>
+                {% endif %}
+            </div>
 
             <!-- Fields First -->
             <div class="space-y-4 mb-6">
@@ -69,40 +97,7 @@
             </div>
 
             <!-- Avatar Last -->
-            <div class="flex flex-col gap-4">
-                <!-- Label + Button Row -->
-                <div class="flex items-center gap-3">
-                    <label class="text-xs font-mono text-gray-400">ターゲット画像</label>
-                    <label for="id_avatar" class="px-3 py-1 bg-white/10 text-[10px] border border-white/20 rounded cursor-pointer hover:bg-white/20 text-white font-mono">
-                         + IMAGE UPLOAD
-                    </label>
-                    <input type="file" name="avatar" id="id_avatar" accept="image/*" class="hidden">
-                </div>
-
-                <!-- Centered Preview & Delete -->
-                <div class="flex flex-col items-center gap-2">
-                    <div id="avatarPreviewContainer" class="relative">
-                        {% if form.instance.avatar %}
-                        <img src="{{ form.instance.avatar.url }}" id="avatarPreview" class="object-cover" style="width: 30vw; height: 30vw;">
-                        {% else %}
-                        <img id="avatarPreview" class="hidden object-cover" style="width: 30vw; height: 30vw;">
-                        {% endif %}
-                    </div>
-    
-                    <div class="{% if not form.instance.avatar %}hidden{% endif %}" id="deleteAvatarBtnContainer">
-                        <button type="button" id="deleteAvatarBtn"
-                            class="text-xs text-red-500 hover:text-red-400 border border-red-500/30 px-2 py-1 rounded bg-red-500/10 cursor-pointer">
-                            画像削除
-                        </button>
-                    </div>
-    
-                    {% if form.instance.avatar %}
-                    <div class="hidden">
-                        <input type="checkbox" name="avatar-clear" id="avatar-clear_id">
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
+            <!-- Old Avatar UI Removed -->
         </section>
 
         <!-- 2. 生体情報 (Bio-Metrics) -->
@@ -293,7 +288,8 @@
 
         <!-- Submit -->
         <!-- Submit Actions -->
-        <div class="mt-8 flex gap-4">
+        <!-- Submit Actions -->
+        <div class="mt-8 flex gap-4 px-6 pb-8">
             {% if is_edit %}
             <a href="{% url 'target_delete' form.instance.pk %}"
                class="flex-1 bg-red-500/10 text-red-500 font-bold py-4 rounded border border-red-500/30 hover:bg-red-500/20 transition font-mono flex items-center justify-center whitespace-nowrap">
