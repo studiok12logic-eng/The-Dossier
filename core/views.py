@@ -226,9 +226,28 @@ class TargetDetailView(LoginRequiredMixin, MobileTemplateMixin, DetailView):
         total_q_count = 0
         total_answered_count = 0
         
-        # Specific titles for Base Profile (10 Questions)
-        base_titles = ['性別', '血液型', '性格タイプ', '出身地', '職業', '現在住所', '家族構成', '趣味', '弱点/苦手なもの', '得意なこと']
-        base_answers = {title: None for title in base_titles}
+        # Specific titles for Base Profile (10 Questions -> updated to user list)
+        # User requested specific list: '職業', '現在住所', '家族構成', '趣味', '弱点', '得意分野'
+        # Previous list had others. We keep iterating all questions for progress but extract specific ones.
+        
+        # Mapping Title to Key
+        base_title_map = {
+            '職業': 'occupation',
+            '現在住所': 'address',
+            '家族構成': 'family_structure',
+            '趣味': 'hobbies',
+            '弱点': 'weakness',
+            '得意分野': 'skills'
+        }
+        base_answers = {
+            'occupation': None, 
+            'address': None, 
+            'family_structure': None, 
+            'hobbies': None, 
+            'weakness': None, 
+            'skills': None
+        }
+        
         answered_base_qs_count = 0
 
         for cat in categories:
@@ -256,11 +275,12 @@ class TargetDetailView(LoginRequiredMixin, MobileTemplateMixin, DetailView):
                 if is_answered:
                     cat_data['answered_count'] += 1
                     total_answered_count += 1
-                    # Check if this is a Base Profile question
-                    if q.title in base_titles:
-                        base_answers[q.title] = answer_item.content
+                    # Check if this is a Base Profile question (Shared Only? User said "Shared flag True")
+                    if q.is_shared and q.title in base_title_map:
+                        key = base_title_map[q.title]
+                        base_answers[key] = answer_item.content
                         answered_base_qs_count += 1
-                
+
                 q_info = {
                     'question': q,
                     'answer': answer_item.content if is_answered else None,
