@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block content_wrapper_class %}flex-1 overflow-y-auto p-0 pb-24 md:pb-8{% endblock %}
+
 {% block content %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
 
@@ -57,48 +59,38 @@
 
             <!-- Avatar Last -->
             <div class="flex flex-col gap-4">
-                <label class="block text-xs font-mono text-gray-400 mb-1">ターゲット画像</label>
-                
-                <!-- Upload Button -->
-                <div>
-                     <label for="id_avatar" class="inline-block px-4 py-2 bg-white/10 text-xs border border-white/20 rounded cursor-pointer hover:bg-white/20 text-white font-mono">
+                <!-- Label + Button Row -->
+                <div class="flex items-center gap-3">
+                    <label class="text-xs font-mono text-gray-400">ターゲット画像</label>
+                    <label for="id_avatar" class="px-3 py-1 bg-white/10 text-[10px] border border-white/20 rounded cursor-pointer hover:bg-white/20 text-white font-mono">
                          + IMAGE UPLOAD
-                     </label>
-                     <input type="file" name="avatar" id="id_avatar" accept="image/*" class="hidden">
+                    </label>
+                    <input type="file" name="avatar" id="id_avatar" accept="image/*" class="hidden">
                 </div>
 
-                <!-- Preview container (reusing ID for JS compatibility if possible, or updating JS) -->
-                <!-- Existing JS expects #avatarPreviewContainer to be the drop zone. 
-                     I will strip its classes but keep ID so JS might work for finding children, 
-                     though 'crop modal' logic might need checking. 
-                     Let's verify JS dependencies briefly. JS uses `avatarPreviewContainer` to append `img`.
-                     So I'll keep the ID on a wrapper div for the image. -->
-                <div id="avatarPreviewContainer" class="relative">
+                <!-- Centered Preview & Delete -->
+                <div class="flex flex-col items-center gap-2">
+                    <div id="avatarPreviewContainer" class="relative">
+                        {% if form.instance.avatar %}
+                        <img src="{{ form.instance.avatar.url }}" id="avatarPreview" class="object-cover" style="width: 30vw; height: 30vw;">
+                        {% else %}
+                        <img id="avatarPreview" class="hidden object-cover" style="width: 30vw; height: 30vw;">
+                        {% endif %}
+                    </div>
+    
+                    <div class="{% if not form.instance.avatar %}hidden{% endif %}" id="deleteAvatarBtnContainer">
+                        <button type="button" id="deleteAvatarBtn"
+                            class="text-xs text-red-500 hover:text-red-400 border border-red-500/30 px-2 py-1 rounded bg-red-500/10 cursor-pointer">
+                            画像削除
+                        </button>
+                    </div>
+    
                     {% if form.instance.avatar %}
-                    <img src="{{ form.instance.avatar.url }}" id="avatarPreview" class="object-cover" style="width: 30vw; height: 30vw;">
-                    {% else %}
-                    <!-- Image created by JS will go here -->
-                    <img id="avatarPreview" class="hidden object-cover" style="width: 30vw; height: 30vw;">
-                    <!-- Placeholder div from original is removed as per request -->
+                    <div class="hidden">
+                        <input type="checkbox" name="avatar-clear" id="avatar-clear_id">
+                    </div>
                     {% endif %}
                 </div>
-
-                <!-- Avatar Delete Button -->
-                <div class="{% if not form.instance.avatar %}hidden{% endif %}" id="deleteAvatarBtnContainer">
-                    <button type="button" id="deleteAvatarBtn"
-                        class="text-xs text-red-500 hover:text-red-400 border border-red-500/30 px-2 py-1 rounded bg-red-500/10 cursor-pointer">
-                        画像削除
-                    </button>
-                </div>
-
-                {% if form.instance.avatar %}
-                <div class="hidden">
-                    <input type="checkbox" name="avatar-clear" id="avatar-clear_id">
-                </div>
-                {% endif %}
-                
-                <!-- Hidden img for crop logic if needed -->
-                <!-- JS sets src on #imageToCrop in modal. Input change triggers it. -->
             </div>
         </section>
 
