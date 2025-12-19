@@ -1,18 +1,17 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block content_wrapper_class %}flex-1 overflow-hidden p-0 pb-24 md:pb-8{% endblock %}
+{% block content_wrapper_class %}flex-1 overflow-y-auto p-0 pb-40{% endblock %}
 
 {% block content %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
 
-<div class="h-full flex flex-col overflow-y-auto p-0 pb-40">
-    <div class="p-4 border-b border-white/10 shrink-0 flex items-center gap-3">
-                 <button onclick="window.location.href='{% url 'target_list' %}';" class="w-8 h-8 flex items-center justify-center text-text-sub hover:text-white rounded-full bg-white/5">
-                     <i class="fas fa-chevron-left"></i>
-                 </button>
-                 <h3 class="text-sm font-bold text-text-main truncate flex-1" id="answerPageTitle">{% if is_edit %}EDIT TARGET{% else %}ADD TARGET{% endif %}</h3>
-             </div>
+<div class="p-4 border-b border-white/10 shrink-0 flex items-center gap-3">
+    <button onclick="window.location.href='{% url 'target_list' %}';" class="w-8 h-8 flex items-center justify-center text-text-sub hover:text-white rounded-full bg-white/5">
+        <i class="fas fa-chevron-left"></i>
+    </button>
+    <h3 class="text-sm font-bold text-text-main truncate flex-1" id="answerPageTitle">{% if is_edit %}EDIT TARGET{% else %}ADD TARGET{% endif %}</h3>
+</div>
 
     <style>
         /* Force Selection States */
@@ -110,9 +109,9 @@
             <!-- Birthdate -->
             <div class="mb-6">
                 <label class="block text-xs font-mono text-gray-400 mb-2">生年月日</label>
-                <div class="flex gap-2 mb-2">
+                <div class="grid grid-cols-4 gap-2 mb-2">
                     <!-- Year (50%) -->
-                    <div class="relative w-1/2">
+                    <div class="relative col-span-2">
                         {{ form.birth_year.as_hidden }}
                         <select id="birth_year_select"
                             class="w-full bg-surface border border-white/10 rounded px-2 py-2 text-white text-sm appearance-none focus:border-primary">
@@ -121,7 +120,7 @@
                         </select>
                     </div>
                     <!-- Month (25%) -->
-                    <div class="relative w-1/4">
+                    <div class="relative col-span-1">
                         {{ form.birth_month.as_hidden }}
                         <select id="birth_month_select"
                             class="w-full bg-surface border border-white/10 rounded px-2 py-2 text-white text-sm appearance-none focus:border-primary">
@@ -132,7 +131,7 @@
                         </select>
                     </div>
                     <!-- Day (25%) -->
-                    <div class="relative w-1/4">
+                    <div class="relative col-span-1">
                         {{ form.birth_day.as_hidden }}
                         <select id="birth_day_select"
                             class="w-full bg-surface border border-white/10 rounded px-2 py-2 text-white text-sm appearance-none focus:border-primary">
@@ -306,7 +305,7 @@
             </button>
         </div>
     </form>
-</div>
+<!-- Removed inner div closing tag -->
 
 <!-- Crop Modal -->
 <div id="cropModal" class="hidden fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
