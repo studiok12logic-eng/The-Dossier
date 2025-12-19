@@ -190,18 +190,15 @@
 
         <!-- 3. 所属 (Affiliation) -->
         <section class="bg-surface/30 p-6 relative">
-            <h2 class="text-primary font-mono text-sm mb-6 flex items-center gap-2 border-b border-white/5 pb-2">
-                <span class="text-primary/50">03.</span> 所属・グループ
+            <h2 class="text-primary font-mono text-sm mb-6 flex items-center justify-between gap-2 border-b border-white/5 pb-2">
+                <span class="flex items-center gap-2"><span class="text-primary/50">03.</span> 所属・グループ</span>
+                <button type="button" id="openGroupModal"
+                    class="text-xs bg-primary/20 text-primary border border-primary/50 px-2 py-1 rounded hover:bg-primary/30 transition shadow-sm">
+                    + 新規グループ作成
+                </button>
             </h2>
 
             <div class="form-group">
-                <div class="flex justify-between items-center mb-2">
-                    <label class="block text-xs font-mono text-gray-400">所属グループ選択</label>
-                    <button type="button" id="openGroupModal"
-                        class="text-xs bg-primary/20 text-primary border border-primary/50 px-2 py-1 rounded hover:bg-primary/30 transition">
-                        + 新規グループ作成
-                    </button>
-                </div>
                 <!-- Checkbox Grid (Tag Style) -->
                 <div class="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 bg-black/20 rounded border border-white/5" id="groupsContainer">
                     {% for group in user_groups %}
@@ -345,37 +342,41 @@
                         <!-- Manual Day Toggles -->
                         <label class="cursor-pointer">
                             <input type="checkbox" name="is_mon" class="hidden peer">
-                            <span class="block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/10 text-xs text-gray-400 peer-checked:bg-green-500 peer-checked:text-black peer-checked:border-green-500 transition">月</span>
+                            <span class="block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/20 text-xs text-gray-500 peer-checked:bg-green-500 peer-checked:text-black peer-checked:font-bold peer-checked:border-green-500 hover:bg-white/5 transition select-none">月</span>
                         </label>
                         <label class="cursor-pointer">
                             <input type="checkbox" name="is_tue" class="hidden peer">
-                            <span class="block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/10 text-xs text-gray-400 peer-checked:bg-green-500 peer-checked:text-black peer-checked:border-green-500 transition">火</span>
+                            <span class="block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/20 text-xs text-gray-500 peer-checked:bg-green-500 peer-checked:text-black peer-checked:font-bold peer-checked:border-green-500 hover:bg-white/5 transition select-none">火</span>
                         </label>
                         <label class="cursor-pointer">
                             <input type="checkbox" name="is_wed" class="hidden peer">
-                            <span class="block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/10 text-xs text-gray-400 peer-checked:bg-green-500 peer-checked:text-black peer-checked:border-green-500 transition">水</span>
+                            <span class="block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/20 text-xs text-gray-500 peer-checked:bg-green-500 peer-checked:text-black peer-checked:font-bold peer-checked:border-green-500 hover:bg-white/5 transition select-none">水</span>
                         </label>
                         <label class="cursor-pointer">
                             <input type="checkbox" name="is_thu" class="hidden peer">
-                            <span class="block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/10 text-xs text-gray-400 peer-checked:bg-green-500 peer-checked:text-black peer-checked:border-green-500 transition">木</span>
+                            <span class="block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/20 text-xs text-gray-500 peer-checked:bg-green-500 peer-checked:text-black peer-checked:font-bold peer-checked:border-green-500 hover:bg-white/5 transition select-none">木</span>
                         </label>
                         <label class="cursor-pointer">
                             <input type="checkbox" name="is_fri" class="hidden peer">
-                            <span class="block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/10 text-xs text-gray-400 peer-checked:bg-green-500 peer-checked:text-black peer-checked:border-green-500 transition">金</span>
+                            <span class="block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/20 text-xs text-gray-500 peer-checked:bg-green-500 peer-checked:text-black peer-checked:font-bold peer-checked:border-green-500 hover:bg-white/5 transition select-none">金</span>
                         </label>
                         <label class="cursor-pointer">
                             <input type="checkbox" name="is_sat" class="hidden peer">
-                            <span class="block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/10 text-xs text-gray-400 peer-checked:bg-green-500 peer-checked:text-black peer-checked:border-green-500 transition">土</span>
+                            <span class="block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/20 text-xs text-gray-500 peer-checked:bg-green-500 peer-checked:text-black peer-checked:font-bold peer-checked:border-green-500 hover:bg-white/5 transition select-none">土</span>
                         </label>
                         <label class="cursor-pointer">
                             <input type="checkbox" name="is_sun" class="hidden peer">
-                            <span class="block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/10 text-xs text-gray-400 peer-checked:bg-green-500 peer-checked:text-black peer-checked:border-green-500 transition">日</span>
+                            <span class="block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/20 text-xs text-gray-500 peer-checked:bg-green-500 peer-checked:text-black peer-checked:font-bold peer-checked:border-green-500 hover:bg-white/5 transition select-none">日</span>
                         </label>
                     </div>
                 </div>
-                <div class="pt-4 flex justify-center">
+                <div class="pt-4 flex justify-center gap-4">
+                    <button type="button" id="cancelGroupModalBtn"
+                        class="px-6 py-3 text-gray-400 hover:text-white border border-white/10 rounded font-bold text-sm bg-surface hover:bg-white/5 transition">
+                        キャンセル
+                    </button>
                     <button type="submit"
-                        class="px-8 py-3 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/50 rounded font-bold text-sm min-w-[120px]">
+                        class="px-8 py-3 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/50 rounded font-bold text-sm min-w-[120px] transition">
                         作成
                     </button>
                 </div>
@@ -649,6 +650,7 @@
     const groupModal = document.getElementById('groupModal');
     const openGroupBtn = document.getElementById('openGroupModal');
     const closeGroupBtn = document.getElementById('closeGroupModal');
+    const cancelGroupBtn = document.getElementById('cancelGroupModalBtn'); // New Cancel Button
     const groupForm = document.getElementById('groupCreateForm');
     const actionMenu = document.getElementById('groupActionMenu');
     let currentEditingGroupId = null;
@@ -665,7 +667,9 @@
         groupModal.classList.remove('hidden');
     });
 
-    closeGroupBtn.addEventListener('click', () => groupModal.classList.add('hidden'));
+    const closeModal = () => groupModal.classList.add('hidden');
+    closeGroupBtn.addEventListener('click', closeModal);
+    if(cancelGroupBtn) cancelGroupBtn.addEventListener('click', closeModal);
 
     // Helpers for Day Toggles (Manual binding since Django Widget default doesn't match well)
     // Actually the inputs are cleaner in HTML now.
