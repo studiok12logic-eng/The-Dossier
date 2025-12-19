@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block content_wrapper_class %}flex-1 overflow-y-auto p-0 pb-40{% endblock %}
+{% block content_wrapper_class %}flex-1 overflow-y-auto p-0 pb-20{% endblock %}
 
 {% block content %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
@@ -303,8 +303,8 @@
                 {% if is_edit %}更新を保存 (SAVE){% else %}登録する (REGISTER){% endif %}
             </button>
         </div>
-        <!-- Spacer to ensure scroll clearance on mobile -->
-        <div class="h-40"></div>
+        <!-- Spacer to ensure 64px clearance on mobile -->
+        <div class="h-16"></div>
     </form>
 <!-- Removed inner div closing tag -->
 
