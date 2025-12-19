@@ -35,22 +35,25 @@
 
     <!-- Content -->
     <div class="flex-1 overflow-y-auto p-4 space-y-4">
-        {% regroup questions by category as category_list %}
-
-        {% for category in category_list %}
+        {% for category in structured_categories %}
         <div class="bg-surface rounded-xl overflow-hidden border border-white/5">
             <!-- Header (Accordion Trigger) -->
             <button onclick="toggleAccordion('cat-{{ forloop.counter }}')" class="w-full flex items-center justify-between p-4 text-left bg-white/5 hover:bg-white/10 transition">
-                <span class="font-bold text-sm text-text-main">{{ category.grouper.name|default:"Uncategorized" }}</span>
                 <div class="flex items-center gap-2">
-                     <span class="text-[10px] bg-black/30 px-2 py-0.5 rounded-full text-text-sub">{{ category.list|length }}</span>
+                    <span class="font-bold text-sm text-text-main">{{ category.name }}</span>
+                    {% if category.is_shared %}
+                    <i class="fas fa-globe text-[10px] text-text-sub" title="Shared"></i>
+                    {% endif %}
+                </div>
+                <div class="flex items-center gap-2">
+                     <span class="text-[10px] bg-black/30 px-2 py-0.5 rounded-full text-text-sub">{{ category.questions_list|length }}</span>
                      <i id="icon-cat-{{ forloop.counter }}" class="fas fa-chevron-down text-xs text-text-sub transition-transform duration-200"></i>
                 </div>
             </button>
             
             <!-- List (Content) -->
             <div id="cat-{{ forloop.counter }}" class="hidden">
-                {% for q in category.list %}
+                {% for q in category.questions_list %}
                 <div class="border-t border-white/5 p-3 flex items-center gap-3 active:bg-white/5 transition relative group"
                      onclick="window.location.href='{% url 'question_detail' %}?question_id={{ q.id }}'"
                      oncontextmenu="showContextMenu(event, '{{ q.id }}', {{ q.is_shared|yesno:'true,false' }}); return false;">
@@ -80,12 +83,16 @@
                     <!-- Long Press Visual -->
                     <div class="absolute inset-0 bg-primary/10 opacity-0 group-active:opacity-100 pointer-events-none transition"></div>
                 </div>
+                {% empty %}
+                <div class="p-3 text-center text-xs text-gray-500 border-t border-white/5">
+                    No questions in this category.
+                </div>
                 {% endfor %}
             </div>
         </div>
         {% empty %}
         <div class="text-center py-10 opacity-50">
-            <p>No questions found.</p>
+            <p>No categories found.</p>
         </div>
         {% endfor %}
     </div>

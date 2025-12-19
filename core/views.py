@@ -1067,8 +1067,50 @@ class QuestionListView(LoginRequiredMixin, MobileTemplateMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['categories'] = QuestionCategory.objects.filter(user=self.request.user)
+        user = self.request.user
+
+        # 1. Fetch Categories properly sorted
+        # User's Private Categories: Created At ASC
+        private_cats = list(QuestionCategory.objects.filter(user=user, is_shared=False).order_by('created_at'))
+        # Shared Categories: Order ASC, then Created At ASC
+        shared_cats = list(QuestionCategory.objects.filter(is_shared=True).order_by('order', 'created_at'))
+        
+        # Combined List: Private (Top) -> Shared (Bottom)
+        all_cats = private_cats + shared_cats
+        
+        # 2. Bucket questions
+        # self.object_list contains the filtered questions
+        qs = self.object_list
+        from collections import defaultdict
+        q_dict = defaultdict(list)
+        uncategorized = []
+        
+        for q in qs:
+            if q.category_id:
+                q_dict[q.category_id].append(q)
+            else:
+                uncategorized.append(q)
+                
+        # 3. Build structure
+        structured_list = []
+        for cat in all_cats:
+            # We add a .questions_list attribute to the category object for the template
+            cat.questions_list = q_dict[cat.id] 
+            structured_list.append(cat)
+            
+        # 4. Uncategorized (Append to end if exists)
+        if uncategorized:
+            # Create a dummy object to mimic category interface
+            class DummyCat:
+                name = "Uncategorized"
+                id = None
+                questions_list = uncategorized
+                is_shared = False
+            structured_list.append(DummyCat())
+            
+        context['structured_categories'] = structured_list
         context['ranks'] = QuestionRank.objects.filter(user=self.request.user)
+        
         # Add all targets for the LOG modal
         from intelligence.models import Target
         context['all_targets'] = Target.objects.filter(user=self.request.user).order_by('nickname')
