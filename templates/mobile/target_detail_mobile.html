@@ -106,22 +106,24 @@
             </div>
             
             <!-- 3-Column Row: Gender, Blood, Personality -->
-            <div class="grid grid-cols-3 gap-2 pt-1">
-                <div class="flex flex-col gap-0.5">
-                    <span class="text-[9px] text-text-sub uppercase">性別</span>
-                    <span class="text-xs text-text-main font-medium">{{ base_answers.性別|default:"-" }}</span>
+            <div class="flex items-center gap-4 py-2 border-y border-white/5 my-2">
+                <div class="flex-1">
+                    <div class="text-[9px] text-text-sub uppercase mb-0.5">性別</div>
+                    <div class="text-xs text-text-main font-bold">{{ base_answers.性別|default:"-" }}</div>
                 </div>
-                <div class="flex flex-col gap-0.5 border-l border-white/10 pl-2">
-                    <span class="text-[9px] text-text-sub uppercase">血液型</span>
-                    <span class="text-xs text-text-main font-medium">{{ base_answers.血液型|default:"-" }}</span>
+                <div class="w-px h-6 bg-white/10"></div>
+                <div class="flex-1">
+                    <div class="text-[9px] text-text-sub uppercase mb-0.5">血液型</div>
+                    <div class="text-xs text-text-main font-bold">{{ base_answers.血液型|default:"-" }}</div>
                 </div>
-                <div class="flex flex-col gap-0.5 border-l border-white/10 pl-2">
-                    <span class="text-[9px] text-text-sub uppercase">性格タイプ</span>
-                    <span class="text-xs text-text-main font-medium">{{ base_answers.性格タイプ|default:"-" }}</span>
+                <div class="w-px h-6 bg-white/10"></div>
+                <div class="flex-1">
+                    <div class="text-[9px] text-text-sub uppercase mb-0.5">性格タイプ</div>
+                    <div class="text-xs text-text-main font-bold">{{ base_answers.性格タイプ|default:"-" }}</div>
                 </div>
             </div>
 
-            <div class="flex justify-between items-center text-xs pt-2">
+            <div class="flex justify-between items-center text-xs pt-1">
                 <span class="text-text-sub">記念日</span>
                 <div class="text-right">
                     {% for anniv in custom_anniversaries %}
@@ -133,9 +135,9 @@
             </div>
             
             <!-- Other Shared Questions (Excl. the 3 above) -->
-            <div class="pt-4 space-y-3 border-t border-white/5 mt-4">
+            <div class="pt-4 space-y-3 mt-2">
                 {% for title, ans in base_answers.items %}
-                    {% if title not in "性別 血液型 性格タイプ" %}
+                    {% if title != "性別" and title != "血液型" and title != "性格タイプ" %}
                     <div class="flex justify-between text-xs">
                         <span class="text-text-sub">{{ title }}</span>
                         <span class="text-text-main font-medium">{{ ans|default:"-" }}</span>
