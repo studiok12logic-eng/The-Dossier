@@ -102,8 +102,8 @@
                 <span>{{ base_progress }}%</span>
             </div>
             <div class="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-                <div class="h-full transition-all duration-500" 
-                     style="width:{{ base_progress }}%; background-color:{{ base_color }}; box-shadow:{{ base_shadow }};"></div>
+                <div class="h-full block transition-all duration-500" 
+                     style="width:{{ base_progress }}%; height:100%; display:block; background-color:{{ base_color }}; box-shadow:{{ base_shadow }};"></div>
             </div>
         </div>
 
@@ -172,7 +172,7 @@
                         <span>{{ base_progress }}%</span>
                     </div>
                     <div class="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                        <div class="h-full bg-emerald-500" style="width:{{ base_progress }}%;"></div>
+                        <div class="h-full block bg-emerald-500" style="width:{{ base_progress }}%; height:100%; display:block;"></div>
                     </div>
                 </div>
 
@@ -184,7 +184,7 @@
                         <span>{{ cat.progress }}%</span>
                     </div>
                     <div class="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                        <div class="h-full bg-blue-500 opacity-80" style="width:{{ cat.progress }}%;"></div>
+                        <div class="h-full block bg-blue-500 opacity-80" style="width:{{ cat.progress }}%; height:100%; display:block;"></div>
                     </div>
                 </div>
                 {% endfor %}
