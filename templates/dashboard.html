@@ -23,6 +23,9 @@
                     <span class="text-accent font-bold">{{ item.name }}</span>
                     <span class="text-text-sub mx-1">·</span>
                     <span class="text-text-sub">{{ item.date|date:"m/d" }}</span>
+                    <span class="ml-1 text-[10px] font-bold {% if item.is_today %}text-accent-red{% else %}text-primary{% endif %}">
+                        {% if item.is_today %}TODAY{% else %}{{ item.days_left }}d{% endif %}
+                    </span>
                 </div>
             </div>
             {% endfor %}

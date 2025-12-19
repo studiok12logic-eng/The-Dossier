@@ -21,23 +21,23 @@
             <div class="flex items-center justify-between mb-3 px-1">
                 <h2 class="text-xs font-bold text-text-sub uppercase tracking-wider">Upcoming</h2>
             </div>
-            <div class="grid grid-cols-2 gap-3">
-                {% for anniv in upcoming_anniversaries|slice:":4" %}
-                <div class="bg-surface rounded-xl p-3 border border-white/5 flex flex-col relative overflow-hidden active:scale-95 transition-transform"
+            <div class="grid grid-cols-3 gap-2">
+                {% for anniv in upcoming_anniversaries|slice:":6" %}
+                <div class="bg-surface rounded-xl p-2 border border-white/5 flex flex-col relative overflow-hidden active:scale-95 transition-transform"
                      onclick="window.location.href='{% url 'target_detail' %}?target_id={{ anniv.target.id }}'">
                     
-                    <!-- Days Left Badge -->
-                    <div class="absolute top-2 right-2 text-xs font-bold {% if anniv.is_today %}text-accent-red{% else %}text-primary{% endif %}">
-                        {% if anniv.is_today %}TODAY{% else %}{{ anniv.days_left }}d{% endif %}
-                    </div>
-                    
                     <div class="mt-1">
-                        <div class="font-bold text-text-main truncate pr-6">{{ anniv.target.nickname }}</div>
-                        <div class="text-[10px] text-text-sub flex items-center gap-1 mt-1">
+                        <div class="font-bold text-[11px] text-text-main truncate">{{ anniv.target.nickname }}</div>
+                        <div class="text-[9px] text-text-sub flex items-center gap-1 mt-0.5">
                             <i class="fas {% if anniv.name == 'Birthday' %}fa-birthday-cake text-primary{% else %}fa-star text-yellow-500{% endif %} opacity-70"></i>
                             {{ anniv.name }}
                         </div>
-                        <div class="text-[10px] text-text-sub/50 mt-0.5">{{ anniv.date|date:"Y/m/d" }}</div>
+                        <div class="flex items-center gap-1.5 mt-1">
+                            <span class="text-[10px] text-text-sub/50 font-mono">{{ anniv.date|date:"m/d" }}</span>
+                            <span class="text-[10px] font-bold {% if anniv.is_today %}text-accent-red{% else %}text-primary{% endif %} font-mono">
+                                {% if anniv.is_today %}TODAY{% else %}{{ anniv.days_left }}d{% endif %}
+                            </span>
+                        </div>
                     </div>
                 </div>
                 {% endfor %}
