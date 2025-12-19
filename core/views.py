@@ -198,22 +198,16 @@ class TargetDetailView(LoginRequiredMixin, MobileTemplateMixin, DetailView):
         context['contact_count'] = TimelineItem.objects.filter(target=target, contact_made=True).count()
         
         # Calculate Total Points & Answers
-        from django.db.models import Sum
-        q_items = TimelineItem.objects.filter(
-            target=target, type='Question', question__isnull=False
-        ).values('question_id', 'question__rank__points')
+        from django.db.models import Sum, Count, Q
+        points_data = TimelineItem.objects.filter(
+            target=target, type='Question'
+        ).aggregate(
+            total_points=Sum('question__rank__points'),
+            total_answers=Count('question', distinct=True)
+        )
         
-        unique_pairs = set()
-        total_points = 0
-        for item in q_items:
-            pair = item['question_id']
-            if pair not in unique_pairs:
-                unique_pairs.add(pair)
-                if item['question__rank__points']:
-                    total_points += item['question__rank__points']
-        
-        context['total_points'] = total_points
-        context['total_answers'] = len(unique_pairs)
+        context['total_points'] = points_data['total_points'] or 0
+        context['total_answers'] = points_data['total_answers'] or 0
         
         # 2. Q&A
         from intelligence.models import Question, QuestionCategory

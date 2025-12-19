@@ -19,9 +19,27 @@
     <div class="relative shrink-0 pt-10 pb-6 px-6 flex flex-col items-center bg-surface-2 border-b border-white/5">
         
         <!-- RANK & LAST CONTACT -->
-        <div class="flex items-center gap-4 text-[10px] font-mono text-text-sub mb-4">
-            <span>RANK: <span class="text-primary">{{ target.role_rank|default:'--' }}</span></span>
-            <span>LAST CONTACT: <span class="text-text-main">{{ target.last_contact|date:"Y/m/d"|default:"--" }}</span></span>
+        <div class="flex items-center gap-4 mb-4 text-[10px] font-mono">
+            {% with pts=total_points|default:0 %}
+            <span class="font-bold flex items-center gap-1">
+                {% if pts >= 100 %}
+                <i class="fas fa-crown text-purple-400"></i> <span class="text-purple-400">PLATINUM</span>
+                {% elif pts >= 61 %}
+                <i class="fas fa-crown text-yellow-500"></i> <span class="text-yellow-500">GOLD</span>
+                {% elif pts >= 31 %}
+                <i class="fas fa-medal text-gray-300"></i> <span class="text-gray-300">SILVER</span>
+                {% elif pts >= 1 %}
+                <i class="fas fa-medal text-amber-700"></i> <span class="text-amber-700">BRONZE</span>
+                {% else %}
+                <span class="text-text-sub opacity-50">NO RANK</span>
+                {% endif %}
+            </span>
+            {% endwith %}
+
+            <span class="text-text-sub flex items-center gap-1">
+                <i class="fas fa-history text-emerald-500/50"></i> 
+                <span class="text-text-main">{% if target.last_contact %}{{ target.last_contact|date:"Y/m/d" }}{% else %}-{% endif %}</span>
+            </span>
         </div>
 
         <!-- Avatar -->
@@ -47,19 +65,27 @@
         <!-- Quick Stats Row -->
         <div class="flex items-center justify-center gap-5 text-xs text-text-sub w-full">
             <div class="flex flex-col items-center">
-                <span class="font-bold text-lg text-text-main">{{ log_count }}</span>
+                <span class="font-bold text-lg text-text-main flex items-center gap-1">
+                    <i class="fas fa-comment text-blue-400/30 text-xs"></i> {{ log_count }}
+                </span>
                 <span>Logs</span>
             </div>
             <div class="flex flex-col items-center border-l border-white/10 pl-5">
-                <span class="font-bold text-lg text-text-main">{{ contact_count }}</span>
+                <span class="font-bold text-lg text-text-main flex items-center gap-1">
+                    <i class="fas fa-handshake text-emerald-500/30 text-xs"></i> {{ contact_count }}
+                </span>
                 <span>Contacts</span>
             </div>
             <div class="flex flex-col items-center border-l border-white/10 pl-5">
-                <span class="font-bold text-lg text-text-main">{{ total_answers }}</span>
+                <span class="font-bold text-lg text-text-main flex items-center gap-1">
+                    <i class="fas fa-question-circle text-purple-400/30 text-xs"></i> {{ total_answers }}
+                </span>
                 <span>Answers</span>
             </div>
             <div class="flex flex-col items-center border-l border-white/10 pl-5">
-                <span class="font-bold text-lg text-text-main">{{ total_points }}</span>
+                <span class="font-bold text-lg text-text-main flex items-center gap-1">
+                    <i class="fas fa-star text-yellow-500/30 text-xs"></i> {{ total_points }}
+                </span>
                 <span>Points</span>
             </div>
         </div>
