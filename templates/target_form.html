@@ -260,16 +260,16 @@
                     </div>
                     <div class="flex flex-col" style="width: auto;">
                         <label class="block text-xs font-mono text-gray-400 mb-1">日付</label>
-                        <div class="flex items-center gap-0 h-[42px]"> 
+                        <div class="flex items-center gap-0"> 
                             <!-- Date Input with rounded-r-none -->
-                            <div class="w-32 h-full"> 
+                            <div class="w-32" style="height: 41px;"> 
                                 <style>.ann-date-input input { border-top-right-radius: 0 !important; border-bottom-right-radius: 0 !important; height: 100%; width: 100%; }</style>
                                 <span class="ann-date-input h-full block">{{ form.date }}</span>
                             </div>
                             <!-- Delete Button -->
                             <button type="button"
-                                class="delete-anniversary-btn h-full rounded-r bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition rounded-l-none border-l-0 {% if not form.instance.pk %}hidden{% endif %}" 
-                                style="width: 8vw;"
+                                class="delete-anniversary-btn bg-red-500/80 text-white flex items-center justify-center hover:bg-red-500 transition border-l-0 {% if not form.instance.pk %}hidden{% endif %}" 
+                                style="width: 6vw; height: 41px; border-radius: 0 5px 5px 0;"
                                 title="削除">
                                 <i class="fas fa-times text-sm"></i>
                             </button>
@@ -427,13 +427,13 @@
         </div>
         <div class="flex flex-col" style="width: auto;">
             <label class="block text-xs font-mono text-gray-400 mb-1">日付</label>
-            <div class="flex items-center gap-0 h-[42px]">
-                <div class="w-32 h-full"> 
+            <div class="flex items-center gap-0">
+                <div class="w-32" style="height: 41px;"> 
                     <span class="ann-date-input h-full block">{{ anniversaries.empty_form.date }}</span>
                 </div>
                 <button type="button"
-                    class="delete-anniversary-btn h-full rounded-r bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition rounded-l-none border-l-0" 
-                    style="width: 8vw;"
+                    class="delete-anniversary-btn bg-red-500/80 text-white flex items-center justify-center hover:bg-red-500 transition border-l-0" 
+                    style="width: 6vw; height: 41px; border-radius: 0 5px 5px 0;"
                     title="削除">
                     <i class="fas fa-times text-sm"></i>
                 </button>
