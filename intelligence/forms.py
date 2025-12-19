@@ -145,7 +145,21 @@ class QuestionRankForm(forms.ModelForm):
             'points': forms.NumberInput(attrs={'class': STYLE_INPUT, 'placeholder': 'ポイント'}),
         }
 
+class CategoryModelChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        if obj.description:
+            return f"{obj.name} : {obj.description}"
+        return obj.name
+
 class QuestionForm(forms.ModelForm):
+    # Custom field to display Description and make Required=True
+    category = CategoryModelChoiceField(
+        queryset=QuestionCategory.objects.none(),
+        required=True, # Enforce selection
+        widget=forms.Select(attrs={'class': STYLE_SELECT}),
+        empty_label="カテゴリーを選択してください"
+    )
+
     class Meta:
         model = Question
         fields = ['is_shared', 'category', 'rank', 'title', 'description', 'example', 'answer_type', 'choices', 'order']
@@ -155,8 +169,8 @@ class QuestionForm(forms.ModelForm):
             'example': forms.Textarea(attrs={'class': STYLE_INPUT, 'rows': 2}),
             'choices': forms.TextInput(attrs={'class': STYLE_INPUT, 'placeholder': '例: はい, いいえ, 多分'}),
             'order': forms.NumberInput(attrs={'class': 'w-32 bg-white/5 border border-white/20 rounded px-3 py-2 text-white'}),
-            # Explicitly define Selects with STYLE_SELECT (w-full, appearance-none, cursor-pointer)
-            'category': forms.Select(attrs={'class': STYLE_SELECT}),
+            # Explicitly define Selects with STYLE_SELECT 
+            # category is handled by class field above
             'rank': forms.Select(attrs={'class': STYLE_SELECT}),
             'answer_type': forms.Select(attrs={'class': STYLE_SELECT}),
         }
@@ -179,25 +193,14 @@ class QuestionForm(forms.ModelForm):
                 self.fields['rank'].queryset = QuestionRank.objects.filter(user=self.user)
             else:
                 # Non-Master: Can only pick Shared Categories
-                # But requirement says "Category is user cannot create. Shared category check."
-                # Also "Master except: rank/category cannot create." 
-                # Meaning they CAN select a category, but only from shared ones?
-                # "共有されたカテゴリーから選ぶっていう" -> Yes.
                 self.fields['category'].queryset = QuestionCategory.objects.filter(is_shared=True)
-                # Rank hidden for non-master
                 
             if not is_master:
                 # Remove protected fields
-                # "共通質問・表示順はmaster権限者のみに表示"
-                # "ランクはMASTER権限者以外には非表示"
                 cols_to_remove = ['is_shared', 'order', 'rank']
                 for col in cols_to_remove:
                     if col in self.fields:
                         del self.fields[col]
-                        
-                 # Note: 'category' is NOT removed, but restricted to shared categories above.
-                 # Wait, user said "category ... select only ... ADD button unnecessary".
-                 # So field remains, but restricted queryset.
         else:
              self.fields['category'].queryset = QuestionCategory.objects.none()
              self.fields['rank'].queryset = QuestionRank.objects.none()
