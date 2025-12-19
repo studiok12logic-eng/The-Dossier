@@ -264,7 +264,9 @@ class TargetDetailView(LoginRequiredMixin, MobileTemplateMixin, DetailView):
                 cat_data['progress'] = round((cat_data['answered_count'] / q_count) * 100)
             qa_data.append(cat_data)
             
-        context['qa_data'] = qa_data
+        # Sort category progress: Exclude "基本情報" for the category bar display
+        context['qa_data_progress'] = [c for c in qa_data if c['category'].name != "基本情報"]
+        context['qa_data'] = qa_data # Keep full list for the Q&A tab
         
         # Calculate Base Profile Progress (14 items: 3 Bio + 1 Anniversary + 10 Questions)
         answered_base_items = 0
@@ -277,7 +279,9 @@ class TargetDetailView(LoginRequiredMixin, MobileTemplateMixin, DetailView):
         context['base_answers'] = base_answers
         context['base_progress'] = min(round((answered_base_items / 14) * 100), 100)
         
-        # Global Progress
+        # Global Progress (ensure counts for display)
+        context['total_q_count'] = total_q_count
+        context['total_answered_count'] = total_answered_count
         if total_q_count > 0:
             context['global_progress'] = round((total_answered_count / total_q_count) * 100)
         else:

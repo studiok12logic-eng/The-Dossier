@@ -96,17 +96,32 @@
         <h2 class="text-xs font-bold text-text-sub uppercase tracking-wider mb-4 opacity-70">・BASE PROFILE</h2>
         
         <div class="space-y-3 mb-8">
-            <div class="flex justify-between text-xs">
+            <div class="flex justify-between items-center text-xs">
                 <span class="text-text-sub">誕生日</span>
-                <span class="text-text-main">{% if target.birth_year %}{{ target.birth_year }}/{{ target.birth_month }}/{{ target.birth_day }}{% else %}-{% endif %}</span>
-            </div>
-            <div class="flex justify-between text-xs">
-                <span class="text-text-sub">年齢・干支・星座</span>
-                <span class="text-text-main">
-                    {% if target.birth_year %}{{ age }}歳 ・ {{ target.eto }} ・ {{ target.zodiac_sign }}{% else %}-{% endif %}
+                <span class="text-text-main font-bold">
+                    {% if target.birth_year %}
+                        {{ target.birth_year }}/{{ target.birth_month }}/{{ target.birth_day }} ({{ age }}歳) {{ target.eto }} {{ target.zodiac_sign }}
+                    {% else %}-{% endif %}
                 </span>
             </div>
-            <div class="flex justify-between text-xs">
+            
+            <!-- 3-Column Row: Gender, Blood, Personality -->
+            <div class="grid grid-cols-3 gap-2 pt-1">
+                <div class="flex flex-col gap-0.5">
+                    <span class="text-[9px] text-text-sub uppercase">性別</span>
+                    <span class="text-xs text-text-main font-medium">{{ base_answers.性別|default:"-" }}</span>
+                </div>
+                <div class="flex flex-col gap-0.5 border-l border-white/10 pl-2">
+                    <span class="text-[9px] text-text-sub uppercase">血液型</span>
+                    <span class="text-xs text-text-main font-medium">{{ base_answers.血液型|default:"-" }}</span>
+                </div>
+                <div class="flex flex-col gap-0.5 border-l border-white/10 pl-2">
+                    <span class="text-[9px] text-text-sub uppercase">性格タイプ</span>
+                    <span class="text-xs text-text-main font-medium">{{ base_answers.性格タイプ|default:"-" }}</span>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center text-xs pt-2">
                 <span class="text-text-sub">記念日</span>
                 <div class="text-right">
                     {% for anniv in custom_anniversaries %}
@@ -117,32 +132,44 @@
                 </div>
             </div>
             
-            <!-- Shared Questions Grouped -->
+            <!-- Other Shared Questions (Excl. the 3 above) -->
             <div class="pt-4 space-y-3 border-t border-white/5 mt-4">
                 {% for title, ans in base_answers.items %}
-                <div class="flex justify-between text-xs">
-                    <span class="text-text-sub">{{ title }}</span>
-                    <span class="text-text-main font-medium">{{ ans|default:"-" }}</span>
-                </div>
+                    {% if title not in "性別 血液型 性格タイプ" %}
+                    <div class="flex justify-between text-xs">
+                        <span class="text-text-sub">{{ title }}</span>
+                        <span class="text-text-main font-medium">{{ ans|default:"-" }}</span>
+                    </div>
+                    {% endif %}
                 {% endfor %}
             </div>
         </div>
 
         <!-- Progress Tracking -->
         <div class="space-y-6">
-            <!-- Global & Base Master Progress -->
-            <div class="grid grid-cols-2 gap-4">
-                <div class="bg-black/20 p-3 rounded-lg border border-white/5">
-                    <div class="flex justify-between text-[9px] text-text-sub mb-1.5 font-bold uppercase tracking-tighter">
-                        <span>Global Progress</span>
-                        <span>{{ global_progress }}%</span>
+            <h2 class="text-xs font-bold text-text-sub uppercase tracking-wider mb-2 opacity-70">・PROGRESS</h2>
+            
+            <!-- Row 1: Global Progress (Full width) -->
+            <div class="bg-black/20 p-4 rounded-lg border border-white/5">
+                <div class="flex justify-between items-end text-xs mb-2">
+                    <div class="flex flex-col">
+                        <span class="text-[9px] text-text-sub font-bold uppercase tracking-tighter">Global Progress</span>
+                        <span class="text-lg font-bold text-text-main leading-none">{{ global_progress }}%</span>
                     </div>
-                    <div class="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                        <div class="h-full bg-primary" style="width: {{ global_progress }}%"></div>
+                    <div class="text-[10px] text-text-sub font-mono">
+                        <span class="text-primary">{{ total_answered_count }}</span> / {{ total_q_count }}
                     </div>
                 </div>
-                <div class="bg-black/20 p-3 rounded-lg border border-white/5">
-                    <div class="flex justify-between text-[9px] text-text-sub mb-1.5 font-bold uppercase tracking-tighter">
+                <div class="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                    <div class="h-full bg-primary" style="width: {{ global_progress }}%"></div>
+                </div>
+            </div>
+
+            <!-- Row 2+: Base and Category Progress (2 Columns) -->
+            <div class="grid grid-cols-2 gap-x-4 gap-y-5">
+                <!-- Base Profile Bar -->
+                <div class="flex flex-col gap-1.5">
+                    <div class="flex justify-between items-center text-[10px] font-bold text-text-sub uppercase tracking-tighter">
                         <span>Base Profile</span>
                         <span>{{ base_progress }}%</span>
                     </div>
@@ -150,26 +177,22 @@
                         <div class="h-full bg-emerald-500" style="width: {{ base_progress }}%"></div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Category-wise Progress Grid -->
-            <div>
-                <h3 class="text-[9px] font-bold text-text-sub uppercase tracking-widest mb-3 opacity-50">Category Progress</h3>
-                <div class="grid grid-cols-2 gap-x-4 gap-y-3">
-                    {% for cat in qa_data %}
-                    <div class="flex flex-col gap-1">
-                        <div class="flex justify-between items-center text-[8px] text-text-sub font-mono">
-                            <span class="truncate pr-2">{{ cat.category.name }}</span>
-                            <span class="shrink-0">{{ cat.progress }}%</span>
-                        </div>
-                        <div class="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                            <div class="h-full bg-blue-400 opacity-80" style="width: {{ cat.progress }}%"></div>
-                        </div>
+                <!-- Category Bars (Excluding Base Info which is hidden from qa_data_progress in view) -->
+                {% for cat in qa_data_progress %}
+                <div class="flex flex-col gap-1.5">
+                    <div class="flex justify-between items-center text-[10px] font-bold text-text-sub uppercase tracking-tighter">
+                        <span class="truncate pr-2">{{ cat.category.name }}</span>
+                        <span>{{ cat.progress }}%</span>
                     </div>
-                    {% endfor %}
+                    <div class="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                        <div class="h-full bg-blue-500 opacity-80" style="width: {{ cat.progress }}%"></div>
+                    </div>
                 </div>
+                {% endfor %}
             </div>
         </div>
+    </div>
     </div>
 
     <!-- Tabs content container -->
