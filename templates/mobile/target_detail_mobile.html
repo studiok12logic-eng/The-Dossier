@@ -7,8 +7,8 @@
     .bar-animate { transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
 </style>
 <div class="flex flex-col h-full bg-background">
-    <!-- Header -->
-    <div class="p-4 border-b border-white/10 shrink-0 flex items-center gap-3">
+    <!-- Header (Fixed/Sticky) -->
+    <div class="sticky top-0 z-50 p-4 bg-background/95 backdrop-blur-md border-b border-white/10 shrink-0 flex items-center gap-3">
         <button onclick="window.location.href=this.dataset.url;" data-url="{% url 'target_list' %}" class="w-8 h-8 flex items-center justify-center text-text-sub hover:text-white rounded-full bg-white/5">
             <i class="fas fa-chevron-left"></i>
         </button>
@@ -204,63 +204,158 @@
     </div>
 
     <!-- Tabs content container -->
-    <div class="flex-1 overflow-y-auto" x-data="{ tab: 'timeline' }">
+    <div class="flex-1" x-data="{ 
+        tab: 'timeline',
+        searchQuery: '',
+        selectedTagId: null,
+        showAllTags: false,
+        items: [
+            {% for item in events %}
+            {
+                id: {{ item.id }},
+                type: '{{ item.type }}',
+                content: '{{ item.content|escapejs|default:"" }}',
+                date: '{{ item.date|date:"Y/m/d (D)" }}',
+                dateRaw: '{{ item.date|date:"Y/m/d" }}',
+                hasContact: {{ item.contact_made|yesno:"true,false" }},
+                tags: [{% for tag in item.tags.all %}{id: {{ tag.id }}, name: '{{ tag.name|escapejs }}'}{% if not forloop.last %},{% endif %}{% endfor %}],
+                isQuestion: {% if item.type == 'Question' %}true{% else %}false{% endif %}
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ],
+        get filteredLogs() {
+            return this.items.filter(item => {
+                const searchMatch = !this.searchQuery || 
+                    item.content.toLowerCase().includes(this.searchQuery.toLowerCase().replace(/^#/, ''));
+                
+                // If search starts with #, treat as tag search
+                if (this.searchQuery.startsWith('#')) {
+                    const tagName = this.searchQuery.substring(1).toLowerCase();
+                    const hasTag = item.tags.some(t => t.name.toLowerCase().includes(tagName));
+                    if (!hasTag) return false;
+                }
+
+                const tagMatch = !this.selectedTagId || 
+                    item.tags.some(t => t.id === this.selectedTagId);
+                
+                return searchMatch && tagMatch;
+            });
+        },
+        toggleTag(tagId) {
+            if (this.selectedTagId === tagId) {
+                this.selectedTagId = null;
+            } else {
+                this.selectedTagId = tagId;
+                this.searchQuery = ''; // Clear search when picking tag via chip
+            }
+        },
+        searchByTag(tagLabel) {
+            this.searchQuery = '#' + tagLabel;
+            this.selectedTagId = null;
+            this.tab = 'timeline';
+        }
+    }">
         
         <!-- Sticky Tab Header -->
-        <div class="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-white/10 flex text-sm font-bold">
+        <div class="sticky top-[65px] z-40 bg-background/95 backdrop-blur border-b border-white/10 flex text-sm font-bold">
             <button @click="tab = 'timeline'" :class="{'text-primary border-b-2 border-primary': tab==='timeline', 'text-text-sub border-b-2 border-transparent': tab!=='timeline'}" class="flex-1 py-3 text-center transition">
-                Timeline
+                Event Log
             </button>
             <button @click="tab = 'questions'" :class="{'text-primary border-b-2 border-primary': tab==='questions', 'text-text-sub border-b-2 border-transparent': tab!=='questions'}" class="flex-1 py-3 text-center transition">
-                Q&A
+                Q&A Summary
             </button>
         </div>
 
-        <!-- 1. Timeline Tab -->
-        <div x-show="tab === 'timeline'" class="p-4 space-y-4">
-             <!-- Simplified Search Bar -->
-             <div class="relative mb-4">
-                 <input type="text" placeholder="Search timeline..." class="w-full bg-surface border border-white/10 rounded-full py-2 pl-9 pr-4 text-sm text-text-main focus:border-primary focus:outline-none placeholder-text-sub/50" autocomplete="off">
-                 <i class="fas fa-search absolute left-3 top-2.5 text-text-sub text-xs"></i>
+        <!-- 1. Event Log Tab -->
+        <div x-show="tab === 'timeline'" class="p-4">
+             <!-- Revamped Search & Tags -->
+             <div class="space-y-3 mb-6">
+                 <div class="relative">
+                     <input type="text" x-model="searchQuery" placeholder="search Logs..." class="w-full bg-surface border border-white/10 rounded-full py-2 pl-9 pr-4 text-sm text-text-main focus:border-primary focus:outline-none placeholder-text-sub/50" autocomplete="off">
+                     <i class="fas fa-search absolute left-3 top-2.5 text-text-sub text-xs"></i>
+                 </div>
+
+                 <!-- Tags List (Top 10 + More) -->
+                 <div class="flex flex-wrap gap-1.5 px-1">
+                     {% for tag in all_tags %}
+                        {% if forloop.counter <= 10 %}
+                        <button @click="toggleTag({{ tag.id }})" 
+                                :class="selectedTagId === {{ tag.id }} ? 'bg-primary text-black border-primary' : 'bg-white/5 text-text-sub border-white/10'"
+                                class="text-[10px] px-2.5 py-1 rounded-full border transition-all active:scale-95">
+                            #{{ tag.name }}
+                        </button>
+                        {% else %}
+                        <button x-show="showAllTags" 
+                                @click="toggleTag({{ tag.id }})" 
+                                :class="selectedTagId === {{ tag.id }} ? 'bg-primary text-black border-primary' : 'bg-white/5 text-text-sub border-white/10'"
+                                class="text-[10px] px-2.5 py-1 rounded-full border transition-all active:scale-95"
+                                style="display: none;">
+                            #{{ tag.name }}
+                        </button>
+                        {% endif %}
+                     {% endfor %}
+                     
+                     {% if all_tags|length > 10 %}
+                     <button @click="showAllTags = !showAllTags" class="text-[10px] px-2.5 py-1 rounded-full bg-white/5 text-text-sub border border-white/10 italic">
+                        <span x-text="showAllTags ? 'collapse' : '...'"></span>
+                     </button>
+                     {% endif %}
+                 </div>
              </div>
 
-             <!-- Timeline Items -->
-             {% for item in events %}
-             <div class="flex gap-3">
-                 <!-- Date Column -->
-                 <div class="flex flex-col items-center shrink-0 w-10 pt-1">
-                     <span class="text-[10px] text-text-sub font-mono">{{ item.created_at|date:"H:i"|default:"--" }}</span>
-                     {% if item.contact_made %}
-                     <div class="mt-1 w-5 h-5 flex items-center justify-center rounded-full bg-primary/20 text-primary border border-primary/30">
-                         <i class="fas fa-handshake text-[10px]"></i>
+             <!-- Log Items -->
+             <div class="space-y-0 relative">
+                 <template x-for="(item, index) in filteredLogs" :key="item.id">
+                     <div>
+                         <!-- Date Divider -->
+                         <template x-if="index === 0 || item.dateRaw !== filteredLogs[index-1].dateRaw">
+                             <div class="flex items-center gap-4 py-6 opacity-30 select-none">
+                                 <div class="h-px flex-1 bg-white/20"></div>
+                                 <span class="text-[10px] font-bold tracking-widest uppercase" x-text="item.dateRaw"></span>
+                                 <div class="h-px flex-1 bg-white/20"></div>
+                             </div>
+                         </template>
+
+                         <div class="flex gap-4 group">
+                             <!-- Leading Icon Column -->
+                             <div class="flex flex-col items-center shrink-0 w-6">
+                                 <div class="w-6 h-6 flex items-center justify-center rounded-full" 
+                                      :class="item.isQuestion ? 'bg-purple-500/20 text-purple-400' : (item.hasContact ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/5 text-text-sub')">
+                                     <i class="fas text-[10px]" :class="item.isQuestion ? 'fa-question-circle' : (item.hasContact ? 'fa-handshake' : 'fa-sticky-note')"></i>
+                                 </div>
+                                 <div class="w-px flex-1 bg-white/5 group-last:hidden mt-2"></div>
+                             </div>
+                             
+                             <!-- Content -->
+                             <div class="flex-1 pb-6">
+                                 <div class="flex justify-between items-start mb-1">
+                                     <span class="text-[10px] text-text-sub uppercase font-bold tracking-tight opacity-40" x-text="item.isQuestion ? 'ANSWER' : 'EVENT'"></span>
+                                 </div>
+                                 <p class="text-[13px] text-text-main whitespace-pre-wrap leading-snug" x-text="item.content"></p>
+                                 
+                                 <!-- Item Tags -->
+                                 <div class="flex flex-wrap gap-1 mt-2" x-show="item.tags.length > 0">
+                                     <template x-for="tag in item.tags" :key="tag.id">
+                                         <span @click.stop="searchByTag(tag.name)" class="text-[9px] px-2 py-0.5 rounded-full bg-surface border border-white/10 text-text-sub hover:text-primary hover:border-primary/30 transition cursor-pointer selection:bg-primary selection:text-black">
+                                             #<span x-text="tag.name"></span>
+                                         </span>
+                                     </template>
+                                 </div>
+                             </div>
+                         </div>
                      </div>
-                     {% endif %}
-                     <!-- Line -->
-                     <div class="w-px flex-1 bg-white/5 my-1 min-h-[20px]"></div>
-                 </div>
-                 
-                 <!-- Content -->
-                 <div class="flex-1 pb-4 border-b border-white/5 last:border-0">
-                     <div class="text-xs text-text-sub mb-1 opacity-70">{{ item.date|date:"Y/m/d (D)" }}</div>
-                     <p class="text-sm text-text-main whitespace-pre-wrap leading-relaxed">{{ item.content }}</p>
-                     
-                     <!-- Tags -->
-                     {% if item.tags.all %}
-                     <div class="flex flex-wrap gap-1 mt-2">
-                         {% for tag in item.tags.all %}
-                         <span class="text-[10px] px-2 py-0.5 rounded-full bg-surface border border-white/10 text-text-sub">#{{ tag.name }}</span>
-                         {% endfor %}
-                     </div>
-                     {% endif %}
+                 </template>
+
+                 <!-- Empty State -->
+                 <div x-show="filteredLogs.length === 0" class="text-center py-12 text-text-sub text-sm italic opacity-50">
+                    No matching logs found.
                  </div>
              </div>
-             {% empty %}
-             <div class="text-center py-8 text-text-sub text-sm">No timeline entries.</div>
-             {% endfor %}
              
-             <div class="text-center py-4">
-                 <a href="{% url 'intelligence_log' %}?target_id={{ target.id }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-black text-xs font-bold shadow-lg">
-                     <i class="fas fa-plus"></i> Add Entry
+             <!-- Add Button (Sticky or Bottom) -->
+             <div class="text-center py-8">
+                 <a href="{% url 'intelligence_log' %}?target_id={{ target.id }}" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-primary text-black text-xs font-bold shadow-xl active:scale-95 transition">
+                     <i class="fas fa-plus"></i> Add Event Log
                  </a>
              </div>
         </div>

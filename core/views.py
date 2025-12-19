@@ -301,17 +301,19 @@ class TargetDetailView(LoginRequiredMixin, MobileTemplateMixin, DetailView):
         else:
             context['global_progress'] = 0
 
-        # 3. Events / Timeline (Recent 20)
+        # 3. Events / Event Log (Include Questions, Sort by Date DESC)
+        # Fetch more than 20 to support basic log browsing
         context['events'] = TimelineItem.objects.filter(
             target=target
-        ).exclude(type='Question').order_by('-date', '-created_at')[:20]
+        ).prefetch_related('images', 'tags').order_by('-date', '-created_at')[:100]
         
-        # 4. Tags
+        # 4. Tags (Top tags for this specific target)
         from django.db.models import Count
         from intelligence.models import Tag
-        context['tags'] = Tag.objects.filter(
+        # Get all tags used by THIS target's items, sorted by count
+        context['all_tags'] = Tag.objects.filter(
             timelineitem__target=target
-        ).annotate(count=Count('timelineitem')).order_by('-count')
+        ).annotate(use_count=Count('timelineitem')).order_by('-use_count')
         
         # 5. Anniversaries
         context['custom_anniversaries'] = target.customanniversary_set.all()
