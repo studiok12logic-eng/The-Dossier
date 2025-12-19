@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.views.generic import CreateView, UpdateView, View, DeleteView, DetailView
+from django.views.generic import CreateView, UpdateView, View, DeleteView, DetailView, TemplateView
 from core.mixins import MobileTemplateMixin
 from django.urls import reverse_lazy
 from django.db import transaction
@@ -1553,9 +1553,6 @@ class QuestionListAPIView(LoginRequiredMixin, View):
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
-class HelpView(LoginRequiredMixin, MobileTemplateMixin, View):
+class HelpView(LoginRequiredMixin, MobileTemplateMixin, TemplateView):
     template_name = 'help.html'
     mobile_template_name = 'mobile/help_mobile.html'
-
-    def get(self, request, *args, **kwargs):
-        return render(request, self.get_template_name(), {})
