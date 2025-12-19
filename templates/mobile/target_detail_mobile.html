@@ -91,6 +91,87 @@
         </div>
     </div>
 
+    <!-- Base Profile & Progress Section -->
+    <div class="px-6 py-6 bg-surface border-b border-white/5">
+        <h2 class="text-xs font-bold text-text-sub uppercase tracking-wider mb-4 opacity-70">・BASE PROFILE</h2>
+        
+        <div class="space-y-3 mb-8">
+            <div class="flex justify-between text-xs">
+                <span class="text-text-sub">誕生日</span>
+                <span class="text-text-main">{% if target.birth_year %}{{ target.birth_year }}/{{ target.birth_month }}/{{ target.birth_day }}{% else %}-{% endif %}</span>
+            </div>
+            <div class="flex justify-between text-xs">
+                <span class="text-text-sub">年齢・干支・星座</span>
+                <span class="text-text-main">
+                    {% if target.birth_year %}{{ age }}歳 ・ {{ target.eto }} ・ {{ target.zodiac_sign }}{% else %}-{% endif %}
+                </span>
+            </div>
+            <div class="flex justify-between text-xs">
+                <span class="text-text-sub">記念日</span>
+                <div class="text-right">
+                    {% for anniv in custom_anniversaries %}
+                        <div class="text-text-main font-bold">{{ anniv.label }} ({{ anniv.date|date:"m/d" }})</div>
+                    {% empty %}
+                        <span class="text-text-sub">-</span>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Shared Questions Grouped -->
+            <div class="pt-4 space-y-3 border-t border-white/5 mt-4">
+                {% for title, ans in base_answers.items %}
+                <div class="flex justify-between text-xs">
+                    <span class="text-text-sub">{{ title }}</span>
+                    <span class="text-text-main font-medium">{{ ans|default:"-" }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Progress Tracking -->
+        <div class="space-y-6">
+            <!-- Global & Base Master Progress -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-black/20 p-3 rounded-lg border border-white/5">
+                    <div class="flex justify-between text-[9px] text-text-sub mb-1.5 font-bold uppercase tracking-tighter">
+                        <span>Global Progress</span>
+                        <span>{{ global_progress }}%</span>
+                    </div>
+                    <div class="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                        <div class="h-full bg-primary" style="width: {{ global_progress }}%"></div>
+                    </div>
+                </div>
+                <div class="bg-black/20 p-3 rounded-lg border border-white/5">
+                    <div class="flex justify-between text-[9px] text-text-sub mb-1.5 font-bold uppercase tracking-tighter">
+                        <span>Base Profile</span>
+                        <span>{{ base_progress }}%</span>
+                    </div>
+                    <div class="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                        <div class="h-full bg-emerald-500" style="width: {{ base_progress }}%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category-wise Progress Grid -->
+            <div>
+                <h3 class="text-[9px] font-bold text-text-sub uppercase tracking-widest mb-3 opacity-50">Category Progress</h3>
+                <div class="grid grid-cols-2 gap-x-4 gap-y-3">
+                    {% for cat in qa_data %}
+                    <div class="flex flex-col gap-1">
+                        <div class="flex justify-between items-center text-[8px] text-text-sub font-mono">
+                            <span class="truncate pr-2">{{ cat.category.name }}</span>
+                            <span class="shrink-0">{{ cat.progress }}%</span>
+                        </div>
+                        <div class="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                            <div class="h-full bg-blue-400 opacity-80" style="width: {{ cat.progress }}%"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Tabs content container -->
     <div class="flex-1 overflow-y-auto" x-data="{ tab: 'timeline' }">
         

@@ -209,43 +209,80 @@ class TargetDetailView(LoginRequiredMixin, MobileTemplateMixin, DetailView):
         context['total_points'] = points_data['total_points'] or 0
         context['total_answers'] = points_data['total_answers'] or 0
         
-        # 2. Q&A
+        # 2. Q&A and Progress Calculation
         from intelligence.models import Question, QuestionCategory
         # Get all categories
         categories = QuestionCategory.objects.filter(user=self.request.user)
         qa_data = []
+        total_q_count = 0
+        total_answered_count = 0
         
+        # Specific titles for Base Profile (10 Questions)
+        base_titles = ['性別', '血液型', '性格タイプ', '出身地', '職業', '現在住所', '家族構成', '趣味', '弱点/苦手なもの', '得意なこと']
+        base_answers = {title: None for title in base_titles}
+        answered_base_qs_count = 0
+
         for cat in categories:
             questions = Question.objects.filter(category=cat).order_by('order', 'title')
+            q_count = questions.count()
+            total_q_count += q_count
+            
             cat_data = {
                 'category': cat,
                 'questions': [],
                 'answered_count': 0,
-                'total_count': questions.count()
+                'total_count': q_count,
+                'progress': 0
             }
             
             for q in questions:
                 # Find latest answer
-                # Optimized: could use Subquery/Prefetch, but loop is okay for low volume
                 answer_item = TimelineItem.objects.filter(
                     target=target, 
                     type='Question', 
                     question=q
                 ).order_by('-date', '-created_at').first()
                 
+                is_answered = bool(answer_item)
+                if is_answered:
+                    cat_data['answered_count'] += 1
+                    total_answered_count += 1
+                    # Check if this is a Base Profile question
+                    if q.title in base_titles:
+                        base_answers[q.title] = answer_item.content
+                        answered_base_qs_count += 1
+                
                 q_info = {
                     'question': q,
-                    'answer': answer_item.content if answer_item else None, # key is 'content' in model
-                    'answer_date': answer_item.date if answer_item else None,
-                    'is_answered': bool(answer_item)
+                    'answer': answer_item.content if is_answered else None,
+                    'answer_date': answer_item.date if is_answered else None,
+                    'is_answered': is_answered
                 }
-                if answer_item: cat_data['answered_count'] += 1
                 cat_data['questions'].append(q_info)
                 
+            if q_count > 0:
+                cat_data['progress'] = round((cat_data['answered_count'] / q_count) * 100)
             qa_data.append(cat_data)
             
         context['qa_data'] = qa_data
         
+        # Calculate Base Profile Progress (14 items: 3 Bio + 1 Anniversary + 10 Questions)
+        answered_base_items = 0
+        if target.birth_year:
+            answered_base_items += 3 # Birthday, Age, Eto
+        if target.customanniversary_set.exists():
+            answered_base_items += 1
+        answered_base_items += answered_base_qs_count
+        
+        context['base_answers'] = base_answers
+        context['base_progress'] = min(round((answered_base_items / 14) * 100), 100)
+        
+        # Global Progress
+        if total_q_count > 0:
+            context['global_progress'] = round((total_answered_count / total_q_count) * 100)
+        else:
+            context['global_progress'] = 0
+
         # 3. Events / Timeline (Recent 20)
         context['events'] = TimelineItem.objects.filter(
             target=target
@@ -257,6 +294,9 @@ class TargetDetailView(LoginRequiredMixin, MobileTemplateMixin, DetailView):
         context['tags'] = Tag.objects.filter(
             timelineitem__target=target
         ).annotate(count=Count('timelineitem')).order_by('-count')
+        
+        # 5. Anniversaries
+        context['custom_anniversaries'] = target.customanniversary_set.all()
         
         return context
 
