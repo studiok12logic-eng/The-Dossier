@@ -206,7 +206,7 @@
 
             <div class="form-group">
                 <!-- Checkbox Grid (Tag Style) -->
-                <div class="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 bg-black/20 rounded border border-white/5" id="groupsContainer">
+                <div class="flex flex-wrap gap-2 p-2 bg-black/20 rounded border border-white/5" id="groupsContainer">
                     {% for group in user_groups %}
                     <label class="group-item relative flex items-center justify-between px-3 py-2 rounded-full border border-white/10 bg-surface/50 transition cursor-pointer select-none group-select-label"
                         data-id="{{ group.id }}"
@@ -249,7 +249,7 @@
             {{ anniversaries.management_form }}
             <div id="anniversary-forms" class="space-y-4">
                 {% for form in anniversaries %}
-                <div class="anniversary-row flex gap-2 items-end mb-2">
+                <div class="anniversary-row w-full flex gap-2 items-end mb-2">
                     {{ form.id }}
                     {{ form.target }}
                     <div class="hidden">{{ form.DELETE }}</div>
@@ -258,17 +258,19 @@
                         <label class="block text-xs font-mono text-gray-400 mb-1">名称</label>
                         {{ form.label }}
                     </div>
-                    <div class="w-40 flex flex-col">
+                    <div class="flex flex-col" style="width: auto;">
                         <label class="block text-xs font-mono text-gray-400 mb-1">日付</label>
-                        <div class="flex items-center gap-0 h-[42px]"> <!-- Fixed height container for alignment -->
+                        <div class="flex items-center gap-0 h-[42px]"> 
                             <!-- Date Input with rounded-r-none -->
-                            <div class="flex-1 h-full"> 
-                                <style>.ann-date-input input { border-top-right-radius: 0; border-bottom-right-radius: 0; height: 100%; }</style>
+                            <div class="w-32 h-full"> 
+                                <style>.ann-date-input input { border-top-right-radius: 0 !important; border-bottom-right-radius: 0 !important; height: 100%; width: 100%; }</style>
                                 <span class="ann-date-input h-full block">{{ form.date }}</span>
                             </div>
                             <!-- Delete Button -->
                             <button type="button"
-                                class="delete-anniversary-btn w-[42px] h-full rounded-r bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition {% if not form.instance.pk %}hidden{% endif %}" title="削除">
+                                class="delete-anniversary-btn h-full rounded-r bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition rounded-l-none border-l-0 {% if not form.instance.pk %}hidden{% endif %}" 
+                                style="width: 8vw;"
+                                title="削除">
                                 <i class="fas fa-times text-sm"></i>
                             </button>
                         </div>
@@ -414,7 +416,7 @@
 
 <!-- Hidden Template for Anniversary Row -->
 <div id="empty_anniversary_form_template" class="hidden">
-    <div class="anniversary-row flex gap-2 items-end mb-2">
+    <div class="anniversary-row w-full flex gap-2 items-end mb-2">
         {{ anniversaries.empty_form.id }}
         {{ anniversaries.empty_form.target }}
         <div class="hidden">{{ anniversaries.empty_form.DELETE }}</div>
@@ -423,14 +425,16 @@
             <label class="block text-xs font-mono text-gray-400 mb-1">名称</label>
             {{ anniversaries.empty_form.label }}
         </div>
-        <div class="w-40 flex flex-col">
+        <div class="flex flex-col" style="width: auto;">
             <label class="block text-xs font-mono text-gray-400 mb-1">日付</label>
             <div class="flex items-center gap-0 h-[42px]">
-                <div class="flex-1 h-full"> 
+                <div class="w-32 h-full"> 
                     <span class="ann-date-input h-full block">{{ anniversaries.empty_form.date }}</span>
                 </div>
                 <button type="button"
-                    class="delete-anniversary-btn w-[42px] h-full rounded-r bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition" title="削除">
+                    class="delete-anniversary-btn h-full rounded-r bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition rounded-l-none border-l-0" 
+                    style="width: 8vw;"
+                    title="削除">
                     <i class="fas fa-times text-sm"></i>
                 </button>
             </div>
