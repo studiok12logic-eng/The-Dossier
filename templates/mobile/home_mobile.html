@@ -29,10 +29,10 @@
                     <div class="mt-1">
                         <div class="font-bold text-[11px] text-text-main truncate">{{ anniv.target.nickname }}</div>
                         <div class="text-[9px] text-text-sub flex items-center gap-1 mt-0.5">
-                            <i class="fas {% if anniv.name == 'Birthday' %}fa-birthday-cake text-primary{% else %}fa-star text-yellow-500{% endif %} opacity-70"></i>
-                            {{ anniv.name }}
+                            <i class="fas {% if anniv.name == 'Birthday' %}fa-birthday-cake text-primary{% else %}fa-star text-yellow-500{% endif %} opacity-70 shrink-0"></i>
+                            <span class="truncate">{{ anniv.name }}</span>
                         </div>
-                        <div class="flex items-center gap-1.5 mt-1">
+                        <div class="flex items-center justify-between mt-1">
                             <span class="text-[10px] text-text-sub/50 font-mono">{{ anniv.date|date:"m/d" }}</span>
                             <span class="text-[10px] font-bold {% if anniv.is_today %}text-accent-red{% else %}text-primary{% endif %} font-mono">
                                 {% if anniv.is_today %}TODAY{% else %}{{ anniv.days_left }}d{% endif %}
