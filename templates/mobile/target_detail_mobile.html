@@ -3,6 +3,9 @@
 {% block title %}{{ target.nickname }}{% endblock %}
 
 {% block content %}
+<style>
+    .bar-animate { transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+</style>
 <div class="flex flex-col h-full bg-background">
     <!-- Header -->
     <div class="p-4 border-b border-white/10 shrink-0 flex items-center gap-3">
@@ -102,8 +105,11 @@
                 <span>{{ base_progress }}%</span>
             </div>
             <div class="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-                <div class="h-full block transition-all duration-500" 
-                     style="width:{{ base_progress }}%; height:100%; display:block; background-color:{{ base_color }}; box-shadow:{{ base_shadow }};"></div>
+                <div class="h-full block bar-animate js-progress-bar" 
+                     style="width: 0%; height: 100%; display: block;"
+                     data-width="{{ base_progress }}%" 
+                     data-color="{{ base_color }}" 
+                     data-shadow="{{ base_shadow }}"></div>
             </div>
         </div>
 
@@ -172,7 +178,9 @@
                         <span>{{ base_progress }}%</span>
                     </div>
                     <div class="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                        <div class="h-full block bg-emerald-500" style="width:{{ base_progress }}%; height:100%; display:block;"></div>
+                        <div class="h-full block bg-emerald-500 bar-animate js-progress-bar" 
+                             style="width: 0%; height: 100%; display: block;"
+                             data-width="{{ base_progress }}%"></div>
                     </div>
                 </div>
 
@@ -184,7 +192,9 @@
                         <span>{{ cat.progress }}%</span>
                     </div>
                     <div class="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                        <div class="h-full block bg-blue-500 opacity-80" style="width:{{ cat.progress }}%; height:100%; display:block;"></div>
+                        <div class="h-full block bg-blue-500 opacity-80 bar-animate js-progress-bar" 
+                             style="width: 0%; height: 100%; display: block;"
+                             data-width="{{ cat.progress }}%"></div>
                     </div>
                 </div>
                 {% endfor %}
@@ -283,4 +293,16 @@
 
 <!-- Alpine.js for Tabs -->
 <script src="//unpkg.com/alpinejs" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Small delay to ensure transition triggers
+    setTimeout(() => {
+        document.querySelectorAll('.js-progress-bar').forEach(el => {
+            if (el.dataset.width) el.style.width = el.dataset.width;
+            if (el.dataset.color) el.style.backgroundColor = el.dataset.color;
+            if (el.dataset.shadow) el.style.boxShadow = el.dataset.shadow;
+        });
+    }, 50);
+});
+</script>
 {% endblock %}
