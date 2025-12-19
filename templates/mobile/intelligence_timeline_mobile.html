@@ -10,11 +10,9 @@
 <div class="fixed inset-0 flex flex-col bg-background overflow-hidden">
 
     <!-- 1. Header (Minimalist) -->
-    <header class="h-14 px-4 flex items-center justify-between border-b border-white/10 bg-surface z-30 shrink-0">
-        <div class="flex items-center gap-3">
-            <button data-url="{% url 'intelligence_log' %}" 
-                    onclick="window.location.href=this.dataset.url" 
-                    class="w-10 h-10 flex items-center justify-center text-text-sub hover:text-white rounded-full hover:bg-white/5 active:bg-white/10">
+    <header class="h-14 px-4 flex items-center justify-between border-b border-white/10 bg-surface z-30 shrink-0 sticky top-0">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='{% url 'target_detail' %}?target_id={{ target.id }}'">
+            <button class="w-10 h-10 flex items-center justify-center text-text-sub hover:text-white rounded-full hover:bg-white/5 active:bg-white/10" onclick="event.stopPropagation(); window.location.href='{% url 'intelligence_log' %}'">
                 <i class="fas fa-chevron-left text-lg"></i>
             </button>
             
@@ -29,37 +27,33 @@
                  <div>
                      <h1 class="font-bold text-sm text-text-main leading-tight">{{ target.nickname }}</h1>
                      <span class="text-[10px] text-text-sub block leading-none opacity-70">
-                        {% if target.last_contact %}Last: {{ target.last_contact|date:"m/d" }}{% else %}New Target{% endif %}
+                        Last: {% if target.last_contact %}{{ target.last_contact|date:"m/d" }}{% else %}-{% endif %}
                     </span>
                  </div>
             </div>
         </div>
         
         <div class="flex items-center gap-1">
-             <!-- Date Picker (Native) -->
-            <div class="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/5 text-text-sub transition-colors" id="datePickerContainer">
-                <i class="far fa-calendar text-lg pointer-events-none"></i>
-                <input type="date" id="datePicker" class="absolute inset-0 opacity-0 w-full h-full z-10" style="cursor: pointer;" autocomplete="off">
+             <!-- Date Picker (Visible Input style) -->
+            <div class="bg-white/5 rounded-lg h-9 border border-white/10 hover:bg-white/10 transition-colors flex items-center mr-1">
+                <input type="date" id="datePicker"
+                       value="{{ today_date|date:'Y-m-d' }}" 
+                       class="bg-transparent border-none text-text-main font-mono text-xs h-full px-2 focus:ring-0 cursor-pointer"
+                       style="color-scheme: dark; width: 110px;">
             </div>
             
             <!-- Search Toggle -->
             <button id="searchToggleBtn" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/5 text-text-sub">
                 <i class="fas fa-search text-lg"></i>
             </button>
-            
-            <!-- Answer Modal Trigger -->
-            <button onclick="openQuestionModal()" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/5 text-text-sub">
-                <i class="far fa-question-circle text-lg"></i>
-            </button>
         </div>
     </header>
     
-    <!-- Popover Search Bar (Hidden by default) -->
-    <div id="searchPopover" class="absolute top-16 left-4 right-4 z-40 hidden animate-fade-in origin-top">
-        <div class="bg-surface border border-white/10 rounded-full shadow-2xl flex items-center px-4 py-2">
-            <i class="fas fa-search text-text-sub text-sm mr-3"></i>
-            <input type="text" id="timelineSearchInput" placeholder="Search logs..." class="bg-transparent border-none focus:ring-0 text-sm text-text-main w-full placeholder-text-sub/50" style="height: 2em;" autocomplete="off">
-            <button onclick="closeSearch()" class="text-text-sub ml-2"><i class="fas fa-times"></i></button>
+    <!-- Search Bar (Hidden by default, slide interaction) -->
+    <div id="searchPopover" class="hidden px-4 py-2 bg-surface border-b border-white/10 sticky top-14 z-20 animate-slide-down">
+         <div class="relative">
+            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-text-sub text-xs"></i>
+            <input type="text" id="timelineSearchInput" placeholder="Search logs..." class="w-full bg-background border border-white/10 rounded-full pl-9 pr-4 py-2 text-xs text-text-main placeholder-text-sub/50 focus:border-primary outline-none" autocomplete="off">
         </div>
     </div>
 
@@ -170,7 +164,7 @@
                     <i class="far fa-image text-lg"></i>
                 </button>
                  <!-- Contact -->
-                <button id="contactFlagBtn" class="w-10 h-10 flex items-center justify-center text-text-sub transition rounded-full active:bg-white/5 border border-transparent shrink-0">
+                <button id="contactFlagBtn" class="w-10 h-10 flex items-center justify-center text-primary bg-primary/10 border border-primary/30 transition rounded-full active:bg-white/5 shrink-0">
                     <i class="fas fa-handshake text-lg"></i>
                 </button>
              </div>
@@ -186,18 +180,18 @@
             </div>
             
             <!-- Submit (Only visible when typing usually, or always detail?) -->
-            <!-- User said: Select Input -> Tools hide -> Input expands. -->
+            <!-- MOVED Question Modal Trigger here (replacing actionIconDetail) -->
             <div>
                  <button id="saveLogBtn" class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-2 text-primary transition-all shadow-lg active:scale-95">
-                    <!-- Default: Detail Icon (Ellipsis) -->
-                    <i id="actionIconDetail" class="fas fa-ellipsis-h text-lg"></i>
+                    <!-- Default: Question Icon (instead of Ellipsis) -->
+                    <i id="actionIconDetail" class="far fa-question-circle text-lg"></i>
                     <!-- Active: Send Icon (Paper Plane) -->
                     <i id="actionIconSend" class="fas fa-paper-plane text-lg hidden translate-x-[-1px] translate-y-[1px]" style="display: none;"></i>
                 </button>
             </div>
             
             <!-- Hidden inputs -->
-            <input type="checkbox" id="contactFlag" class="hidden">
+            <input type="checkbox" id="contactFlag" class="hidden" checked>
             <input type="file" id="imageInput" class="hidden" accept="image/*" multiple>
         </div>
     </div>
@@ -539,58 +533,13 @@
         window.location.search = '?target_id=' + targetId + '&date=' + e.target.value;
     });
 
-    function updateInputState() {
-        chatInput.style.height = 'auto';
-        const newHeight = Math.min(chatInput.scrollHeight, 120);
-        chatInput.style.height = (newHeight > 40 ? newHeight : 40) + 'px';
-        
-        const hasText = chatInput.value.trim().length > 0;
-        const hasTags = typeof currentSelectedTags !== 'undefined' && currentSelectedTags.size > 0;
-        
-        const iconDetail = document.getElementById('actionIconDetail');
-        const iconSend = document.getElementById('actionIconSend');
-        
-        if (hasText || hasTags) {
-             // Show Send
-             saveLogBtn.classList.remove('bg-surface-2', 'text-primary'); 
-             saveLogBtn.classList.add('bg-primary', 'text-black'); 
-             
-             iconDetail.style.display = 'none';
-             iconSend.classList.remove('hidden');
-             iconSend.style.display = 'inline-block';
-        } else {
-             // Show Detail
-             saveLogBtn.classList.remove('bg-primary', 'text-black');
-             saveLogBtn.classList.add('bg-surface-2', 'text-primary'); 
-             
-             iconDetail.style.display = 'inline-block';
-             iconSend.classList.add('hidden');
-             iconSend.style.display = 'none';
-        }
-    }
-
-    // Input Auto-Resize & Button Toggle
-    chatInput.addEventListener('input', updateInputState);
-    
-    // Initial State Check
-    updateInputState();
-
-    // Action Button Click
-    saveLogBtn.addEventListener('click', () => {
-        const text = chatInput.value.trim();
-        const hasTags = typeof currentSelectedTags !== 'undefined' && currentSelectedTags.size > 0;
-        
-        if (text || hasTags) {
-            saveLog(text);
-        } else {
-            // Navigate to Detail
-            window.location.href = "{% url 'target_detail' %}?target_id=" + targetId;
-        }
-    });
-    
     // Contact Toggle
     contactFlagBtn.addEventListener('click', () => {
         contactFlag.checked = !contactFlag.checked;
+        updateContactBtnState();
+    });
+    
+    function updateContactBtnState() {
         if(contactFlag.checked) {
             contactFlagBtn.classList.add('text-primary', 'bg-primary/10', 'border-primary/30');
             contactFlagBtn.classList.remove('text-text-sub', 'border-transparent');
@@ -598,7 +547,10 @@
             contactFlagBtn.classList.remove('text-primary', 'bg-primary/10', 'border-primary/30');
             contactFlagBtn.classList.add('text-text-sub', 'border-transparent');
         }
-    });
+    }
+    
+    // Initial State Check
+    updateContactBtnState(); // Ensure button matches default checked state
     
     // Search Toggle
     searchToggleBtn.addEventListener('click', () => {
@@ -607,6 +559,16 @@
             searchInput.focus();
         }
     });
+
+    // Close Search Button
+    // Note: Use event delegation or ensure button inside popover calls this if it exists? 
+    // The new html has <input ... ><button ... closeSearch ...> NO, I removed button from new html to match target list style?
+    // Wait, target list didn't have close button in form.
+    // My replacement html:
+    // <div class="relative"><i search></i><input ...></div>
+    // No close button. 
+    // So closeSearch() might be unused or I should add a way to close?
+    // Tap outside to close? Or toggle btn again.
     
     searchInput.addEventListener('input', (e) => {
         const term = e.target.value.toLowerCase();
@@ -624,6 +586,49 @@
         // Reset Filter (Show all)
         const items = timelineContainer.querySelectorAll('.timeline-item');
         items.forEach(item => item.style.display = 'flex');
+    }
+
+    // Action Button Click
+    saveLogBtn.addEventListener('click', () => {
+        const text = chatInput.value.trim();
+        const hasTags = typeof currentSelectedTags !== 'undefined' && currentSelectedTags.size > 0;
+        
+        if (text || hasTags) {
+            saveLog(text);
+        } else {
+            // Open Question Modal
+            if(typeof openQuestionModal === 'function') openQuestionModal();
+        }
+    });
+
+    function updateInputState() {
+        chatInput.style.height = 'auto';
+        const newHeight = Math.min(chatInput.scrollHeight, 120);
+        chatInput.style.height = (newHeight > 40 ? newHeight : 40) + 'px';
+        
+        const hasText = chatInput.value.trim().length > 0;
+        const hasTags = typeof currentSelectedTags !== 'undefined' && currentSelectedTags.size > 0;
+        
+        const iconDetail = document.getElementById('actionIconDetail');
+        const iconSend = document.getElementById('actionIconSend');
+        
+        if (hasText || hasTags) {
+            // Show Send
+            saveLogBtn.classList.remove('bg-surface-2', 'text-primary'); 
+            saveLogBtn.classList.add('bg-primary', 'text-black'); 
+            
+            iconDetail.style.display = 'none';
+            iconSend.classList.remove('hidden');
+            iconSend.style.display = 'inline-block';
+        } else {
+            // Show Question (Detail)
+            saveLogBtn.classList.remove('bg-primary', 'text-black');
+            saveLogBtn.classList.add('bg-surface-2', 'text-primary'); 
+            
+            iconDetail.style.display = 'inline-block';
+            iconSend.classList.add('hidden');
+            iconSend.style.display = 'none';
+        }
     }
 
     function handleLightboxClick(el) {
