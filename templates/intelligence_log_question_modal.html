@@ -1,11 +1,11 @@
 <!-- Question Modal -->
 <div id="questionModal" class="hidden fixed inset-0 z-[60] bg-black/80 flex items-end sm:items-center justify-center sm:p-4 backdrop-blur-sm transition-opacity duration-300 opacity-0 pointer-events-none">
-    <div class="bg-surface border-t sm:border border-white/10 rounded-t-2xl sm:rounded-xl w-full max-w-md h-[85vh] sm:h-[650px] flex flex-col shadow-2xl transform transition-transform duration-300 translate-y-full sm:translate-y-0 scale-95 sm:scale-100 relative">
+    <div class="bg-surface border-t sm:border border-white/10 sm:rounded-xl w-full max-w-md h-full sm:h-[650px] flex flex-col shadow-2xl transform transition-transform duration-300 translate-y-full sm:translate-y-0 scale-95 sm:scale-100 relative">
         
         <!-- Main View: Question List -->
         <div id="questionListView" class="flex flex-col h-full w-full">
             <!-- Header -->
-            <div class="p-4 border-b border-white/10 shrink-0 bg-surface z-10 rounded-t-2xl sm:rounded-t-xl">
+            <div class="p-4 border-b border-white/10 shrink-0 bg-surface z-10 sm:rounded-t-xl">
                  <div class="flex justify-between items-center mb-3">
                     <h3 class="text-sm font-bold tracking-wider text-text-main">QUESTIONS</h3>
                     <button onclick="closeQuestionModal()" class="w-8 h-8 flex items-center justify-center text-text-sub hover:text-white rounded-full bg-white/5">
@@ -27,7 +27,7 @@
         </div>
 
         <!-- Sub View: Answer Form -->
-        <div id="questionAnswerView" class="hidden absolute inset-0 bg-surface rounded-t-2xl sm:rounded-xl flex flex-col z-20 translate-x-full transition-transform duration-300">
+        <div id="questionAnswerView" class="hidden absolute inset-0 bg-surface sm:rounded-xl flex flex-col z-20 translate-x-full transition-transform duration-300">
              <!-- Header -->
              <div class="p-4 border-b border-white/10 shrink-0 flex items-center gap-3">
                  <button onclick="backToQuestionList()" class="w-8 h-8 flex items-center justify-center text-text-sub hover:text-white rounded-full bg-white/5">
@@ -48,16 +48,12 @@
              </div>
              
              <!-- Footer -->
-             <div class="p-4 border-t border-white/10 shrink-0">
-                 <button onclick="submitAnswer()" class="w-full py-3 bg-primary text-black font-bold rounded-xl shadow-lg hover:bg-primary-light transition-transform active:scale-95 flex items-center justify-center gap-2">
+             <div class="p-4 border-t border-white/10 shrink-0 pb-safe">
+                 <button onclick="submitAnswer()" class="w-full py-2 text-sm bg-primary text-black font-bold rounded-xl shadow-lg hover:bg-primary-light transition-transform active:scale-95 flex items-center justify-center gap-2">
                      <i class="fas fa-paper-plane"></i> Submit Answer
                  </button>
              </div>
         </div>
-        
-        <!-- Padding for mobile safe area -->
-        <div class="h-6 sm:hidden shrink-0"></div> 
-    </div>
 </div>
 
 <script>
