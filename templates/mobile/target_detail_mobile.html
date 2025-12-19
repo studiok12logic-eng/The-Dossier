@@ -316,19 +316,17 @@
                              </div>
                          </template>
 
-                         <div class="flex gap-2 group">
-                             <!-- Leading Icon Column -->
-                             <div class="flex flex-col items-center shrink-0 w-6">
-                                 <div class="w-6 h-6 flex items-center justify-center rounded-full" 
-                                      :class="item.isQuestion ? 'bg-purple-500/20 text-purple-400' : (item.hasContact ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/5 text-text-sub')">
-                                     <i class="fas text-[10px]" :class="item.isQuestion ? 'fa-question-circle' : (item.hasContact ? 'fa-handshake' : 'fa-sticky-note')"></i>
-                                 </div>
-                                 <div class="w-px flex-1 bg-white/5 group-last:hidden mt-2"></div>
-                             </div>
-                             
+                         <div class="flex gap-2 group items-start">
                              <!-- Content -->
                              <div class="flex-1 pb-2">
-                                 <p class="text-[13px] text-text-main whitespace-pre-wrap leading-snug" x-text="item.content"></p>
+                                 <div class="flex justify-between items-start">
+                                     <p class="text-[13px] text-text-main whitespace-pre-wrap leading-snug" x-text="item.content"></p>
+                                     
+                                     <!-- Right Contact Icon -->
+                                     <template x-if="item.hasContact">
+                                         <i class="fas fa-handshake text-emerald-500/80 text-xs ml-2 mt-0.5 shrink-0"></i>
+                                     </template>
+                                 </div>
                                  
                                  <!-- Item Tags -->
                                  <div class="flex flex-wrap gap-1 mt-2" x-show="item.tags.length > 0">

@@ -305,7 +305,7 @@ class TargetDetailView(LoginRequiredMixin, MobileTemplateMixin, DetailView):
         # Fetch more than 20 to support basic log browsing
         context['events'] = TimelineItem.objects.filter(
             target=target
-        ).prefetch_related('images', 'tags').order_by('-date', '-created_at')[:100]
+        ).exclude(type='Question').prefetch_related('images', 'tags').order_by('-date', '-created_at')[:100]
         
         # 4. Tags (Top tags for this specific target)
         from django.db.models import Count
