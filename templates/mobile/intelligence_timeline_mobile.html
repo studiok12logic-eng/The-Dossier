@@ -630,6 +630,10 @@
             iconSend.style.display = 'none';
         }
     }
+    
+    // Re-attach Event Listener (accidentally removed)
+    chatInput.addEventListener('input', updateInputState);
+    updateInputState();
 
     function handleLightboxClick(el) {
         const src = el.getAttribute('data-src');
