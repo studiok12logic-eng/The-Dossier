@@ -16,10 +16,13 @@ class RegisterView(CreateView):
         login(self.request, user)
         return redirect('dashboard')
 
-class ProfileView(LoginRequiredMixin, UpdateView):
+from core.mixins import MobileTemplateMixin
+
+class ProfileView(LoginRequiredMixin, MobileTemplateMixin, UpdateView):
     model = CustomUser
     form_class = CustomUserChangeForm
     template_name = 'accounts/profile.html'
+    mobile_template_name = 'mobile/accounts/profile_mobile.html'
     success_url = reverse_lazy('profile')
     
     def get_object(self):
