@@ -23,32 +23,24 @@ def dashboard(request):
     today = datetime.date.today()
     user = request.user
     
-    # 1. Stats Calculation (Python-side for safety/compatibility)
-    # Fetch all relevant fields for Question items
-    q_items = TimelineItem.objects.filter(
-        target__user=user, type='Question', question__isnull=False
-    ).values('target_id', 'question_id', 'question__rank__points')
-    
-    # Process Unique Answers
-    # Set of unique (target_id, question_id) tuples
-    unique_pairs = set()
-    total_points = 0
-    
-    for item in q_items:
-        pair = (item['target_id'], item['question_id'])
-        if pair not in unique_pairs:
-            unique_pairs.add(pair)
-            # Add points for this unique answer
-            points = item['question__rank__points']
-            if points:
-                total_points += points
+    # [MODIFIED] 1. Random Question for "Today's Topic"
+    random_question = Question.objects.filter(user=user).order_by('?').first() or \
+                      Question.objects.filter(is_shared=True).order_by('?').first()
 
-    qa_count = len(unique_pairs)
-    total_logs = TimelineItem.objects.filter(target__user=user).count()
+    # [MODIFIED] 2. Latest Logs (Events) - Limit 10
+    latest_logs = TimelineItem.objects.filter(
+        target__user=user
+    ).exclude(type='Question').select_related('target').prefetch_related('images').order_by('-date', '-created_at')[:10]
 
-    # 2. Anniversaries (Range: Today to Today+7 for notification bar)
+    # [MODIFIED] 3. Latest Answers - Limit 10
+    latest_answers = TimelineItem.objects.filter(
+        target__user=user, type='Question'
+    ).select_related('target', 'question').order_by('-date', '-created_at')[:10]
+
+    # 4. Anniversaries (Range: Today to Today+7)
     start_date = today
-    end_date = today + datetime.timedelta(days=7)
+    # ... (Keep existing anniversary logic below) ...
+    end_date = today + datetime.timedelta(days=14) # Extended range slightly for better upcoming visibility
     
     upcoming_anniv_list = []
     
@@ -60,11 +52,14 @@ def dashboard(request):
             user=user, birth_month=date_curs.month, birth_day=date_curs.day
         )
         for t in b_targets:
+            # Calc Days Left
+            days_left = (date_curs - today).days
             upcoming_anniv_list.append({
                 'date': date_curs,
-                'name': '誕生日',
+                'name': 'Birthday', # Standardize label
                 'target': t,
-                'is_past': date_curs < today
+                'days_left': days_left,
+                'is_today': days_left == 0
             })
             
         # Custom
@@ -72,27 +67,27 @@ def dashboard(request):
             target__user=user, date__month=date_curs.month, date__day=date_curs.day
         ).select_related('target')
         for ca in c_annivs:
+            days_left = (date_curs - today).days
             upcoming_anniv_list.append({
                 'date': date_curs,
                 'name': ca.label,
                 'target': ca.target,
-                'is_past': date_curs < today
+                'days_left': days_left,
+                'is_today': days_left == 0
             })
             
         date_curs += datetime.timedelta(days=1)
         
     upcoming_anniv_list.sort(key=lambda x: x['date']) # Sort by date
 
-    # 3. Filters Support (Groups, Tags)
+    # Filters Support (Groups, Tags)
     groups = TargetGroup.objects.filter(user=user)
     top_tags = Tag.objects.filter(timelineitem__target__user=user).annotate(c=Count('timelineitem')).order_by('-c')[:20]
 
     context = {
-        'stats': {
-            'qa_count': qa_count,
-            'total_points': total_points,
-            'total_logs': total_logs
-        },
+        'random_question': random_question,
+        'latest_logs': latest_logs,
+        'latest_answers': latest_answers,
         'upcoming_anniversaries': upcoming_anniv_list,
         'groups': groups,
         'tags': top_tags,

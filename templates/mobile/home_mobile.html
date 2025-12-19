@@ -6,77 +6,120 @@
 <div class="flex flex-col h-full bg-background pb-20">
 
     <!-- Header -->
-    <header class="h-14 px-4 flex items-center justify-between bg-surface/50 backdrop-blur sticky top-0 z-30">
-        <h1 class="text-xl font-bold text-text-main tracking-wide">DOSSIER</h1>
-        <div class="flex items-center gap-3">
-             <a href="{% url 'profile' %}" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-text-sub border border-white/10 hover:bg-white/10">
-                <i class="fas fa-cog"></i>
-            </a>
-            <div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary border border-primary/30">
-                <i class="fas fa-user-secret"></i>
-            </div>
-        </div>
+    <header class="h-14 px-4 flex items-center justify-between border-b border-white/10 bg-surface/95 backdrop-blur sticky top-0 z-30">
+        <span class="text-xs font-bold text-text-sub uppercase tracking-wider">DASHBOARD</span>
+        <button onclick="window.location.href='/help/'" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/5 text-text-sub transition-colors">
+            <i class="fas fa-question-circle"></i>
+        </button>
     </header>
 
-    <div class="flex-1 overflow-y-auto p-4 space-y-6">
+    <div class="flex-1 overflow-y-auto p-4 space-y-8">
         
-        <!-- 1. Anniversary / Upcoming (Horizontal Scroll) -->
+        <!-- 1. Upcoming Anniversaries (2 Col Grid) -->
         {% if upcoming_anniversaries %}
         <section>
             <div class="flex items-center justify-between mb-3 px-1">
                 <h2 class="text-xs font-bold text-text-sub uppercase tracking-wider">Upcoming</h2>
             </div>
-            <div class="flex gap-3 overflow-x-auto pb-2 snap-x">
-                {% for anniv in upcoming_anniversaries %}
-                <div class="snap-start shrink-0 w-32 bg-surface rounded-xl p-3 border border-white/5 flex flex-col items-center text-center">
-                    <div class="w-10 h-10 rounded-full bg-surface-2 mb-2 flex items-center justify-center overflow-hidden">
-                        {% if anniv.target.avatar %}<img src="{{ anniv.target.avatar.url }}" class="w-full h-full object-cover">
-                        {% else %}{{ anniv.target.nickname|slice:":1" }}{% endif %}
+            <div class="grid grid-cols-2 gap-3">
+                {% for anniv in upcoming_anniversaries|slice:":4" %}
+                <div class="bg-surface rounded-xl p-3 border border-white/5 flex flex-col relative overflow-hidden active:scale-95 transition-transform"
+                     onclick="window.location.href='{% url 'target_detail' %}?target_id={{ anniv.target.id }}'">
+                    
+                    <!-- Days Left Badge -->
+                    <div class="absolute top-2 right-2 text-xs font-bold {% if anniv.is_today %}text-accent-red{% else %}text-primary{% endif %}">
+                        {% if anniv.is_today %}TODAY{% else %}{{ anniv.days_left }}d{% endif %}
                     </div>
-                    <span class="text-xs font-bold truncate w-full mb-1">{{ anniv.target.nickname }}</span>
-                    <span class="text-[10px] text-accent-gold">{{ anniv.name }}</span>
-                    <span class="text-[10px] text-text-sub">{{ anniv.date|date:"m/d" }}</span>
+                    
+                    <div class="mt-1">
+                        <div class="font-bold text-text-main truncate pr-6">{{ anniv.target.nickname }}</div>
+                        <div class="text-[10px] text-text-sub flex items-center gap-1 mt-1">
+                            <i class="fas {% if anniv.name == 'Birthday' %}fa-birthday-cake text-primary{% else %}fa-star text-yellow-500{% endif %} opacity-70"></i>
+                            {{ anniv.name }}
+                        </div>
+                        <div class="text-[10px] text-text-sub/50 mt-0.5">{{ anniv.date|date:"Y/m/d" }}</div>
+                    </div>
                 </div>
                 {% endfor %}
             </div>
         </section>
         {% endif %}
 
-        <!-- 2. Statistics / Ranking -->
-        <section>
-            <div class="grid grid-cols-2 gap-3">
-                <div class="bg-surface rounded-xl p-4 border border-white/5 relative overflow-hidden">
-                    <div class="absolute top-0 right-0 p-2 opacity-10"><i class="fas fa-trophy text-4xl"></i></div>
-                    <div class="text-[10px] text-text-sub uppercase">Total Score</div>
-                    <div class="text-2xl font-bold text-primary mt-1">{{ stats.total_points }}</div>
-                </div>
-                <div class="bg-surface rounded-xl p-4 border border-white/5 relative overflow-hidden">
-                    <div class="absolute top-0 right-0 p-2 opacity-10"><i class="fas fa-book text-4xl"></i></div>
-                    <div class="text-[10px] text-text-sub uppercase">Logs</div>
-                    <div class="text-2xl font-bold text-white mt-1">{{ stats.total_logs }}</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 3. Recent Answers (Simplified) -->
+        <!-- 2. Random Question -->
+        {% if random_question %}
         <section>
             <div class="flex items-center justify-between mb-3 px-1">
-                <h2 class="text-xs font-bold text-text-sub uppercase tracking-wider">Latest Intel</h2>
-                <a href="{% url 'question_list' %}" class="text-[10px] text-primary">View All</a>
+                <h2 class="text-xs font-bold text-text-sub uppercase tracking-wider">Today's Topic</h2>
             </div>
-            <div class="space-y-3">
-                <!-- Mockup Data or Real Data if passed -->
-                 <!-- Since dashboard view logic wasn't fully refactored for "Timeline", we use what's available or static placeholder per "Design Only" request if data missing -->
-                 <!-- Reuse 'events' context if dashboard view provides it (It currently provides 'stats', 'upcoming_annivs', 'groups', 'tags') -->
-                 <!-- It doesn't seem to provide a timeline feed. I will add a placeholder card. -->
-                <div class="bg-surface rounded-xl p-4 border border-white/5">
-                    <p class="text-center text-xs text-text-sub opacity-50 py-4">
-                        Recent activity timeline will appear here.
-                    </p>
+            <div class="bg-gradient-to-br from-primary/20 to-surface border border-primary/20 rounded-xl p-5 relative overflow-hidden group active:scale-[0.99] transition-all"
+                 onclick="window.location.href='{% url 'question_detail' %}?question_id={{ random_question.id }}'">
+                <div class="absolute top-0 right-0 p-3 opacity-20"><i class="fas fa-lightbulb text-4xl text-primary"></i></div>
+                
+                <h3 class="text-lg font-bold text-text-main mb-2 pr-8">{{ random_question.title }}</h3>
+                <p class="text-xs text-text-sub opacity-80 mb-3">次会ったときに、この話題を振ってみましょう。</p>
+                
+                <div class="flex items-center gap-2 text-[10px] text-primary font-bold">
+                    <span>VIEW DETAIL</span>
+                    <i class="fas fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
                 </div>
             </div>
         </section>
+        {% endif %}
+
+        <!-- 3. Latest Logs (Events) -->
+        {% if latest_logs %}
+        <section>
+            <div class="flex items-center justify-between mb-3 px-1">
+                <h2 class="text-xs font-bold text-text-sub uppercase tracking-wider">Latest Logs</h2>
+            </div>
+            <div class="space-y-3">
+                {% for item in latest_logs|slice:":5" %}
+                <div class="bg-surface rounded-xl p-3 border border-white/5 active:bg-white/5 transition"
+                     onclick="window.location.href='{% url 'target_detail' %}?target_id={{ item.target.id }}'">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="font-bold text-xs text-text-main">{{ item.target.nickname }}</span>
+                        <span class="text-[10px] text-text-sub">{{ item.date|date:"m/d" }}</span>
+                    </div>
+                    <p class="text-[11px] text-text-sub line-clamp-2 opacity-80 pl-2 border-l-2 border-white/10">
+                        {{ item.content }}
+                    </p>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
         
+        <!-- 4. Latest Answers -->
+        {% if latest_answers %}
+        <section>
+            <div class="flex items-center justify-between mb-3 px-1">
+                <h2 class="text-xs font-bold text-text-sub uppercase tracking-wider">Latest Answers</h2>
+            </div>
+            <div class="space-y-3">
+                {% for item in latest_answers|slice:":5" %}
+                <div class="bg-surface rounded-xl p-3 border border-white/5 active:bg-white/5 transition"
+                     onclick="window.location.href='{% url 'question_detail' %}?question_id={{ item.question.id }}'">
+                     
+                    <div class="flex items-center gap-2 mb-1">
+                        <div class="w-6 h-6 rounded-full bg-surface-2 flex items-center justify-center text-[10px] font-bold text-text-sub shrink-0">
+                            {{ item.target.nickname|slice:":1" }}
+                        </div>
+                        <div class="flex flex-col min-w-0">
+                             <div class="text-[10px] text-text-sub truncate">{{ item.target.nickname }}</div>
+                             <div class="font-bold text-xs text-text-main truncate w-48">{{ item.question.title }}</div>
+                        </div>
+                        <div class="ml-auto text-[10px] text-text-sub">{{ item.date|date:"m/d" }}</div>
+                    </div>
+
+                    <div class="mt-2 bg-black/20 rounded p-2 text-[11px] text-primary/90 font-mono">
+                        {{ item.content|truncatechars:60 }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
     </div>
 
 </div>
