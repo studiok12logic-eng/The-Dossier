@@ -284,6 +284,8 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
         else:
             context['anniversaries'] = AnniversaryFormSet()
         context['group_form'] = TargetGroupForm() # For the modal
+        from django.db.models import Count
+        context['user_groups'] = TargetGroup.objects.filter(user=self.request.user).annotate(target_count=Count('target'))
         return context
 
     def form_valid(self, form):
@@ -318,6 +320,8 @@ class TargetUpdateView(LoginRequiredMixin, UpdateView):
         else:
             context['anniversaries'] = AnniversaryFormSet(instance=self.object)
         context['group_form'] = TargetGroupForm()
+        from django.db.models import Count
+        context['user_groups'] = TargetGroup.objects.filter(user=self.request.user).annotate(target_count=Count('target'))
         context['is_edit'] = True
         return context
 

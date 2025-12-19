@@ -202,36 +202,32 @@
                         + 新規グループ作成
                     </button>
                 </div>
-                <!-- Checkbox Grid -->
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto p-2 bg-black/20 rounded border border-white/5"
-                    id="groupsContainer">
-                    {% for group in form.groups.field.queryset %}
-                    <div class="flex items-center justify-between p-2 rounded hover:bg-white/5 transition border border-transparent hover:border-white/10 group-item group/item">
-                        <label class="flex items-center gap-2 cursor-pointer flex-1">
-                            <input type="checkbox" name="groups" value="{{ group.id }}" class="rounded border-gray-600 text-primary focus:ring-primary bg-gray-900 w-4 h-4" {% if group in form.instance.groups.all %}checked{% endif %}>
-                            <span class="text-sm text-gray-300 group-name-span">{{ group.name }}</span>
-                        </label>
-                        <div class="flex gap-2">
-                            <button type="button" class="text-gray-400 hover:text-white edit-group-btn" 
-                                data-id="{{ group.id }}" 
-                                data-name="{{ group.name }}" 
-                                data-desc="{{ group.description }}"
-                                data-mon="{{ group.is_mon|yesno:'true,false' }}"
-                                data-tue="{{ group.is_tue|yesno:'true,false' }}"
-                                data-wed="{{ group.is_wed|yesno:'true,false' }}"
-                                data-thu="{{ group.is_thu|yesno:'true,false' }}"
-                                data-fri="{{ group.is_fri|yesno:'true,false' }}"
-                                data-sat="{{ group.is_sat|yesno:'true,false' }}"
-                                data-sun="{{ group.is_sun|yesno:'true,false' }}">
-                                <i class="fas fa-pencil-alt text-xs"></i> 編集
-                            </button>
-                            <button type="button" class="text-gray-400 hover:text-red-500 delete-group-btn" data-id="{{ group.id }}">
-                                <i class="fas fa-trash text-xs"></i>
-                            </button>
-                        </div>
-                    </div>
+                <!-- Checkbox Grid (Tag Style) -->
+                <div class="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 bg-black/20 rounded border border-white/5" id="groupsContainer">
+                    {% for group in user_groups %}
+                    <label class="group-item relative flex items-center justify-between px-3 py-2 rounded-full border border-white/10 bg-surface/50 transition cursor-pointer select-none group-select-label"
+                        data-id="{{ group.id }}"
+                        data-name="{{ group.name }}"
+                        data-desc="{{ group.description }}"
+                        data-mon="{{ group.is_mon|yesno:'true,false' }}"
+                        data-tue="{{ group.is_tue|yesno:'true,false' }}"
+                        data-wed="{{ group.is_wed|yesno:'true,false' }}"
+                        data-thu="{{ group.is_thu|yesno:'true,false' }}"
+                        data-fri="{{ group.is_fri|yesno:'true,false' }}"
+                        data-sat="{{ group.is_sat|yesno:'true,false' }}"
+                        data-sun="{{ group.is_sun|yesno:'true,false' }}">
+                        
+                        <input type="checkbox" name="groups" value="{{ group.id }}" class="hidden peer" {% if group in form.instance.groups.all %}checked{% endif %}>
+                        
+                        <div class="absolute inset-0 rounded-full border border-primary/50 bg-primary/20 opacity-0 peer-checked:opacity-100 transition-opacity"></div>
+                        
+                        <span class="relative z-10 text-xs text-gray-300 peer-checked:text-primary transition-colors flex items-center gap-2">
+                            <span class="group-name-span">{{ group.name }}</span>
+                            <span class="text-[10px] bg-black/40 px-1.5 rounded-full text-gray-400 peer-checked:text-primary/80">{{ group.target_count }}</span>
+                        </span>
+                    </label>
                     {% empty %}
-                    <div class="col-span-full text-center text-gray-500 text-xs py-4">グループがまだありません</div>
+                    <div class="w-full text-center text-gray-500 text-xs py-4">グループがまだありません</div>
                     {% endfor %}
                 </div>
             </div>
@@ -319,60 +315,88 @@
 </div>
 
 <!-- Group Modal -->
-<div id="groupModal"
-    class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
-    <div class="bg-surface border border-white/20 rounded-xl p-6 w-full max-w-md shadow-2xl">
-        <h3 class="text-xl font-mono text-white mb-4 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-                <span class="w-1 h-6 bg-primary block"></span>
-                <span id="groupModalTitle">新規グループ作成</span>
-            </div>
-            <button type="button" id="deleteGroupFromModal" class="hidden text-red-500 hover:text-red-400 border border-red-500/30 bg-red-500/10 px-2 py-1 rounded text-xs">
-                <i class="fas fa-trash"></i> 削除
+<div id="groupModal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-surface border border-white/20 rounded-xl w-full max-w-md shadow-2xl overflow-hidden">
+        <!-- Header -->
+        <div class="p-4 border-b border-white/10 shrink-0 flex items-center gap-3 bg-surface">
+            <button type="button" id="closeGroupModal" class="text-gray-400 hover:text-white">
+                <i class="fas fa-chevron-left"></i>
             </button>
-        </h3>
-        <form id="groupCreateForm" class="space-y-4">
-            <div>
-                <label class="block text-xs font-mono text-gray-400 mb-1">グループ名</label>
-                {{ group_form.name }}
-            </div>
-            <div>
-                <label class="block text-xs font-mono text-gray-400 mb-1">説明</label>
-                {{ group_form.description }}
-            </div>
-            <div class="mt-4">
-                <label class="block text-xs font-mono text-gray-400 mb-2">接触頻度 (Contact Frequency)</label>
-                <div class="flex flex-wrap gap-3">
-                    <label class="flex items-center gap-1 cursor-pointer">
-                        {{ group_form.is_mon }} <span class="text-xs text-gray-300">月</span>
-                    </label>
-                    <label class="flex items-center gap-1 cursor-pointer">
-                        {{ group_form.is_tue }} <span class="text-xs text-gray-300">火</span>
-                    </label>
-                    <label class="flex items-center gap-1 cursor-pointer">
-                        {{ group_form.is_wed }} <span class="text-xs text-gray-300">水</span>
-                    </label>
-                    <label class="flex items-center gap-1 cursor-pointer">
-                        {{ group_form.is_thu }} <span class="text-xs text-gray-300">木</span>
-                    </label>
-                    <label class="flex items-center gap-1 cursor-pointer">
-                        {{ group_form.is_fri }} <span class="text-xs text-gray-300">金</span>
-                    </label>
-                    <label class="flex items-center gap-1 cursor-pointer">
-                        {{ group_form.is_sat }} <span class="text-xs text-gray-300">土</span>
-                    </label>
-                    <label class="flex items-center gap-1 cursor-pointer">
-                        {{ group_form.is_sun }} <span class="text-xs text-gray-300">日</span>
-                    </label>
+            <h3 class="text-base font-mono text-white flex-1" id="groupModalTitle">新規グループ作成</h3>
+        </div>
+
+        <div class="p-6">
+            <form id="groupCreateForm" class="space-y-6">
+                <div>
+                    <label class="block text-xs font-mono text-gray-400 mb-1">グループ名</label>
+                    {{ group_form.name }}
                 </div>
-            </div>
-            <div class="flex justify-end gap-3 pt-4 border-t border-white/10">
-                <button type="button" id="closeGroupModal"
-                    class="px-4 py-2 text-gray-400 hover:text-white text-sm">キャンセル</button>
-                <button type="submit"
-                    class="px-6 py-2 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/50 rounded text-sm">作成</button>
-            </div>
-        </form>
+                <div>
+                    <label class="block text-xs font-mono text-gray-400 mb-1">説明</label>
+                    {{ group_form.description }}
+                </div>
+                <div>
+                    <label class="block text-xs font-mono text-gray-400 mb-2">接触頻度 (曜日選択)</label>
+                    <div class="flex flex-wrap gap-2">
+                        {% for field, label in group_form.days_fields %}
+                        <!-- This requires custom iteration or manual rendering. I'll manually render for now -->
+                        {% endfor %}
+                        
+                        <!-- Manual Day Toggles -->
+                        <label class="cursor-pointer">
+                            <input type="checkbox" name="is_mon" class="hidden peer">
+                            <span class="block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/10 text-xs text-gray-400 peer-checked:bg-green-500 peer-checked:text-black peer-checked:border-green-500 transition">月</span>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="checkbox" name="is_tue" class="hidden peer">
+                            <span class="block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/10 text-xs text-gray-400 peer-checked:bg-green-500 peer-checked:text-black peer-checked:border-green-500 transition">火</span>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="checkbox" name="is_wed" class="hidden peer">
+                            <span class="block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/10 text-xs text-gray-400 peer-checked:bg-green-500 peer-checked:text-black peer-checked:border-green-500 transition">水</span>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="checkbox" name="is_thu" class="hidden peer">
+                            <span class="block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/10 text-xs text-gray-400 peer-checked:bg-green-500 peer-checked:text-black peer-checked:border-green-500 transition">木</span>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="checkbox" name="is_fri" class="hidden peer">
+                            <span class="block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/10 text-xs text-gray-400 peer-checked:bg-green-500 peer-checked:text-black peer-checked:border-green-500 transition">金</span>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="checkbox" name="is_sat" class="hidden peer">
+                            <span class="block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/10 text-xs text-gray-400 peer-checked:bg-green-500 peer-checked:text-black peer-checked:border-green-500 transition">土</span>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="checkbox" name="is_sun" class="hidden peer">
+                            <span class="block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/10 text-xs text-gray-400 peer-checked:bg-green-500 peer-checked:text-black peer-checked:border-green-500 transition">日</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="pt-4 flex justify-center">
+                    <button type="submit"
+                        class="px-8 py-3 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/50 rounded font-bold text-sm min-w-[120px]">
+                        作成
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Long Press Action Menu -->
+<div id="groupActionMenu" class="hidden fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-surface border border-white/20 rounded-xl w-full max-w-xs overflow-hidden flex flex-col">
+        <div class="p-4 text-center border-b border-white/10 text-white font-bold" id="actionMenuTitle">グループ操作</div>
+        <button type="button" id="actionEdit" class="p-4 text-white hover:bg-white/5 border-b border-white/10 transition text-left">
+            <i class="fas fa-pencil-alt mr-2 text-gray-400"></i> 編集する
+        </button>
+        <button type="button" id="actionDelete" class="p-4 text-red-500 hover:bg-red-500/10 transition text-left">
+            <i class="fas fa-trash mr-2"></i> 削除する
+        </button>
+        <button type="button" id="actionCancel" class="p-4 text-gray-400 bg-black/40 hover:bg-black/60 transition text-center border-t border-white/10">
+            キャンセル
+        </button>
     </div>
 </div>
 
@@ -621,62 +645,118 @@
         document.getElementById('deleteAvatarBtnContainer').classList.add('hidden');
     });
 
-    // --- Group AJAX ---
+    // --- Group AJAX & Long Press ---
     const groupModal = document.getElementById('groupModal');
     const openGroupBtn = document.getElementById('openGroupModal');
     const closeGroupBtn = document.getElementById('closeGroupModal');
     const groupForm = document.getElementById('groupCreateForm');
+    const actionMenu = document.getElementById('groupActionMenu');
     let currentEditingGroupId = null;
+    let longPressTimer;
+    let isLongPress = false;
+    let touchedElement = null;
 
+    // Open Create Modal
     openGroupBtn.addEventListener('click', () => {
         currentEditingGroupId = null;
         groupForm.reset();
         document.getElementById('groupModalTitle').textContent = '新規グループ作成';
-        document.getElementById('deleteGroupFromModal').classList.add('hidden');
         groupModal.querySelector('button[type="submit"]').textContent = '作成';
         groupModal.classList.remove('hidden');
     });
+
     closeGroupBtn.addEventListener('click', () => groupModal.classList.add('hidden'));
 
-    // Edit/Delete Group Delegates
-    document.getElementById('groupsContainer').addEventListener('click', function(e) {
-        if (e.target.closest('.delete-group-btn')) {
-            const btn = e.target.closest('.delete-group-btn');
-            const id = btn.dataset.id;
-            if (confirm('このグループを削除しますか？\n(ターゲットとの関連も解除されます)')) {
-                fetch(`/api/groups/${id}/delete/`, {
-                    method: 'POST',
-                    headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value }
-                }).then(resp => resp.json()).then(data => {
-                    if(data.success) {
-                        btn.closest('.group-item').remove();
-                    } else {
-                        alert('Error: ' + data.error);
-                    }
-                });
-            }
-        } else if (e.target.closest('.edit-group-btn')) {
-            const btn = e.target.closest('.edit-group-btn');
-            currentEditingGroupId = btn.dataset.id;
-            groupForm.querySelector('[name="name"]').value = btn.dataset.name;
-            groupForm.querySelector('[name="description"]').value = btn.dataset.desc;
-            
-            // Set frequency checks
-            groupForm.querySelector('[name="is_mon"]').checked = btn.dataset.mon === 'true';
-            groupForm.querySelector('[name="is_tue"]').checked = btn.dataset.tue === 'true';
-            groupForm.querySelector('[name="is_wed"]').checked = btn.dataset.wed === 'true';
-            groupForm.querySelector('[name="is_thu"]').checked = btn.dataset.thu === 'true';
-            groupForm.querySelector('[name="is_fri"]').checked = btn.dataset.fri === 'true';
-            groupForm.querySelector('[name="is_sat"]').checked = btn.dataset.sat === 'true';
-            groupForm.querySelector('[name="is_sun"]').checked = btn.dataset.sun === 'true';
+    // Helpers for Day Toggles (Manual binding since Django Widget default doesn't match well)
+    // Actually the inputs are cleaner in HTML now.
+    
+    // Group List Interactions
+    const groupsContainer = document.getElementById('groupsContainer');
 
-            document.getElementById('groupModalTitle').textContent = 'グループ編集';
-            document.getElementById('deleteGroupFromModal').classList.remove('hidden');
-            groupModal.querySelector('button[type="submit"]').textContent = '更新';
-            groupModal.classList.remove('hidden');
+    groupsContainer.addEventListener('mousedown', handleStart);
+    groupsContainer.addEventListener('touchstart', handleStart);
+    groupsContainer.addEventListener('mouseup', handleEnd);
+    groupsContainer.addEventListener('touchend', handleEnd);
+    groupsContainer.addEventListener('mousemove', handleMove);
+    groupsContainer.addEventListener('touchmove', handleMove);
+    groupsContainer.addEventListener('click', handleClick);
+
+    function handleStart(e) {
+        if (e.target.closest('.group-select-label')) {
+            touchedElement = e.target.closest('.group-select-label');
+            isLongPress = false;
+            longPressTimer = setTimeout(() => {
+                isLongPress = true;
+                showActionMenu(touchedElement);
+            }, 600);
+        }
+    }
+
+    function handleMove(e) {
+        // If moved significantly, cancel long press
+        // Simplify: just cancel on any move if strict, or use distance check.
+        // For now, cancel on move.
+        // clearTimeout(longPressTimer); 
+    }
+
+    function handleEnd(e) {
+        clearTimeout(longPressTimer);
+    }
+    
+    function handleClick(e) {
+        if (isLongPress) {
+            e.preventDefault();
+            e.stopPropagation(); // prevent toggle
+            isLongPress = false;
+        }
+    }
+
+    function showActionMenu(el) {
+        currentEditingGroupId = el.dataset.id;
+        document.getElementById('actionMenuTitle').textContent = el.dataset.name;
+        
+        // Populate form data invisibly for Edit action
+        groupForm.querySelector('[name="name"]').value = el.dataset.name;
+        groupForm.querySelector('[name="description"]').value = el.dataset.desc;
+        groupForm.querySelector('[name="is_mon"]').checked = el.dataset.mon === 'true';
+        groupForm.querySelector('[name="is_tue"]').checked = el.dataset.tue === 'true';
+        groupForm.querySelector('[name="is_wed"]').checked = el.dataset.wed === 'true';
+        groupForm.querySelector('[name="is_thu"]').checked = el.dataset.thu === 'true';
+        groupForm.querySelector('[name="is_fri"]').checked = el.dataset.fri === 'true';
+        groupForm.querySelector('[name="is_sat"]').checked = el.dataset.sat === 'true';
+        groupForm.querySelector('[name="is_sun"]').checked = el.dataset.sun === 'true';
+
+        actionMenu.classList.remove('hidden');
+    }
+
+    // Action Menu Listeners
+    document.getElementById('actionCancel').addEventListener('click', () => actionMenu.classList.add('hidden'));
+    
+    document.getElementById('actionEdit').addEventListener('click', () => {
+        actionMenu.classList.add('hidden');
+        document.getElementById('groupModalTitle').textContent = 'グループ編集';
+        groupModal.querySelector('button[type="submit"]').textContent = '更新';
+        groupModal.classList.remove('hidden');
+    });
+
+    document.getElementById('actionDelete').addEventListener('click', () => {
+        actionMenu.classList.add('hidden');
+        if (confirm('このグループを削除しますか？\n(ターゲットとの関連も解除されます)')) {
+            fetch(`/api/groups/${currentEditingGroupId}/delete/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value }
+            }).then(resp => resp.json()).then(data => {
+                if(data.success) {
+                    const el = document.querySelector(`.group-select-label[data-id="${currentEditingGroupId}"]`);
+                    if(el) el.remove();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            });
         }
     });
 
+    // Form Submit
     groupForm.addEventListener('submit', function (e) {
         e.preventDefault();
         const formData = {
@@ -704,65 +784,55 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    if (currentEditingGroupId) {
+                     if (currentEditingGroupId) {
                         // Update existing UI
-                        const btn = document.querySelector(`.edit-group-btn[data-id="${currentEditingGroupId}"]`);
-                        btn.dataset.name = formData.name;
-                        btn.dataset.desc = formData.description;
-                        btn.dataset.mon = formData.is_mon;
-                        // ... update other datasets ...
-                        const row = btn.closest('.group-item');
-                        row.querySelector('.group-name-span').textContent = formData.name;
+                        const el = document.querySelector(`.group-select-label[data-id="${currentEditingGroupId}"]`);
+                        el.dataset.name = formData.name;
+                        el.dataset.desc = formData.description;
+                        el.dataset.mon = formData.is_mon;
+                        el.dataset.tue = formData.is_tue;
+                        el.dataset.wed = formData.is_wed;
+                        el.dataset.thu = formData.is_thu;
+                        el.dataset.fri = formData.is_fri;
+                        el.dataset.sat = formData.is_sat;
+                        el.dataset.sun = formData.is_sun;
+                        
+                        el.querySelector('.group-name-span').textContent = formData.name;
                     } else {
                         // Add new UI
                         const container = document.getElementById('groupsContainer');
                         const emptyMsg = container.querySelector('.text-center');
                         if (emptyMsg) emptyMsg.remove();
-
-                        const div = document.createElement('div');
-                        div.className = "flex items-center justify-between p-2 rounded hover:bg-white/5 transition border border-transparent hover:border-white/10 group-item group/item";
+                        
+                        // Creating clean DOM element string
+                        const div = document.createElement('div'); // Temp wrapper
                         div.innerHTML = `
-                        <label class="flex items-center gap-2 cursor-pointer flex-1">
-                            <input type="checkbox" name="groups" value="${data.id}" checked class="rounded border-gray-600 text-primary focus:ring-primary bg-gray-900 w-4 h-4">
-                            <span class="text-sm text-gray-300 group-name-span">${data.name}</span>
-                        </label>
-                        <div class="flex gap-2 opacity-0 group-hover/item:opacity-100 transition-opacity">
-                             <button type="button" class="text-gray-400 hover:text-white edit-group-btn" 
-                                data-id="${data.id}" data-name="${data.name}" data-desc="${formData.description}"
-                                data-mon="${formData.is_mon}" data-tue="${formData.is_tue}" data-wed="${formData.is_wed}"
-                                data-thu="${formData.is_thu}" data-fri="${formData.is_fri}" data-sat="${formData.is_sat}" data-sun="${formData.is_sun}">
-                                <i class="fas fa-pencil-alt text-xs"></i> 編集
-                            </button>
-                            <button type="button" class="text-gray-400 hover:text-red-500 delete-group-btn" data-id="${data.id}">
-                                <i class="fas fa-trash text-xs"></i>
-                            </button>
-                        </div>
-                        `;
-                        container.prepend(div);
+                        <label class="group-item relative flex items-center justify-between px-3 py-2 rounded-full border border-white/10 bg-surface/50 transition cursor-pointer select-none group-select-label"
+                            data-id="${data.id}"
+                            data-name="${data.name}"
+                            data-desc="${formData.description}"
+                            data-mon="${formData.is_mon}"
+                            data-tue="${formData.is_tue}"
+                            data-wed="${formData.is_wed}"
+                            data-thu="${formData.is_thu}"
+                            data-fri="${formData.is_fri}"
+                            data-sat="${formData.is_sat}"
+                            data-sun="${formData.is_sun}">
+                            
+                            <input type="checkbox" name="groups" value="${data.id}" checked class="hidden peer">
+                            <div class="absolute inset-0 rounded-full border border-primary/50 bg-primary/20 opacity-0 peer-checked:opacity-100 transition-opacity"></div>
+                            
+                            <span class="relative z-10 text-xs text-gray-300 peer-checked:text-primary transition-colors flex items-center gap-2">
+                                <span class="group-name-span">${data.name}</span>
+                                <span class="text-[10px] bg-black/40 px-1.5 rounded-full text-gray-400 peer-checked:text-primary/80">0</span>
+                            </span>
+                        </label>`;
+                        container.prepend(div.firstElementChild);
                     }
                     groupModal.classList.add('hidden');
                     groupForm.reset();
-                } else {
                 }
             });
-    });
-
-    // Modal Delete Button
-    document.getElementById('deleteGroupFromModal').addEventListener('click', function() {
-        if (currentEditingGroupId && confirm('本当にこのグループを削除しますか？\n(ターゲットとの関連も解除されます)')) {
-            fetch(`/api/groups/${currentEditingGroupId}/delete/`, {
-                method: 'POST',
-                headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value }
-            }).then(resp => resp.json()).then(data => {
-                if(data.success) {
-                    const btn = document.querySelector(`.edit-group-btn[data-id="${currentEditingGroupId}"]`);
-                    if(btn) btn.closest('.group-item').remove();
-                    groupModal.classList.add('hidden');
-                } else {
-                    alert('Error: ' + data.error);
-                }
-            });
-        }
     });
 
     // --- Anniversary FormSet ---
