@@ -1035,7 +1035,7 @@ class QuestionListView(LoginRequiredMixin, MobileTemplateMixin, ListView):
         qs = Question.objects.filter(
             Q(user=self.request.user) | Q(is_shared=True)
         ).annotate(
-            answer_count=Count('timelineitem')
+            answer_count=Count('timelineitem', filter=Q(timelineitem__target__user=self.request.user))
         ).order_by('category', 'order', 'created_at')
         
         # Search

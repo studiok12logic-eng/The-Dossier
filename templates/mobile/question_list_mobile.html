@@ -192,9 +192,8 @@
     function logForTarget(targetId) {
         if(currentQId && targetId) {
             // Navigate to Intelligence Log Timeline with Target AND Question pre-filled
-            // The Logic in IntelligenceLogView or JS on that page needs to handle 'question_id' param if passed?
-            // Existing `js` in log page handles `question_id` (I recall seeing it).
-            window.location.href = `{% url 'intelligence_log' %}?target_id=${targetId}&question_id=${currentQId}`;
+            // Redirect to Intelligence Log with 'action=question' to trigger modal, and 'next' to return here
+            window.location.href = `{% url 'intelligence_log' %}?target_id=${targetId}&action=question&question_id=${currentQId}&next=/questions/`;
         }
     }
     

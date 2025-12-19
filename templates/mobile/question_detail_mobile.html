@@ -146,10 +146,8 @@
     }
 
     function logForTarget(targetId) {
-        // Redirect to Log with target, question, and TODAY's date (implicit/current)
-        // User requested: input day is today.
-        const today = new Date().toISOString().split('T')[0];
-        window.location.href = `{% url 'intelligence_log' %}?target_id=${targetId}&question_id={{ question.id }}&date=${today}`;
+        // Redirect to Log with target, question, and action to trigger modal
+        window.location.href = `{% url 'intelligence_log' %}?target_id=${targetId}&action=question&question_id={{ question.id }}&next=/questions/detail/?question_id={{ question.id }}`;
     }
 </script>
 {% endblock %}
