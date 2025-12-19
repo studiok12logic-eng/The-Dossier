@@ -2,22 +2,29 @@ from django import forms
 from .models import Target, TargetGroup, CustomAnniversary
 import datetime
 
+# --- GLOBAL STYLES ---
+# "BG 2 levels brighter" from bg-black/20 -> bg-white/5
+# "Border 1 level brighter" from border-white/10 -> border-white/20
+STYLE_INPUT = 'w-full bg-white/5 border border-white/20 rounded px-4 py-2 text-white focus:outline-none focus:border-primary'
+STYLE_SELECT = 'w-full bg-white/5 border border-white/20 rounded px-4 py-2 text-white focus:outline-none focus:border-primary appearance-none cursor-pointer'
+STYLE_CHECKBOX = 'rounded border-gray-600 text-primary bg-gray-900 w-4 h-4 mr-2'
+STYLE_FILE = 'w-full bg-white/5 border border-white/20 rounded px-4 py-2 text-white focus:outline-none focus:border-primary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-black hover:file:bg-primary/80'
+
 class TargetForm(forms.ModelForm):
     # Split name fields
-    last_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary', 'placeholder': '姓'}))
-    first_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary', 'placeholder': '名'}))
-    last_name_kana = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary', 'placeholder': 'せい'}))
-    first_name_kana = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary', 'placeholder': 'めい'}))
+    last_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': STYLE_INPUT, 'placeholder': '姓'}))
+    first_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': STYLE_INPUT, 'placeholder': '名'}))
+    last_name_kana = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': STYLE_INPUT, 'placeholder': 'せい'}))
+    first_name_kana = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': STYLE_INPUT, 'placeholder': 'めい'}))
     
     # Birthdate split fields
-    birth_year = forms.IntegerField(required=False, widget=forms.NumberInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary', 'placeholder': '年'}))
-    birth_month = forms.IntegerField(required=False, widget=forms.NumberInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary', 'placeholder': '月', 'min': 1, 'max': 12}))
-    birth_day = forms.IntegerField(required=False, widget=forms.NumberInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary', 'placeholder': '日', 'min': 1, 'max': 31}))
+    birth_year = forms.IntegerField(required=False, widget=forms.NumberInput(attrs={'class': STYLE_INPUT, 'placeholder': '年'}))
+    birth_month = forms.IntegerField(required=False, widget=forms.NumberInput(attrs={'class': STYLE_INPUT, 'placeholder': '月', 'min': 1, 'max': 12}))
+    birth_day = forms.IntegerField(required=False, widget=forms.NumberInput(attrs={'class': STYLE_INPUT, 'placeholder': '日', 'min': 1, 'max': 31}))
     
     # Zodiac (Read-only or Hidden, calculated by JS)
-    zodiac_sign = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary', 'readonly': 'readonly'}))
+    zodiac_sign = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': STYLE_INPUT, 'readonly': 'readonly'}))
 
-    # Groups (M2M) - Rendered as checkbox or multi-select. Using SelectMultiple for now with custom styling class.
     # Groups (M2M) - Rendered as checkbox or multi-select. Using SelectMultiple for now with custom styling class.
     groups = forms.ModelMultipleChoiceField(
         queryset=TargetGroup.objects.none(), # Populated in __init__
@@ -43,12 +50,12 @@ class TargetForm(forms.ModelForm):
         fields = ['nickname', 'last_name', 'first_name', 'last_name_kana', 'first_name_kana', 
                   'birthplace', 'gender', 'blood_type', 'description', 'avatar', 'zodiac_sign', 'groups']
         widgets = {
-            'nickname': forms.TextInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary', 'required': 'required'}),
-            'birthplace': forms.TextInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary'}),
-            'gender': forms.Select(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary'}),
-            'blood_type': forms.Select(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary'}),
-            'description': forms.Textarea(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary', 'rows': 4}),
-            'avatar': forms.FileInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-black hover:file:bg-primary/80'}),
+            'nickname': forms.TextInput(attrs={'class': STYLE_INPUT, 'required': 'required'}),
+            'birthplace': forms.TextInput(attrs={'class': STYLE_INPUT}),
+            'gender': forms.Select(attrs={'class': STYLE_SELECT}),
+            'blood_type': forms.Select(attrs={'class': STYLE_SELECT}),
+            'description': forms.Textarea(attrs={'class': STYLE_INPUT, 'rows': 4}),
+            'avatar': forms.FileInput(attrs={'class': STYLE_FILE}),
         }
 
     def save(self, commit=True):
@@ -69,24 +76,25 @@ class TargetGroupForm(forms.ModelForm):
         fields = ['name', 'description', 
                   'is_mon', 'is_tue', 'is_wed', 'is_thu', 'is_fri', 'is_sat', 'is_sun']
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'w-full bg-surface border border-white/10 rounded px-4 py-2 text-white focus:border-primary', 'placeholder': 'グループ名'}),
-            'description': forms.Textarea(attrs={'class': 'w-full bg-surface border border-white/10 rounded px-4 py-2 text-white focus:border-primary', 'rows': 2, 'placeholder': '説明'}),
-            'is_mon': forms.CheckboxInput(attrs={'class': 'rounded border-gray-600 text-primary bg-gray-900 w-4 h-4 mr-2'}),
-            'is_tue': forms.CheckboxInput(attrs={'class': 'rounded border-gray-600 text-primary bg-gray-900 w-4 h-4 mr-2'}),
-            'is_wed': forms.CheckboxInput(attrs={'class': 'rounded border-gray-600 text-primary bg-gray-900 w-4 h-4 mr-2'}),
-            'is_thu': forms.CheckboxInput(attrs={'class': 'rounded border-gray-600 text-primary bg-gray-900 w-4 h-4 mr-2'}),
-            'is_fri': forms.CheckboxInput(attrs={'class': 'rounded border-gray-600 text-primary bg-gray-900 w-4 h-4 mr-2'}),
-            'is_sat': forms.CheckboxInput(attrs={'class': 'rounded border-gray-600 text-primary bg-gray-900 w-4 h-4 mr-2'}),
-            'is_sun': forms.CheckboxInput(attrs={'class': 'rounded border-gray-600 text-primary bg-gray-900 w-4 h-4 mr-2'}),
+            'name': forms.TextInput(attrs={'class': STYLE_INPUT, 'placeholder': 'グループ名'}),
+            'description': forms.Textarea(attrs={'class': STYLE_INPUT, 'rows': 2, 'placeholder': '説明'}),
+            'is_mon': forms.CheckboxInput(attrs={'class': STYLE_CHECKBOX}),
+            'is_tue': forms.CheckboxInput(attrs={'class': STYLE_CHECKBOX}),
+            'is_wed': forms.CheckboxInput(attrs={'class': STYLE_CHECKBOX}),
+            'is_thu': forms.CheckboxInput(attrs={'class': STYLE_CHECKBOX}),
+            'is_fri': forms.CheckboxInput(attrs={'class': STYLE_CHECKBOX}),
+            'is_sat': forms.CheckboxInput(attrs={'class': STYLE_CHECKBOX}),
+            'is_sun': forms.CheckboxInput(attrs={'class': STYLE_CHECKBOX}),
         }
+
 
 class CustomAnniversaryForm(forms.ModelForm):
     class Meta:
         model = CustomAnniversary
         fields = ['label', 'date']
         widgets = {
-            'label': forms.TextInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary', 'placeholder': '名称'}),
-            'date': forms.DateInput(attrs={'type': 'date', 'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary'}),
+            'label': forms.TextInput(attrs={'class': STYLE_INPUT, 'placeholder': '名称'}),
+            'date': forms.DateInput(attrs={'type': 'date', 'class': STYLE_INPUT}),
         }
 
 # --- QUESTION MANAGEMENT ---
@@ -98,8 +106,8 @@ class QuestionCategoryForm(forms.ModelForm):
         model = QuestionCategory
         fields = ['name'] # Description removed
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'w-full bg-surface border border-white/10 rounded px-3 py-2 text-white', 'placeholder': 'カテゴリー名'}),
-            'order': forms.NumberInput(attrs={'class': 'w-32 bg-black/20 border border-white/10 rounded px-3 py-2 text-white'}),
+            'name': forms.TextInput(attrs={'class': STYLE_INPUT, 'placeholder': 'カテゴリー名'}),
+            'order': forms.NumberInput(attrs={'class': 'w-32 bg-white/5 border border-white/20 rounded px-3 py-2 text-white'}), # Custom width for order
         }
 
     def __init__(self, *args, **kwargs):
@@ -133,8 +141,8 @@ class QuestionRankForm(forms.ModelForm):
         model = QuestionRank
         fields = ['name', 'points']
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'w-full bg-surface border border-white/10 rounded px-3 py-2 text-white', 'placeholder': 'ランク名'}),
-            'points': forms.NumberInput(attrs={'class': 'w-full bg-surface border border-white/10 rounded px-3 py-2 text-white', 'placeholder': 'ポイント'}),
+            'name': forms.TextInput(attrs={'class': STYLE_INPUT, 'placeholder': 'ランク名'}),
+            'points': forms.NumberInput(attrs={'class': STYLE_INPUT, 'placeholder': 'ポイント'}),
         }
 
 class QuestionForm(forms.ModelForm):
@@ -142,11 +150,15 @@ class QuestionForm(forms.ModelForm):
         model = Question
         fields = ['is_shared', 'category', 'rank', 'title', 'description', 'example', 'answer_type', 'choices', 'order']
         widgets = {
-            'title': forms.TextInput(attrs={'class': 'w-full bg-black/20 border border-white/10 rounded px-3 py-2 text-white'}),
-            'description': forms.Textarea(attrs={'class': 'w-full bg-black/20 border border-white/10 rounded px-3 py-2 text-white h-24'}),
-            'example': forms.Textarea(attrs={'class': 'w-full bg-black/20 border border-white/10 rounded px-3 py-2 text-white h-20'}),
-            'choices': forms.TextInput(attrs={'class': 'w-full bg-black/20 border border-white/10 rounded px-3 py-2 text-white', 'placeholder': '例: はい, いいえ, 多分'}),
-            'order': forms.NumberInput(attrs={'class': 'w-32 bg-black/20 border border-white/10 rounded px-3 py-2 text-white'}),
+            'title': forms.TextInput(attrs={'class': STYLE_INPUT}),
+            'description': forms.Textarea(attrs={'class': STYLE_INPUT, 'rows': 3}), # Adjusted rows
+            'example': forms.Textarea(attrs={'class': STYLE_INPUT, 'rows': 2}),
+            'choices': forms.TextInput(attrs={'class': STYLE_INPUT, 'placeholder': '例: はい, いいえ, 多分'}),
+            'order': forms.NumberInput(attrs={'class': 'w-32 bg-white/5 border border-white/20 rounded px-3 py-2 text-white'}),
+            # Explicitly define Selects with STYLE_SELECT (w-full, appearance-none, cursor-pointer)
+            'category': forms.Select(attrs={'class': STYLE_SELECT}),
+            'rank': forms.Select(attrs={'class': STYLE_SELECT}),
+            'answer_type': forms.Select(attrs={'class': STYLE_SELECT}),
         }
     
     def __init__(self, *args, **kwargs):
