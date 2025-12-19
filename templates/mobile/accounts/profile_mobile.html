@@ -9,34 +9,50 @@
     <header class="h-14 px-4 flex items-center justify-between border-b border-white/10 bg-surface/95 backdrop-blur sticky top-0 z-30">
         <span class="text-xs font-bold text-text-sub uppercase tracking-wider">PROFILE</span>
         <div class="flex items-center gap-2">
-            <!-- Save Button -->
-            <button type="submit" form="profileForm" class="w-8 h-8 flex items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors">
-                <i class="fas fa-check"></i>
+            <!-- Color Mode Toggle (Placeholder) -->
+            <button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/5 text-text-sub transition-colors">
+                <i class="fas fa-palette"></i>
             </button>
         </div>
     </header>
 
     <!-- Content -->
-    <div class="p-4 space-y-6">
+    <div class="p-4 space-y-8">
         
         <!-- User Info Base -->
-        <div class="bg-surface rounded-xl p-6 border border-white/5 flex flex-col items-center gap-4">
-            <div class="w-20 h-20 rounded-full bg-surface-2 border border-white/10 flex items-center justify-center text-2xl font-bold text-text-sub overflow-hidden">
-                {{ user.username|slice:":1"|upper }}
-            </div>
-            <div class="text-center">
-                <h2 class="text-lg font-bold text-text-main">{{ user.get_full_name|default:user.username }}</h2>
-                <span class="text-xs text-text-sub">@{{ user.username }}</span>
-                {% if role_label %}
-                <div class="mt-2 inline-block px-2 py-0.5 rounded border border-white/10 text-[10px] text-text-sub bg-white/5 mx-auto">
-                    {{ role_label }}
-                </div>
+        <div class="flex flex-col items-center gap-2 mt-4">
+            <!-- Role Display -->
+            <div class="flex items-center gap-2 font-bold text-lg tracking-wider
+                {% if user.role == 'MASTER' %} text-green-500
+                {% elif user.role == 'ELITE_AGENT' %} text-yellow-500
+                {% else %} text-white
+                {% endif %}">
+                
+                {% if user.role == 'MASTER' %}
+                    <i class="fas fa-user-shield"></i>
+                    <span>MASTER</span>
+                {% elif user.role == 'ELITE_AGENT' %}
+                    <i class="fas fa-medal"></i>
+                    <span>ELITE AGENT</span>
+                {% else %}
+                    <i class="fas fa-user"></i>
+                    <span>AGENT</span>
                 {% endif %}
             </div>
+
+            <!-- Username -->
+            <span class="text-sm text-text-sub font-mono">@{{ user.username }}</span>
+
+            <!-- Upgrade Button (Only for Agent) -->
+            {% if user.role == 'AGENT' %}
+            <button class="mt-2 px-6 py-1.5 border border-primary text-primary text-xs font-bold rounded-full hover:bg-primary/10 transition-colors uppercase tracking-widest">
+                UP GRADE
+            </button>
+            {% endif %}
         </div>
 
         <!-- Edit Form -->
-        <form method="post" enctype="multipart/form-data" id="profileForm" class="space-y-4">
+        <form method="post" enctype="multipart/form-data" id="profileForm" class="space-y-6">
             {% csrf_token %}
             
             {% for field in form %}
@@ -65,6 +81,13 @@
                 {% endif %}
             </div>
             {% endfor %}
+            
+            <!-- Update Button -->
+            <div class="pt-2">
+                <button type="submit" class="w-full bg-primary text-black font-bold py-3 rounded-xl shadow-lg hover:bg-primary-light active:scale-95 transition-transform flex items-center justify-center gap-2">
+                    <i class="fas fa-sync-alt"></i> 更新
+                </button>
+            </div>
         </form>
 
         <!-- Actions -->
@@ -75,7 +98,7 @@
                     <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-text-sub group-hover:text-white transition-colors">
                         <i class="fas fa-key text-xs"></i>
                     </div>
-                    <span class="text-sm font-medium text-text-main">Change Password</span>
+                    <span class="text-sm font-medium text-text-main">パスワード変更</span>
                 </div>
                 <i class="fas fa-chevron-right text-xs text-text-sub opacity-50"></i>
             </a>
@@ -88,7 +111,7 @@
                         <div class="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center text-red-400 border border-red-500/20">
                             <i class="fas fa-sign-out-alt text-xs"></i>
                         </div>
-                        <span class="text-sm font-medium">Log Out</span>
+                        <span class="text-sm font-medium">ログアウト</span>
                     </div>
                 </button>
             </form>
