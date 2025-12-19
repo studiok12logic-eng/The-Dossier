@@ -53,7 +53,7 @@
                 {% for q in category.list %}
                 <div class="border-t border-white/5 p-3 flex items-center gap-3 active:bg-white/5 transition relative group"
                      onclick="window.location.href='{% url 'question_detail' %}?question_id={{ q.id }}'"
-                     oncontextmenu="showContextMenu(event, '{{ q.id }}'); return false;">
+                     oncontextmenu="showContextMenu(event, '{{ q.id }}', {{ q.is_shared|yesno:'true,false' }}); return false;">
                     
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2 mb-1">
@@ -106,7 +106,7 @@
                 <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary"><i class="fas fa-pen"></i></div>
                 <span>Log Answer (Select Target)</span>
             </button>
-             <button onclick="goToEdit()" class="p-4 text-left hover:bg-white/5 flex items-center gap-3 border-b border-white/5">
+             <button id="editBtn" onclick="goToEdit()" class="p-4 text-left hover:bg-white/5 flex items-center gap-3 border-b border-white/5">
                 <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center"><i class="fas fa-cog"></i></div>
                 <span>Edit Question</span>
             </button>
@@ -171,10 +171,21 @@
 
     let currentQId = null;
     const contextMenu = document.getElementById('contextMenu');
+    const editBtn = document.getElementById('editBtn');
+    // Inject User Role from Django
+    const isMaster = {% if user.role == 'MASTER' %}true{% else %}false{% endif %};
     
-    function showContextMenu(e, id) {
+    function showContextMenu(e, id, isShared) {
         e.preventDefault();
         currentQId = id;
+        
+        // Handling visibility of Edit button
+        if(isMaster || !isShared) {
+            editBtn.classList.remove('hidden');
+        } else {
+            editBtn.classList.add('hidden');
+        }
+
         contextMenu.classList.remove('hidden');
         if(navigator.vibrate) navigator.vibrate(50);
     }

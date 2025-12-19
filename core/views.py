@@ -1096,7 +1096,23 @@ class QuestionUpdateView(LoginRequiredMixin, UpdateView):
     success_url = reverse_lazy('question_list')
 
     def get_queryset(self):
+        # Allow editing shared if MASTER, otherwise only own
+        from django.db.models import Q
+        if hasattr(self.request.user, 'role') and self.request.user.role == 'MASTER':
+            return Question.objects.filter(Q(user=self.request.user) | Q(is_shared=True))
         return Question.objects.filter(user=self.request.user)
+
+    def dispatch(self, request, *args, **kwargs):
+        # Double check for shared edit permission
+        if request.user.is_authenticated:
+            try:
+                obj = self.get_object() 
+                if obj.is_shared and getattr(request.user, 'role', '') != 'MASTER':
+                     from django.core.exceptions import PermissionDenied
+                     raise PermissionDenied("You do not have permission to edit shared questions.")
+            except:
+                pass # get_object will fail safely later if 404
+        return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

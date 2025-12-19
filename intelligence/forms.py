@@ -99,7 +99,34 @@ class QuestionCategoryForm(forms.ModelForm):
         fields = ['name'] # Description removed
         widgets = {
             'name': forms.TextInput(attrs={'class': 'w-full bg-surface border border-white/10 rounded px-3 py-2 text-white', 'placeholder': 'カテゴリー名'}),
+            'order': forms.NumberInput(attrs={'class': 'w-32 bg-black/20 border border-white/10 rounded px-3 py-2 text-white'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        
+        # Hide 'order' and 'is_shared' for non-MASTER, or just don't include them in fields if not MASTER?
+        # Requirement: "MASTER以外は...表示順項目は非表示"
+        if self.user and getattr(self.user, 'role', '') != 'MASTER':
+             if 'order' in self.fields: del self.fields['order']
+             if 'is_shared' in self.fields: del self.fields['is_shared']
+
+    def clean_name(self):
+        name = self.cleaned_data['name']
+        from django.db.models import Q
+        # Validation: No duplicate name in (User's own OR Shared)
+        # Exclude self if editing
+        qs = QuestionCategory.objects.filter(
+            Q(user=self.user) | Q(is_shared=True),
+            name=name
+        )
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+            
+        if qs.exists():
+            raise forms.ValidationError(f"カテゴリー「{name}」は既に存在します。")
+        return name
 
 class QuestionRankForm(forms.ModelForm):
     class Meta:
@@ -162,3 +189,18 @@ class QuestionForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+
+    def clean_title(self):
+        title = self.cleaned_data['title']
+        from django.db.models import Q
+        # Validation: No duplicate title in (User's own OR Shared)
+        qs = Question.objects.filter(
+            Q(user=self.user) | Q(is_shared=True),
+            title=title
+        )
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        
+        if qs.exists():
+            raise forms.ValidationError(f"質問「{title}」は既に存在します。")
+        return title
