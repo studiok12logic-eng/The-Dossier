@@ -116,32 +116,30 @@
 </div>
 
 <!-- Add Candidate Modal -->
-<div id="addCandidateModal" class="fixed inset-0 z-50 hidden bg-surface animate-slide-up flex flex-col">
-        <!-- Modal Header -->
-        <div class="p-4 border-b border-white/10 flex items-center justify-between bg-surface-2">
-            <h3 class="font-bold text-lg">Select Target</h3>
-            <button onclick="closeAddModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10">
-                <i class="fas fa-times"></i>
+<div id="addCandidateModal" class="fixed inset-0 z-[60] hidden bg-background flex flex-col animate-slide-up">
+    <!-- Header Area (Matches questionListView) -->
+    <div class="p-4 border-b border-white/10 shrink-0 bg-surface z-10">
+         <div class="flex items-center gap-3 mb-3">
+            <button onclick="closeAddModal()" class="w-8 h-8 flex items-center justify-center text-text-sub hover:text-white rounded-full bg-white/5">
+                <i class="fas fa-chevron-left"></i> <!-- Using chevron-left for 'Back' feel to close -->
             </button>
+            <h3 class="text-sm font-bold tracking-wider text-text-main uppercase">Select Target</h3>
         </div>
-        
         <!-- Search -->
-        <div class="p-4 border-b border-white/5 bg-surface">
-            <div class="flex items-center gap-3 bg-black/30 rounded-lg px-4 py-3 border border-white/10 focus-within:border-primary/50 transition-colors">
-                <i class="fas fa-search text-text-sub"></i>
-                <input type="text" id="candidateSearch" placeholder="Search (Name, Kana)..." 
-                       class="flex-1 bg-transparent outline-none text-text-main placeholder-white/20 h-full"
-                       oninput="filterCandidates(this.value)">
-            </div>
+        <div class="relative">
+            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-text-sub opacity-50 text-xs"></i>
+            <input type="text" id="candidateSearch" placeholder="Search targets..." 
+                   class="w-full bg-surface-2 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm text-text-main focus:border-primary/50 focus:ring-0 outline-none placeholder-text-sub/40"
+                   oninput="filterCandidates(this.value)" autocomplete="off">
         </div>
-        
-        <!-- List -->
-        <div id="candidateList" class="flex-1 overflow-y-auto p-2 space-y-1">
-            <!-- Loaded via JS -->
-            <div class="text-center py-10 opacity-50">
-                <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
-                <p>Loading...</p>
-            </div>
+    </div>
+    
+    <!-- List -->
+    <div id="candidateList" class="flex-1 overflow-y-auto p-4 space-y-1">
+        <!-- Loaded via JS -->
+        <div class="text-center py-10 opacity-50">
+            <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+            <p>Loading...</p>
         </div>
     </div>
 </div>
