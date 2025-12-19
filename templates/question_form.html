@@ -132,7 +132,7 @@
 <div id="catModal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center backdrop-blur-sm">
     <div class="bg-surface border border-white/20 p-6 rounded-xl w-96">
         <h3 class="text-white font-mono mb-4">NEW CATEGORY</h3>
-        <input id="newCatName" type="text" placeholder="Name" class="w-full bg-black/20 border border-white/10 rounded px-3 py-2 text-white mb-4">
+        <input id="newCatName" type="text" placeholder="Name" class="w-full bg-white/5 border border-white/20 rounded px-3 py-2 text-white mb-4 shadow-inner">
         <div class="flex justify-end gap-2">
             <button type="button" onclick="document.getElementById('catModal').classList.add('hidden')" class="px-3 py-1 text-gray-400 text-sm">Cancel</button>
             <button type="button" id="saveCatBtn" class="px-3 py-1 bg-primary text-black text-sm rounded">Save</button>
@@ -143,8 +143,8 @@
 <div id="rankModal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center backdrop-blur-sm">
     <div class="bg-surface border border-white/20 p-6 rounded-xl w-96">
         <h3 class="text-white font-mono mb-4">NEW RANK</h3>
-        <input id="newRankName" type="text" placeholder="Rank Name" class="w-full bg-black/20 border border-white/10 rounded px-3 py-2 text-white mb-2">
-        <input id="newRankPoints" type="number" placeholder="Points" class="w-full bg-black/20 border border-white/10 rounded px-3 py-2 text-white mb-4">
+        <input id="newRankName" type="text" placeholder="Rank Name" class="w-full bg-white/5 border border-white/20 rounded px-3 py-2 text-white mb-2 shadow-inner">
+        <input id="newRankPoints" type="number" placeholder="Points" class="w-full bg-white/5 border border-white/20 rounded px-3 py-2 text-white mb-4 shadow-inner">
         <div class="flex justify-end gap-2">
             <button type="button" onclick="document.getElementById('rankModal').classList.add('hidden')" class="px-3 py-1 text-gray-400 text-sm">Cancel</button>
             <button type="button" id="saveRankBtn" class="px-3 py-1 bg-primary text-black text-sm rounded">Save</button>
@@ -176,11 +176,11 @@
     updateChoicesState(); // Init
 
     // Styling Django Form Widgets via JS if needed (or assume classes added in ID)
-    document.querySelectorAll('input, select, textarea').forEach(el => {
-        if(!el.classList.contains('bg-black/20') && !el.classList.contains('bg-surface') && !el.type === 'checkbox') {
-             // Basic styling reset
+    // Styling is handled in forms.py, but just in case of raw inputs not in ModelForm:
+    document.querySelectorAll('input:not([class*="bg-"]), select:not([class*="bg-"]), textarea:not([class*="bg-"])').forEach(el => {
+        if(el.type !== 'checkbox' && el.type !== 'hidden') {
+            el.classList.add('w-full', 'bg-white/5', 'border', 'border-white/20', 'rounded', 'px-4', 'py-2', 'text-white', 'focus:outline-none', 'focus:border-primary');
         }
-        // Specific Fixes if Django widget attrs miss
         if(el.tagName === 'SELECT') el.classList.add('appearance-none', 'cursor-pointer');
     });
 
