@@ -285,6 +285,18 @@
         
         // Attach Long Press Listeners
         attachLongPressHandlers();
+        
+        // Check URL for Deep Linking Actions
+        const params = new URLSearchParams(window.location.search);
+        const action = params.get('action');
+        if(action === 'question') {
+             const qId = params.get('question_id');
+             // Open Modal (and potentially pre-select)
+             // Need to ensure openQuestionModal is defined (it is in included file)
+             if(typeof openQuestionModal === 'function') {
+                 openQuestionModal(qId);
+             }
+        }
     });
     
     // --- IMAGE UPLOAD LOGIC ---

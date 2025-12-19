@@ -61,7 +61,7 @@
     let allCategories = []; // Cached data
     let currentQuestion = null;
 
-    function openQuestionModal() {
+    function openQuestionModal(preSelectQuestionId = null) {
         qModal.classList.remove('hidden', 'pointer-events-none');
         // Trigger reflow
         void qModal.offsetWidth;
@@ -70,7 +70,18 @@
         
         // Reset View
         backToQuestionList(false);
-        fetchQuestions();
+        fetchQuestions().then(() => {
+            if (preSelectQuestionId) {
+                // Find and open
+                for (const cat of allCategories) {
+                    const q = cat.questions.find(x => x.id == preSelectQuestionId);
+                    if (q) {
+                        openAnswerView(q);
+                        break;
+                    }
+                }
+            }
+        });
     }
 
     function closeQuestionModal() {
@@ -82,8 +93,8 @@
     }
 
     function fetchQuestions() {
-        if(!targetId) return;
-        fetch(`/api/questions/?target_id=${targetId}`)
+        if(!targetId) return Promise.reject("No Target ID");
+        return fetch(`/api/questions/?target_id=${targetId}`)
         .then(res => res.json())
         .then(data => {
             if(data.success) {
@@ -263,8 +274,16 @@
              body: JSON.stringify(payload)
         }).then(res => res.json()).then(data => {
             if(data.success) {
-                // Done. Close modal and reload page.
-                window.location.reload();
+                // Check if 'next' param exists
+                const params = new URLSearchParams(window.location.search);
+                const nextUrl = params.get('next');
+                
+                if (nextUrl) {
+                    window.location.href = nextUrl;
+                } else {
+                    // Done. Close modal and reload page.
+                    window.location.reload();
+                }
             } else {
                 alert('Error: ' + data.error);
             }

@@ -267,7 +267,7 @@
         </div>
 
         <!-- 1. Event Log Tab -->
-        <div x-show="tab === 'timeline'" class="p-4">
+        <div x-show="tab === 'timeline'" class="p-4 pb-24">
              <!-- Revamped Search & Tags -->
              <div class="space-y-3 mb-6">
                  <div class="relative">
@@ -358,16 +358,21 @@
         </div>
 
         <!-- 2. Q&A Tab -->
-        <div x-show="tab === 'questions'" class="p-4 space-y-2" style="display: none;">
+        <div x-show="tab === 'questions'" class="p-4 space-y-2 pb-24" style="display: none;">
             {% for cat_data in qa_data %}
             <div class="mb-4">
                 <h3 class="text-xs font-bold text-text-sub uppercase tracking-wider mb-2 px-1">{{ cat_data.category.name }}</h3>
                 <div class="space-y-2">
                     {% for q_info in cat_data.questions %}
-                    <div class="bg-surface rounded-lg p-3 border border-white/5">
-                        <div class="text-xs text-primary font-bold mb-1">{{ q_info.question.title }}</div>
+                    <!-- Clickable Question Card -->
+                    <div onclick="window.location.href='{% url 'intelligence_log' %}?target_id={{ target.id }}&action=question&question_id={{ q_info.question.id }}&next={% url 'target_detail' target.id %}'" 
+                         class="bg-surface rounded-lg p-3 border border-white/5 active:scale-[0.98] transition-transform cursor-pointer hover:border-primary/30">
+                        <div class="flex justify-between items-start">
+                            <div class="text-xs text-primary font-bold mb-1">{{ q_info.question.title }}</div>
+                            <i class="fas fa-chevron-right text-[10px] text-text-sub opacity-50 mt-1"></i>
+                        </div>
                         {% if q_info.is_answered %}
-                        <p class="text-sm text-text-main">{{ q_info.answer }}</p>
+                        <p class="text-sm text-text-main line-clamp-2">{{ q_info.answer }}</p>
                         <div class="text-[10px] text-text-sub text-right mt-1 opacity-50">{{ q_info.answer_date|timesince }} ago</div>
                         {% else %}
                         <p class="text-sm text-text-sub italic opacity-50">Not answered yet</p>
