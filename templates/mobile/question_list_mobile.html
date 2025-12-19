@@ -18,19 +18,15 @@
         </div>
     </header>
 
-    <!-- Search Popover -->
-    <div id="searchPopover" class="absolute top-16 left-4 right-4 z-40 hidden animate-fade-in origin-top">
-        <div class="bg-surface border border-white/10 rounded-full shadow-2xl flex items-center px-4 py-2">
-            <i class="fas fa-search text-text-sub text-sm mr-3"></i>
-            <input type="text" id="searchInput" 
-                   value="{{ request.GET.q|default:'' }}"
-                   placeholder="Search (Title, Desc, Example)..." 
-                   class="bg-transparent border-none focus:ring-0 text-sm text-text-main w-full placeholder-text-sub/50" 
-                   style="height: 2em;" 
-                   onkeydown="if(event.key === 'Enter') doSearch(this.value)"
-                   autocomplete="off">
-            <button onclick="toggleSearch()" class="text-text-sub ml-2"><i class="fas fa-times"></i></button>
-        </div>
+    <!-- Search Bar (Hidden by default) -->
+    <div id="searchBar" class="hidden px-4 py-2 bg-surface border-b border-white/10 sticky top-14 z-40 animate-slide-down">
+        <form method="get" action="." class="flex gap-2">
+            <div class="relative flex-1">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-text-sub text-xs"></i>
+                <input type="text" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Search (Title, Desc, Example)..." 
+                       class="w-full bg-background border border-white/10 rounded-full pl-9 pr-4 py-2 text-xs text-text-main placeholder-text-sub/50 focus:border-primary outline-none">
+            </div>
+        </form>
     </div>
 
     <!-- Content -->
@@ -157,15 +153,12 @@
     }
 
     // Search Logic
-    const searchPopover = document.getElementById('searchPopover');
-    const searchInput = document.getElementById('searchInput');
-
     function toggleSearch() {
-        if(searchPopover.classList.contains('hidden')) {
-            searchPopover.classList.remove('hidden');
-            setTimeout(() => searchInput.focus(), 100);
-        } else {
-            searchPopover.classList.add('hidden');
+        const bar = document.getElementById('searchBar');
+        bar.classList.toggle('hidden');
+        if(!bar.classList.contains('hidden')) {
+             const input = bar.querySelector('input');
+             if(input) input.focus();
         }
     }
 
