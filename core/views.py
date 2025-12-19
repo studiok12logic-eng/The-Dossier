@@ -191,6 +191,15 @@ class TargetDetailView(LoginRequiredMixin, MobileTemplateMixin, DetailView):
         context = super().get_context_data(**kwargs)
         target = self.object
         
+        # Calculate Age
+        from datetime import date
+        context['age'] = None
+        if target.birth_year and target.birth_month and target.birth_day:
+            today = date.today()
+            context['age'] = today.year - target.birth_year - (
+                (today.month, today.day) < (target.birth_month, target.birth_day)
+            )
+        
         # 1. Stats
         # Total Log Count
         context['log_count'] = TimelineItem.objects.filter(target=target).count()
