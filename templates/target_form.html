@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block content_wrapper_class %}flex-1 overflow-y-auto p-0{% endblock %}
+{% block content_wrapper_class %}flex-1 overflow-y-auto p-0 pb-40{% endblock %}
 
 {% block content %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
@@ -109,9 +109,9 @@
             <!-- Birthdate -->
             <div class="mb-6">
                 <label class="block text-xs font-mono text-gray-400 mb-2">生年月日</label>
-                <div class="grid grid-cols-4 gap-2 mb-2 w-full">
+                <div class="flex gap-2 mb-2 w-full">
                     <!-- Year (50%) -->
-                    <div class="relative col-span-2">
+                    <div class="relative" style="width: 50%;">
                         {{ form.birth_year.as_hidden }}
                         <select id="birth_year_select"
                             class="w-full bg-surface border border-white/10 rounded px-2 py-2 text-white text-sm appearance-none focus:border-primary">
@@ -120,7 +120,7 @@
                         </select>
                     </div>
                     <!-- Month (25%) -->
-                    <div class="relative col-span-1">
+                    <div class="relative" style="width: 25%;">
                         {{ form.birth_month.as_hidden }}
                         <select id="birth_month_select"
                             class="w-full bg-surface border border-white/10 rounded px-2 py-2 text-white text-sm appearance-none focus:border-primary">
@@ -131,7 +131,7 @@
                         </select>
                     </div>
                     <!-- Day (25%) -->
-                    <div class="relative col-span-1">
+                    <div class="relative" style="width: 25%;">
                         {{ form.birth_day.as_hidden }}
                         <select id="birth_day_select"
                             class="w-full bg-surface border border-white/10 rounded px-2 py-2 text-white text-sm appearance-none focus:border-primary">
