@@ -133,9 +133,12 @@
                         ${rankHtml}
                         <span class="text-sm text-text-main truncate">${q.title}</span>
                     </div>
-                    <div class="shrink-0 flex items-center gap-1 text-xs text-text-sub">
-                        <i class="fas fa-check opacity-50"></i>
-                        <span>${q.count}</span>
+                    <div class="shrink-0 flex flex-col items-end gap-0.5 text-xs text-text-sub">
+                        <div class="flex items-center gap-1">
+                            <i class="fas fa-check opacity-50"></i>
+                            <span>${q.count}</span>
+                        </div>
+                        ${q.latest_date ? `<span class="text-[10px] opacity-50">${q.latest_date.slice(5).replace('-','/')}</span>` : ''}
                     </div>
                 `;
                 list.appendChild(item);

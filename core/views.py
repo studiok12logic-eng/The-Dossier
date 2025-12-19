@@ -1342,7 +1342,7 @@ class QuestionListAPIView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         try:
             from intelligence.models import Question, QuestionCategory, TimelineItem
-            from django.db.models import Count, Q
+            from django.db.models import Count, Q, Max
             
             target_id = request.GET.get('target_id')
             if not target_id:
@@ -1372,7 +1372,8 @@ class QuestionListAPIView(LoginRequiredMixin, View):
             # TimelineItem has 'question' FK. So 'timelineitem'.
             
             questions_qs = questions_qs.annotate(
-                answer_count=Count('timelineitem_set', filter=Q(timelineitem_set__target_id=target_id))
+                answer_count=Count('timelineitem', filter=Q(timelineitem__target_id=target_id)),
+                latest_answer=Max('timelineitem__date', filter=Q(timelineitem__target_id=target_id))
             )
 
             # Structure by Category
@@ -1396,7 +1397,8 @@ class QuestionListAPIView(LoginRequiredMixin, View):
                     'choices': q.choices,
                     'description': q.description,
                     'example': q.example,
-                    'count': q.answer_count
+                    'count': q.answer_count,
+                    'latest_date': q.latest_answer.strftime('%Y-%m-%d') if q.latest_answer else ''
                 }
                 
                 if q.category:
@@ -1406,8 +1408,6 @@ class QuestionListAPIView(LoginRequiredMixin, View):
                          categorized_data['none']['questions'].append(q_data) # Fallback
                 else:
                     categorized_data['none']['questions'].append(q_data)
-            
-            # Convert to list, removing empty if desired? Or keep all.
             result_list = []
             # Order: Categories then None
             for cat in categories:
