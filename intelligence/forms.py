@@ -85,7 +85,8 @@ class CustomAnniversaryForm(forms.ModelForm):
         model = CustomAnniversary
         fields = ['label', 'date']
         widgets = {
-            'date': forms.DateInput(attrs={'type': 'date', 'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:border-primary'}),
+            'label': forms.TextInput(attrs={'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary', 'placeholder': '名称'}),
+            'date': forms.DateInput(attrs={'type': 'date', 'class': 'w-full bg-surface/50 border border-white/10 rounded px-4 py-2 text-white focus:outline-none focus:border-primary'}),
         }
 
 # --- QUESTION MANAGEMENT ---

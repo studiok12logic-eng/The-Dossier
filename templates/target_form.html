@@ -232,8 +232,12 @@
 
         <!-- 4. 記念日 (Anniversaries) -->
         <section class="bg-surface/30 p-6 relative">
-            <h2 class="text-primary font-mono text-sm mb-6 flex items-center gap-2 border-b border-white/5 pb-2">
-                <span class="text-primary/50">04.</span> 重要な日付・記念日
+            <h2 class="text-primary font-mono text-sm mb-6 flex items-center justify-between gap-2 border-b border-white/5 pb-2">
+                <span class="flex items-center gap-2"><span class="text-primary/50">04.</span> 重要な日付・記念日</span>
+                <button type="button" id="add-anniversary"
+                    class="text-xs bg-primary/20 text-primary border border-primary/50 px-2 py-1 rounded hover:bg-primary/30 transition shadow-sm">
+                    + 記念日を追加
+                </button>
             </h2>
 
             {{ anniversaries.management_form }}
@@ -264,16 +268,14 @@
                 </div>
                 {% endfor %}
             </div>
-            <button type="button" id="add-anniversary"
-                class="mt-4 w-full py-2 bg-primary/20 text-primary border border-primary/50 rounded font-mono text-xs hover:bg-primary/30 transition">
-                + 記念日を追加
-            </button>
+            </div>
+            <!-- Old button removed -->
         </section>
 
         <!-- 5. メモ (Notes) -->
         <section class="bg-surface/30 p-6 relative">
             <h2 class="text-primary font-mono text-sm mb-6 flex items-center gap-2 border-b border-white/5 pb-2">
-                <span class="text-primary/50">05.</span> その他メモ
+                <span class="text-primary/50">05.</span> 備考
             </h2>
             {{ form.description }}
         </section>
