@@ -64,6 +64,27 @@
             <p class="text-sm text-text-main">{{ target.last_name }} {{ target.first_name }}</p>
             <p class="text-[10px] text-text-sub">({{ target.last_name_kana }} {{ target.first_name_kana }})</p>
         </div>
+
+        <!-- New Header Info Row -->
+        <div class="flex flex-col items-center mb-6 text-xs text-text-sub">
+            <div class="flex items-center gap-2 mb-1">
+                <i class="fas fa-birthday-cake text-primary"></i>
+                <span class="text-text-main font-bold">
+                    {% if target.birth_year %}
+                        {{ target.birth_year }}/{{ target.birth_month }}/{{ target.birth_day }} ({{ age }}歳) {{ target.eto }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </span>
+            </div>
+            <div class="flex items-center gap-3 opacity-80 text-[11px]">
+                <span>{{ target.zodiac_sign|default:"-" }}</span>
+                <span class="text-white/10">|</span>
+                <span>{{ target.get_gender_display|default:"-" }}</span>
+                <span class="text-white/10">|</span>
+                <span>{{ target.blood_type|default:"-" }}型</span>
+            </div>
+        </div>
         
         <!-- Quick Stats Row -->
         <div class="flex items-center justify-center gap-5 text-xs text-text-sub w-full">
@@ -71,25 +92,25 @@
                 <span class="font-bold text-lg text-text-main flex items-center gap-1">
                     <i class="fas fa-comment text-blue-400/30 text-xs"></i> {{ log_count }}
                 </span>
-                <span>Logs</span>
+                <span>ログ数</span>
             </div>
             <div class="flex flex-col items-center border-l border-white/10 pl-5">
                 <span class="font-bold text-lg text-text-main flex items-center gap-1">
                     <i class="fas fa-handshake text-emerald-500/30 text-xs"></i> {{ contact_count }}
                 </span>
-                <span>Contacts</span>
+                <span>接触日数</span>
             </div>
             <div class="flex flex-col items-center border-l border-white/10 pl-5">
                 <span class="font-bold text-lg text-text-main flex items-center gap-1">
                     <i class="fas fa-question-circle text-purple-400/30 text-xs"></i> {{ total_answers }}
                 </span>
-                <span>Answers</span>
+                <span>回答数</span>
             </div>
             <div class="flex flex-col items-center border-l border-white/10 pl-5">
                 <span class="font-bold text-lg text-text-main flex items-center gap-1">
                     <i class="fas fa-star text-yellow-500/30 text-xs"></i> {{ total_points }}
                 </span>
-                <span>Points</span>
+                <span>獲得P</span>
             </div>
         </div>
     </div>
@@ -99,69 +120,57 @@
         <h2 class="text-xs font-bold text-text-sub uppercase tracking-wider mb-4 opacity-70">BASE PROFILE</h2>
         
         <!-- Base Profile Progress Bar (Moved here) -->
-        <div class="mb-6">
-            <div class="flex justify-between items-center text-[10px] font-bold text-text-sub uppercase tracking-wider mb-1.5 opacity-80">
-                <span>PROGRESS</span>
-                <span>{{ base_progress }}%</span>
-            </div>
-            <div class="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-                <div class="h-full block bar-animate js-progress-bar" 
-                     style="width: 0%; height: 100%; display: block;"
-                     data-width="{{ base_progress }}%" 
-                     data-color="{{ base_color }}" 
-                     data-shadow="{{ base_shadow }}"></div>
-            </div>
-        </div>
-
-        <div class="space-y-3 mb-8">
-            <div class="flex justify-between items-center text-xs">
-                <span class="text-text-sub">誕生日</span>
-                <span class="text-text-main font-bold">
-                    {% if target.birth_year %}
-                        {{ target.birth_year }}/{{ target.birth_month }}/{{ target.birth_day }} ({{ age }}歳) {{ target.eto }} {{ target.zodiac_sign }}
-                    {% else %}-{% endif %}
-                </span>
-            </div>
-            
-            <!-- 3-Column Row: Gender, Blood, Personality -->
-            <div class="flex items-center gap-4 py-2 border-y border-white/5 my-2">
-                <div class="flex-1">
-                    <div class="text-[9px] text-text-sub uppercase mb-0.5">性別</div>
-                    <div class="text-xs text-text-main font-bold">{{ base_answers.性別|default:"-" }}</div>
-                </div>
-                <div class="w-px h-6 bg-white/10"></div>
-                <div class="flex-1">
-                    <div class="text-[9px] text-text-sub uppercase mb-0.5">血液型</div>
-                    <div class="text-xs text-text-main font-bold">{{ base_answers.血液型|default:"-" }}</div>
-                </div>
-                <div class="w-px h-6 bg-white/10"></div>
-                <div class="flex-1">
-                    <div class="text-[9px] text-text-sub uppercase mb-0.5">性格タイプ</div>
-                    <div class="text-xs text-text-main font-bold">{{ base_answers.性格タイプ|default:"-" }}</div>
-                </div>
-            </div>
-
-            <div class="flex justify-between items-center text-xs pt-1">
+        <div class="space-y-3">
+            <!-- Anniversary -->
+            <div class="flex justify-between text-xs border-b border-white/5 pb-2">
                 <span class="text-text-sub">記念日</span>
-                <div class="text-right">
+                <div class="text-right text-text-main font-medium">
                     {% for anniv in custom_anniversaries %}
-                        <div class="text-text-main font-bold">{{ anniv.label }} ({{ anniv.date|date:"m/d" }})</div>
+                        <div>{{ anniv.label }} ({{ anniv.date|date:"m/d" }})</div>
                     {% empty %}
-                        <span class="text-text-sub">-</span>
+                        -
                     {% endfor %}
                 </div>
             </div>
-            
-            <!-- Other Shared Questions (Excl. the 3 above) -->
-            <div class="pt-4 space-y-3 mt-2">
-                {% for title, ans in base_answers.items %}
-                    {% if title != "性別" and title != "血液型" and title != "性格タイプ" %}
-                    <div class="flex justify-between text-xs">
-                        <span class="text-text-sub">{{ title }}</span>
-                        <span class="text-text-main font-medium">{{ ans|default:"-" }}</span>
-                    </div>
-                    {% endif %}
-                {% endfor %}
+            <!-- Birthplace -->
+            <div class="flex justify-between text-xs border-b border-white/5 pb-2">
+                <span class="text-text-sub">出身地</span>
+                <span class="text-text-main font-medium">{{ target.birthplace|default:"-" }}</span>
+            </div>
+            <!-- Occupation -->
+            <div class="flex justify-between text-xs border-b border-white/5 pb-2">
+                <span class="text-text-sub">職業</span>
+                <span class="text-text-main font-medium">{{ base_answers.occupation|default:"-" }}</span>
+            </div>
+            <!-- Address -->
+            <div class="flex justify-between text-xs border-b border-white/5 pb-2">
+                <span class="text-text-sub">現在住所</span>
+                <span class="text-text-main font-medium">{{ base_answers.address|default:"-" }}</span>
+            </div>
+            <!-- Family -->
+            <div class="flex justify-between text-xs border-b border-white/5 pb-2">
+                <span class="text-text-sub">家族構成</span>
+                <span class="text-text-main font-medium">{{ base_answers.family_structure|default:"-" }}</span>
+            </div>
+            <!-- Hobbies -->
+            <div class="flex justify-between text-xs border-b border-white/5 pb-2">
+                <span class="text-text-sub">趣味</span>
+                <span class="text-text-main font-medium">{{ base_answers.hobbies|default:"-" }}</span>
+            </div>
+            <!-- Weakness -->
+            <div class="flex justify-between text-xs border-b border-white/5 pb-2">
+                <span class="text-text-sub">弱点</span>
+                <span class="text-text-main font-medium">{{ base_answers.weakness|default:"-" }}</span>
+            </div>
+            <!-- Skills -->
+            <div class="flex justify-between text-xs border-b border-white/5 pb-2">
+                <span class="text-text-sub">得意分野</span>
+                <span class="text-text-main font-medium">{{ base_answers.skills|default:"-" }}</span>
+            </div>
+            <!-- Notes -->
+            <div class="flex flex-col text-xs pt-1">
+                <span class="text-text-sub mb-1">備考</span>
+                <span class="text-text-main font-medium whitespace-pre-wrap leading-relaxed opacity-80">{{ target.description|default:"-" }}</span>
             </div>
         </div>
 
