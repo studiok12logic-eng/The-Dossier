@@ -28,7 +28,7 @@
         </section>
 
         <!-- 2. ダッシュボード -->
-        <section class="space-y-4">
+        <section class="space-y-4 pt-10">
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
                     <i class="fas fa-th-large text-sm"></i>
@@ -54,10 +54,10 @@
         </section>
 
         <!-- 3. ターゲット -->
-        <section class="space-y-4">
+        <section class="space-y-4 pt-10">
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
-                    <i class="fas fa-users-viewfinder text-sm"></i>
+                    <i class="fa-solid fa-users-viewfinder text-sm"></i>
                 </div>
                 <h2 class="text-lg font-bold text-white">ターゲット</h2>
             </div>
@@ -90,7 +90,7 @@
         </section>
 
         <!-- 4. 諜報ログ -->
-        <section class="space-y-4">
+        <section class="space-y-4 pt-10">
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
                     <i class="fas fa-clipboard-list text-sm"></i>
@@ -127,7 +127,7 @@
         </section>
 
         <!-- 5. 質問リスト -->
-        <section class="space-y-4">
+        <section class="space-y-4 pt-10">
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
                     <i class="fas fa-brain text-sm"></i>
@@ -160,52 +160,64 @@
         </section>
 
         <!-- 6. 権限レベル -->
-        <section class="space-y-6 pt-4">
+        <section class="space-y-6 pt-10">
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
-                    <i class="fas fa-shield-halved text-sm"></i>
+                    <i class="fa-solid fa-shield-halved text-sm"></i>
                 </div>
                 <h2 class="text-lg font-bold text-white">権限レベル</h2>
             </div>
-            <div class="space-y-4">
-                <div class="bg-surface/20 rounded-2xl border border-white/5 overflow-hidden">
-                    <div class="px-6 py-3 bg-white/5 border-b border-white/10 flex items-center justify-between gap-4">
-                        <span class="text-xs font-mono font-bold text-white/40 uppercase">Rank</span>
-                        <span class="text-xs font-mono font-bold text-white/40 uppercase text-right">AGENT</span>
-                    </div>
-                    <div class="p-5 space-y-3">
-                        <p class="text-xs text-white font-bold">標準調査員</p>
-                        <ul class="text-[11px] text-text-sub space-y-2 list-disc list-inside px-1">
-                            <li>ターゲットの新規登録・管理</li>
-                            <li>諜報ログの入力・タイムライン管理</li>
-                            <li>公開された質問への回答</li>
-                            <li>独自質問（自分用）の作成</li>
-                        </ul>
-                    </div>
-                </div>
+            
+            <div class="bg-surface/20 rounded-2xl border border-white/5 overflow-hidden">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-white/5 border-b border-white/10">
+                            <th class="px-4 py-3 text-[10px] font-mono font-bold text-white/40 uppercase tracking-wider">項目</th>
+                            <th class="px-3 py-3 text-[10px] font-mono font-bold text-white/40 uppercase tracking-wider text-center">AGENT</th>
+                            <th class="px-3 py-3 text-[10px] font-mono font-bold text-primary uppercase tracking-wider text-center bg-primary/5">ELITE</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        <tr class="text-[11px]">
+                            <td class="px-4 py-3 text-text-sub">ターゲット</td>
+                            <td class="px-3 py-3 text-center text-white">5名まで</td>
+                            <td class="px-3 py-3 text-center text-primary font-bold bg-primary/5">無制限</td>
+                        </tr>
+                        <tr class="text-[11px]">
+                            <td class="px-4 py-3 text-text-sub">グループ</td>
+                            <td class="px-3 py-3 text-center text-white">3個まで</td>
+                            <td class="px-3 py-3 text-center text-primary font-bold bg-primary/5">無制限</td>
+                        </tr>
+                        <tr class="text-[11px]">
+                            <td class="px-4 py-3 text-text-sub">タグ</td>
+                            <td class="px-3 py-3 text-center text-white">10個まで</td>
+                            <td class="px-3 py-3 text-center text-primary font-bold bg-primary/5">無制限</td>
+                        </tr>
+                        <tr class="text-[11px]">
+                            <td class="px-4 py-3 text-text-sub">質問追加</td>
+                            <td class="px-3 py-3 text-center text-white">0</td>
+                            <td class="px-3 py-3 text-center text-primary font-bold bg-primary/5">無制限</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-                <div class="bg-surface/20 rounded-2xl border border-primary/20 overflow-hidden shadow-[0_0_20px_rgba(34,197,94,0.05)]">
-                    <div class="px-6 py-3 bg-primary/10 border-b border-primary/20 flex items-center justify-between gap-4">
-                        <span class="text-xs font-mono font-bold text-primary/60 uppercase">Rank</span>
-                        <span class="text-xs font-mono font-bold text-primary uppercase text-right">ELITE</span>
-                    </div>
-                    <div class="p-5 space-y-4">
-                        <p class="text-xs text-primary font-bold">上級エージェント</p>
-                        <ul class="space-y-3">
-                            <li class="flex items-start gap-2 bg-primary/5 p-3 rounded-xl border border-primary/10">
-                                <i class="fas fa-check-circle text-[10px] text-primary mt-1"></i>
-                                <span class="text-[11px] text-text-sub leading-tight">共通質問（Global Questions）の作成・編集権限</span>
-                            </li>
-                            <li class="flex items-start gap-2 bg-primary/5 p-3 rounded-xl border border-primary/10">
-                                <i class="fas fa-check-circle text-[10px] text-primary mt-1"></i>
-                                <span class="text-[11px] text-text-sub leading-tight">共通カテゴリーの管理</span>
-                            </li>
-                            <li class="flex items-start gap-2 bg-primary/5 p-3 rounded-xl border border-primary/10">
-                                <i class="fas fa-check-circle text-[10px] text-primary mt-1"></i>
-                                <span class="text-[11px] text-text-sub leading-tight">AGENTの全機能が利用可能</span>
-                            </li>
-                        </ul>
-                    </div>
+            <div class="space-y-4">
+                <div class="bg-surface/20 rounded-xl p-4 border border-white/5">
+                    <h4 class="text-xs font-bold text-primary mb-2 flex items-center gap-2">
+                        <i class="fas fa-crown text-[10px]"></i>
+                        ELITE権限の拡張
+                    </h4>
+                    <ul class="text-[10px] text-text-sub space-y-2">
+                        <li class="flex items-start gap-2">
+                            <i class="fas fa-check text-primary mt-0.5"></i>
+                            <span>共通質問（Global Questions）の作成・編集</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fas fa-check text-primary mt-0.5"></i>
+                            <span>共通カテゴリー（Global Categories）の管理</span>
+                        </li>
+                    </ul>
                 </div>
             </div>
         </section>
