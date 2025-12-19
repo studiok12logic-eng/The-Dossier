@@ -1,118 +1,134 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="h-full flex flex-col p-6 overflow-y-auto">
-    <div class="max-w-3xl mx-auto w-full">
+    
+    <div class="h-full flex flex-col p-0 pb-20 overflow-y-auto"> <!-- Padding 0 to match target -->
+        
         <!-- Header -->
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl text-white font-mono tracking-wider">
+        <div class="p-4 border-b border-white/10 shrink-0 flex items-center gap-3">
+            <button type="button" onclick="history.back()" class="w-8 h-8 flex items-center justify-center text-text-sub hover:text-white rounded-full bg-white/5">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <h3 class="text-sm font-bold text-text-main truncate flex-1">
                 {% if form.instance.pk %}EDIT QUESTION{% else %}NEW QUESTION{% endif %}
-            </h1>
-            <a href="{% url 'question_list' %}" class="text-gray-500 hover:text-white font-mono text-sm">Cancel</a>
+            </h3>
         </div>
 
         <!-- Form -->
-        <form method="post" class="space-y-6">
+        <form method="post" class="">
             {% csrf_token %}
             
-            <!-- Type & Scope -->
-            <div class="grid grid-cols-2 gap-4">
-                {% if user.role == 'MASTER' %}
-                <div class="bg-surface border border-white/10 p-4 rounded-xl">
-                    <label class="block text-xs font-mono text-gray-400 mb-2">公開範囲</label>
-                    <div class="flex items-center gap-2">
+            <!-- Type & Scope (Master Only for Shared/Order) -->
+            {% if user.role == 'MASTER' %}
+            <section class="bg-surface/30 p-6 relative">
+                 <h2 class="text-primary font-mono text-sm mb-6 flex items-center gap-2 border-b border-white/5 pb-2">
+                    <span class="text-primary/50">00.</span> ADMIN SETTINGS
+                </h2>
+                <div class="space-y-4">
+                    <div class="flex items-center gap-2 p-3 bg-white/5 rounded border border-white/10">
                         {{ form.is_shared }}
-                        <span class="text-sm text-gray-300">共通質問 (Shared)</span>
+                        <span class="text-sm text-gray-300 font-bold">共通質問 (Shared)</span>
+                    </div>
+                     <div>
+                        <label class="block text-xs font-mono text-gray-400 mb-2">表示順 (Order)</label>
+                        {{ form.order }}
                     </div>
                 </div>
-                {% endif %}
-                <div class="bg-surface border border-white/10 p-4 rounded-xl">
-                    <label class="block text-xs font-mono text-gray-400 mb-2">表示順</label>
-                    {{ form.order }}
-                </div>
-            </div>
+            </section>
+            {% endif %}
 
             <!-- Classification (Category & Rank) -->
-            {% if user.role == 'MASTER' %}
-            <div class="bg-surface border border-white/10 p-6 rounded-xl space-y-4">
-                <h3 class="text-sm font-bold text-primary font-mono border-b border-white/5 pb-2">CLASSIFICATION</h3>
-                
-                <div class="grid grid-cols-2 gap-4">
+            <section class="bg-surface/30 p-6 relative">
+                 <h2 class="text-primary font-mono text-sm mb-6 flex items-center gap-2 border-b border-white/5 pb-2">
+                    <span class="text-primary/50">01.</span> CLASSIFICATION
+                </h2>
+                <div class="space-y-6">
+                    <!-- Rank (Master Only) -->
+                     {% if user.role == 'MASTER' %}
                     <div>
                         <div class="flex justify-between items-center mb-1">
-                            <label class="text-xs font-mono text-gray-400">カテゴリー</label>
-                            <button type="button" id="addCategoryBtn" class="text-[10px] text-primary hover:underline">+ ADD NEW</button>
-                        </div>
-                        <div class="relative">
-                            {{ form.category }}
-                            <!-- Arrow icon could be here but standard select is fine -->
-                        </div>
-                    </div>
-                    <div>
-                        <div class="flex justify-between items-center mb-1">
-                            <label class="text-xs font-mono text-gray-400">ランク</label>
-                            <button type="button" id="addRankBtn" class="text-[10px] text-primary hover:underline">+ ADD NEW</button>
+                            <label class="text-xs font-mono text-gray-400">ランク (RANK)</label>
+                             <button type="button" id="addRankBtn" class="text-[10px] text-primary hover:underline border border-primary/30 px-2 py-0.5 rounded">+ ADD NEW</button>
                         </div>
                         {{ form.rank }}
                     </div>
+                    {% endif %}
+
+                    <!-- Category -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs font-mono text-gray-400">カテゴリー (CATEGORY)</label>
+                            {% if user.role == 'MASTER' %}
+                            <button type="button" id="addCategoryBtn" class="text-[10px] text-primary hover:underline border border-primary/30 px-2 py-0.5 rounded">+ ADD NEW</button>
+                            {% endif %}
+                        </div>
+                        <div class="relative">
+                            {{ form.category }}
+                        </div>
+                         {% if user.role != 'MASTER' %}
+                         <p class="text-[10px] text-gray-500 mt-1">* 共有カテゴリーから選択してください。</p>
+                         {% endif %}
+                    </div>
                 </div>
-            </div>
-            {% endif %}
+            </section>
 
             <!-- Content -->
-            <div class="bg-surface border border-white/10 p-6 rounded-xl space-y-4">
-                <h3 class="text-sm font-bold text-primary font-mono border-b border-white/5 pb-2">CONTENT</h3>
-                
-                <div>
-                    <label class="block text-xs font-mono text-gray-400 mb-1">質問名 (Title)</label>
-                    {{ form.title }}
+            <section class="bg-surface/30 p-6 relative">
+                 <h2 class="text-primary font-mono text-sm mb-6 flex items-center gap-2 border-b border-white/5 pb-2">
+                    <span class="text-primary/50">02.</span> CONTENT
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-mono text-gray-400 mb-1">質問名 (Title)</label>
+                        {{ form.title }}
+                    </div>
+                    <div>
+                        <label class="block text-xs font-mono text-gray-400 mb-1">説明・意図 (Intent)</label>
+                        {{ form.description }}
+                    </div>
+                    <div>
+                        <label class="block text-xs font-mono text-gray-400 mb-1">質問例 (Example)</label>
+                        {{ form.example }}
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-xs font-mono text-gray-400 mb-1">説明・意図 (Intent)</label>
-                    {{ form.description }}
-                </div>
-                <div>
-                    <label class="block text-xs font-mono text-gray-400 mb-1">質問例 (Example)</label>
-                    {{ form.example }}
-                </div>
-            </div>
+            </section>
 
             <!-- Answer Settings -->
-            <div class="bg-surface border border-white/10 p-6 rounded-xl space-y-4">
-                <h3 class="text-sm font-bold text-primary font-mono border-b border-white/5 pb-2">ANSWER SETTINGS</h3>
-                
-                <div>
-                    <label class="block text-xs font-mono text-gray-400 mb-1">回答形式</label>
-                    {{ form.answer_type }}
+            <section class="bg-surface/30 p-6 relative">
+                 <h2 class="text-primary font-mono text-sm mb-6 flex items-center gap-2 border-b border-white/5 pb-2">
+                    <span class="text-primary/50">03.</span> ANSWER SETTINGS
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-mono text-gray-400 mb-1">回答形式 (Type)</label>
+                        {{ form.answer_type }}
+                    </div>
+                    <div id="choicesContainer" class="transition-opacity duration-300">
+                        <label class="block text-xs font-mono text-gray-400 mb-1">選択肢 (Choices)</label>
+                        {{ form.choices }}
+                        <p class="text-[10px] text-gray-500 mt-1">カンマ区切り (例: A, B, C)</p>
+                    </div>
                 </div>
-                <div id="choicesField" class="hidden">
-                    <label class="block text-xs font-mono text-gray-400 mb-1">選択肢 (カンマ区切り)</label>
-                    {{ form.choices }}
-                    <p class="text-[10px] text-gray-500 mt-1">例: A, B, C (タグのように選択可能になります)</p>
-                </div>
-            </div>
+            </section>
 
             <!-- Submit -->
-            <div class="pt-4 flex justify-end gap-3">
-                {% if form.instance.pk and user.role == "MASTER" or form.instance.pk and not form.instance.is_shared %}
+            <div class="mt-8 flex gap-4 px-6 pb-8">
+                 {% if form.instance.pk and user.role == "MASTER" or form.instance.pk and not form.instance.is_shared %}
                 <a href="{% url 'question_delete' form.instance.pk %}" 
-                   class="px-8 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 font-bold font-mono rounded border border-red-500/30 transition"
+                   class="flex-1 bg-red-500/10 text-red-500 font-bold py-4 rounded border border-red-500/30 hover:bg-red-500/20 transition font-mono flex items-center justify-center whitespace-nowrap"
                    onclick="return confirm('この質問を削除してもよろしいですか？')">
-                    DELETE
+                    削除 (DELETE)
                 </a>
                 {% endif %}
                 <button type="submit" 
-                    class="px-8 py-3 bg-primary text-black font-bold font-mono rounded hover:bg-primary/90 transition shadow-[0_0_20px_rgba(34,197,94,0.4)]">
-                    {% if form.instance.pk %}UPDATE QUESTION{% else %}REGISTER QUESTION{% endif %}
+                    class="flex-[2] bg-primary text-black font-bold py-4 rounded shadow-[0_0_20px_rgba(34,197,94,0.3)] hover:shadow-[0_0_30px_rgba(34,197,94,0.5)] transition font-mono border border-green-400">
+                    {% if form.instance.pk %}更新を保存 (SAVE){% else %}登録する (REGISTER){% endif %}
                 </button>
             </div>
         </form>
     </div>
-</div>
 
 <!-- Modals for Category/Rank (Simple Prompts or Custom Modal) -->
-<!-- Using simple JS prompts for MVP speed as requested "Same as Group logic" but Group logic is complex modal. 
-     I will implement simple custom modals to match the style without full separate files -->
-
+{% if user.role == 'MASTER' %}
 <div id="catModal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center backdrop-blur-sm">
     <div class="bg-surface border border-white/20 p-6 rounded-xl w-96">
         <h3 class="text-white font-mono mb-4">NEW CATEGORY</h3>
@@ -135,30 +151,46 @@
         </div>
     </div>
 </div>
+{% endif %}
 
 <script>
-    // Toggle Choices Field
+    // Toggle Choices Visual State
     const typeSelect = document.querySelector('[name="answer_type"]');
-    const choicesField = document.getElementById('choicesField');
+    const choicesInput = document.querySelector('[name="choices"]');
+    const choicesContainer = document.getElementById('choicesContainer');
     
-    function toggleChoices() {
-        if(typeSelect.value === 'SELECTION') choicesField.classList.remove('hidden');
-        else choicesField.classList.add('hidden');
+    function updateChoicesState() {
+        if(typeSelect.value === 'SELECTION') {
+            choicesInput.disabled = false;
+            choicesInput.classList.remove('opacity-50', 'cursor-not-allowed');
+            choicesContainer.classList.remove('opacity-50');
+        } else {
+            // Disabled style
+            choicesInput.disabled = true; // Or just visual? "グレーアウト" usually implies disabled.
+            // But if user wants to keep data... well, TEXT type doesn't use choices.
+            choicesInput.classList.add('opacity-50', 'cursor-not-allowed');
+            choicesContainer.classList.add('opacity-50');
+        }
     }
-    typeSelect.addEventListener('change', toggleChoices);
-    toggleChoices(); // Init
+    typeSelect.addEventListener('change', updateChoicesState);
+    updateChoicesState(); // Init
 
     // Styling Django Form Widgets via JS if needed (or assume classes added in ID)
     document.querySelectorAll('input, select, textarea').forEach(el => {
-        if(!el.classList.contains('bg-black/20') && !el.classList.contains('bg-surface')) {
-            el.classList.add('bg-black/20', 'border', 'border-white/10', 'rounded', 'px-3', 'py-2', 'text-white', 'w-full');
-            if(el.tagName === 'SELECT') el.classList.add('appearance-none', 'cursor-pointer');
+        if(!el.classList.contains('bg-black/20') && !el.classList.contains('bg-surface') && !el.type === 'checkbox') {
+             // Basic styling reset
         }
+        // Specific Fixes if Django widget attrs miss
+        if(el.tagName === 'SELECT') el.classList.add('appearance-none', 'cursor-pointer');
     });
 
+    {% if user.role == 'MASTER' %}
     // API Handling for Category/Rank
-    document.getElementById('addCategoryBtn').addEventListener('click', () => document.getElementById('catModal').classList.remove('hidden'));
-    document.getElementById('addRankBtn').addEventListener('click', () => document.getElementById('rankModal').classList.remove('hidden'));
+    const addCatBtn = document.getElementById('addCategoryBtn');
+    if(addCatBtn) addCatBtn.addEventListener('click', () => document.getElementById('catModal').classList.remove('hidden'));
+    
+    const addRankBtn = document.getElementById('addRankBtn');
+    if(addRankBtn) addRankBtn.addEventListener('click', () => document.getElementById('rankModal').classList.remove('hidden'));
 
     document.getElementById('saveCatBtn').addEventListener('click', () => {
         const name = document.getElementById('newCatName').value;
@@ -198,5 +230,6 @@
             }
         });
     });
+    {% endif %}
 </script>
 {% endblock %}

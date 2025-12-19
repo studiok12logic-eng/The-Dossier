@@ -152,21 +152,40 @@ class QuestionForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None) # Store user
         super().__init__(*args, **kwargs)
+        
+        is_master = False
+        if self.user and hasattr(self.user, 'role') and self.user.role == 'MASTER':
+            is_master = True
+
         if self.user:
-            self.fields['category'].queryset = QuestionCategory.objects.filter(user=self.user)
-            self.fields['rank'].queryset = QuestionRank.objects.filter(user=self.user)
-            
-            # Permission: Only 'MASTER' or 'Admin' role can set is_shared, category, rank
-            is_master = False
-            if hasattr(self.user, 'role') and self.user.role == 'MASTER':
-                is_master = True
-            
+            # Category QuerySet
+            # User can pick from Shared Categories.
+            # Master can pick from Own + Shared
+            from django.db.models import Q
+            if is_master:
+                self.fields['category'].queryset = QuestionCategory.objects.filter(Q(user=self.user) | Q(is_shared=True))
+                self.fields['rank'].queryset = QuestionRank.objects.filter(user=self.user)
+            else:
+                # Non-Master: Can only pick Shared Categories
+                # But requirement says "Category is user cannot create. Shared category check."
+                # Also "Master except: rank/category cannot create." 
+                # Meaning they CAN select a category, but only from shared ones?
+                # "共有されたカテゴリーから選ぶっていう" -> Yes.
+                self.fields['category'].queryset = QuestionCategory.objects.filter(is_shared=True)
+                # Rank hidden for non-master
+                
             if not is_master:
-                # Remove fields for non-MASTER
-                cols_to_remove = ['is_shared', 'category', 'rank']
+                # Remove protected fields
+                # "共通質問・表示順はmaster権限者のみに表示"
+                # "ランクはMASTER権限者以外には非表示"
+                cols_to_remove = ['is_shared', 'order', 'rank']
                 for col in cols_to_remove:
                     if col in self.fields:
                         del self.fields[col]
+                        
+                 # Note: 'category' is NOT removed, but restricted to shared categories above.
+                 # Wait, user said "category ... select only ... ADD button unnecessary".
+                 # So field remains, but restricted queryset.
         else:
              self.fields['category'].queryset = QuestionCategory.objects.none()
              self.fields['rank'].queryset = QuestionRank.objects.none()
@@ -181,10 +200,9 @@ class QuestionForm(forms.ModelForm):
             
         if not is_master and self.user:
             instance.is_shared = False
-            instance.rank = None
-            # Set default category 'その他'
-            cat, _ = QuestionCategory.objects.get_or_create(user=self.user, name='その他')
-            instance.category = cat
+            instance.rank = None # No rank for non-master
+            # Category is selected by user from shared list, so no forced default needed unless field is missing.
+            # If category field was removed, we'd need default. It's not removed now.
             
         if commit:
             instance.save()
