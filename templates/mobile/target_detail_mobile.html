@@ -265,9 +265,14 @@
         <div x-show="tab === 'timeline'" class="p-4 pb-24">
              <!-- Revamped Search & Tags -->
              <div class="space-y-3 mb-6">
-                 <div class="relative">
-                     <input type="text" x-model="searchQuery" placeholder="search Logs..." class="w-full bg-surface border border-white/10 rounded-full py-2 pl-9 pr-4 text-sm text-text-main focus:border-primary focus:outline-none placeholder-text-sub/50" autocomplete="off">
-                     <i class="fas fa-search absolute left-3 top-2.5 text-text-sub text-xs"></i>
+                 <div class="flex items-center gap-2">
+                     <div class="relative flex-1">
+                         <input type="text" x-model="searchQuery" placeholder="search Logs..." class="w-full bg-surface border border-white/10 rounded-full py-2 pl-9 pr-4 text-sm text-text-main focus:border-primary focus:outline-none placeholder-text-sub/50" autocomplete="off">
+                         <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-text-sub text-xs"></i>
+                     </div>
+                     <a href="{% url 'intelligence_log' %}?target_id={{ target.id }}" class="h-9 px-3 rounded-full bg-primary text-black text-xs font-bold flex items-center justify-center shrink-0 shadow-lg active:scale-95 transition">
+                        <i class="fas fa-plus mr-1"></i> Log
+                     </a>
                  </div>
 
                  <!-- Tags List (Top 10 + More) -->
@@ -344,8 +349,8 @@
              
              <!-- Add Button (Sticky or Bottom) -->
              <div class="text-center py-8">
-                 <a href="{% url 'intelligence_log' %}?target_id={{ target.id }}" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-primary text-black text-xs font-bold shadow-xl active:scale-95 transition">
-                     <i class="fas fa-plus"></i> Add Event Log
+                 <a href="{% url 'intelligence_log' %}?target_id={{ target.id }}" class="inline-flex items-center gap-2 px-10 py-5 rounded-full bg-primary text-black text-sm font-bold shadow-xl active:scale-95 transition">
+                     <i class="fas fa-plus text-lg"></i> <span class="tracking-wide">Add Event Log</span>
                  </a>
              </div>
         </div>
