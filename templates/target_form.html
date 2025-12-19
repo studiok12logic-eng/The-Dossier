@@ -8,11 +8,22 @@
 
 <div class="h-full flex flex-col gap-6 overflow-y-auto p-0 pb-10">
     <div class="p-4 border-b border-white/10 shrink-0 flex items-center gap-3">
-                 <button onclick="window.location.href='{% url 'target_list' %}'" class="w-8 h-8 flex items-center justify-center text-text-sub hover:text-white rounded-full bg-white/5">
+                 <button onclick="window.location.href='{% url 'target_list' %}';" class="w-8 h-8 flex items-center justify-center text-text-sub hover:text-white rounded-full bg-white/5">
                      <i class="fas fa-chevron-left"></i>
                  </button>
                  <h3 class="text-sm font-bold text-text-main truncate flex-1" id="answerPageTitle">{% if is_edit %}EDIT TARGET{% else %}ADD TARGET{% endif %}</h3>
              </div>
+
+    <style>
+        /* Force Selection States */
+        /* Group Items */
+        input.peer:checked ~ .group-check-ring { opacity: 1 !important; border-color: #22c55e !important; background-color: rgba(34, 197, 94, 0.2) !important; }
+        input.peer:checked ~ .group-check-text { color: #22c55e !important; }
+        input.peer:checked ~ .group-check-text .group-count { color: rgba(34, 197, 94, 0.8) !important; }
+        
+        /* Day Toggles */
+        input.peer:checked ~ .day-toggle-box { background-color: #22c55e !important; color: black !important; border-color: #22c55e !important; font-weight: bold; }
+    </style>
 
     <form method="post" enctype="multipart/form-data" class="space-y-8" id="targetForm">
         {% csrf_token %}
@@ -216,11 +227,11 @@
                         
                         <input type="checkbox" name="groups" value="{{ group.id }}" class="hidden peer" {% if group in form.instance.groups.all %}checked{% endif %}>
                         
-                        <div class="absolute inset-0 rounded-full border border-primary/50 bg-primary/20 opacity-0 peer-checked:!opacity-100 transition-opacity"></div>
+                        <div class="group-check-ring absolute inset-0 rounded-full border border-primary/50 bg-primary/20 opacity-0 transition-opacity"></div>
                         
-                        <span class="relative z-10 text-xs text-gray-300 peer-checked:!text-primary transition-colors flex items-center gap-2">
+                        <span class="group-check-text relative z-10 text-xs text-gray-300 transition-colors flex items-center gap-2">
                             <span class="group-name-span">{{ group.name }}</span>
-                            <span class="text-[10px] bg-black/40 px-1.5 rounded-full text-gray-400 peer-checked:!text-primary/80">{{ group.target_count }}</span>
+                            <span class="group-count text-[10px] bg-black/40 px-1.5 rounded-full text-gray-400">{{ group.target_count }}</span>
                         </span>
                     </label>
                     {% empty %}
@@ -344,31 +355,31 @@
                         <!-- Manual Day Toggles -->
                         <label class="cursor-pointer">
                             <input type="checkbox" name="is_mon" class="hidden peer">
-                            <span class="block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/20 text-xs text-gray-500 peer-checked:!bg-green-500 peer-checked:!text-black peer-checked:font-bold peer-checked:!border-green-500 hover:bg-white/5 transition select-none">月</span>
+                            <span class="day-toggle-box block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/20 text-xs text-gray-500 hover:bg-white/5 transition select-none">月</span>
                         </label>
                         <label class="cursor-pointer">
                             <input type="checkbox" name="is_tue" class="hidden peer">
-                            <span class="block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/20 text-xs text-gray-500 peer-checked:!bg-green-500 peer-checked:!text-black peer-checked:font-bold peer-checked:!border-green-500 hover:bg-white/5 transition select-none">火</span>
+                            <span class="day-toggle-box block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/20 text-xs text-gray-500 hover:bg-white/5 transition select-none">火</span>
                         </label>
                         <label class="cursor-pointer">
                             <input type="checkbox" name="is_wed" class="hidden peer">
-                            <span class="block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/20 text-xs text-gray-500 peer-checked:!bg-green-500 peer-checked:!text-black peer-checked:font-bold peer-checked:!border-green-500 hover:bg-white/5 transition select-none">水</span>
+                            <span class="day-toggle-box block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/20 text-xs text-gray-500 hover:bg-white/5 transition select-none">水</span>
                         </label>
                         <label class="cursor-pointer">
                             <input type="checkbox" name="is_thu" class="hidden peer">
-                            <span class="block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/20 text-xs text-gray-500 peer-checked:!bg-green-500 peer-checked:!text-black peer-checked:font-bold peer-checked:!border-green-500 hover:bg-white/5 transition select-none">木</span>
+                            <span class="day-toggle-box block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/20 text-xs text-gray-500 hover:bg-white/5 transition select-none">木</span>
                         </label>
                         <label class="cursor-pointer">
                             <input type="checkbox" name="is_fri" class="hidden peer">
-                            <span class="block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/20 text-xs text-gray-500 peer-checked:!bg-green-500 peer-checked:!text-black peer-checked:font-bold peer-checked:!border-green-500 hover:bg-white/5 transition select-none">金</span>
+                            <span class="day-toggle-box block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/20 text-xs text-gray-500 hover:bg-white/5 transition select-none">金</span>
                         </label>
                         <label class="cursor-pointer">
                             <input type="checkbox" name="is_sat" class="hidden peer">
-                            <span class="block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/20 text-xs text-gray-500 peer-checked:!bg-green-500 peer-checked:!text-black peer-checked:font-bold peer-checked:!border-green-500 hover:bg-white/5 transition select-none">土</span>
+                            <span class="day-toggle-box block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/20 text-xs text-gray-500 hover:bg-white/5 transition select-none">土</span>
                         </label>
                         <label class="cursor-pointer">
                             <input type="checkbox" name="is_sun" class="hidden peer">
-                            <span class="block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/20 text-xs text-gray-500 peer-checked:!bg-green-500 peer-checked:!text-black peer-checked:font-bold peer-checked:!border-green-500 hover:bg-white/5 transition select-none">日</span>
+                            <span class="day-toggle-box block w-8 h-8 flex items-center justify-center rounded bg-surface border border-white/20 text-xs text-gray-500 hover:bg-white/5 transition select-none">日</span>
                         </label>
                     </div>
                 </div>

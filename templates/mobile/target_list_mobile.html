@@ -45,7 +45,7 @@
         {% for target in targets %}
         <!-- Card -->
         <div class="bg-surface border border-white/5 rounded-xl p-4 hover:border-primary/50 transition-all group relative overflow-hidden flex flex-col mb-2 active:scale-[0.99]"
-             onclick="window.location.href='{% url 'target_detail' %}?target_id={{ target.pk }}'"
+             onclick="window.location.href='{% url 'target_detail' %}?target_id={{ target.pk }}';"
              oncontextmenu="showContextMenu(event, '{{ target.pk }}')">
             
             <!-- 1. Header Row: Rank, Points, Count, Last Contact -->
