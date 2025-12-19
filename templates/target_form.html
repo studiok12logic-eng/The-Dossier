@@ -148,9 +148,9 @@
             <div class="hidden">{{ form.zodiac_sign }}</div>
 
             <!-- Zodiac Select, Gender, Blood -->
-            <div class="grid grid-cols-3 gap-2 mb-6">
+            <div class="flex gap-2 mb-6">
                 <!-- Zodiac Select -->
-                <div>
+                <div class="flex-1 min-w-0">
                      <label class="block text-xs font-mono text-gray-400 mb-1">星座</label>
                      <select id="zodiacParams"
                          class="w-full bg-surface border border-white/10 rounded px-2 py-2 text-white text-sm appearance-none focus:border-primary">
@@ -170,12 +170,12 @@
                      </select>
                 </div>
                 <!-- Gender -->
-                <div>
+                <div class="flex-1 min-w-0">
                     <label class="block text-xs font-mono text-gray-400 mb-1">性別</label>
                     {{ form.gender }}
                 </div>
                 <!-- Blood -->
-                <div>
+                <div class="flex-1 min-w-0">
                     <label class="block text-xs font-mono text-gray-400 mb-1">血液型</label>
                     {{ form.blood_type }}
                 </div>
