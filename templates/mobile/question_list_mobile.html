@@ -51,6 +51,11 @@
             
             <!-- List (Content) -->
             <div id="cat-{{ forloop.counter }}" class="hidden">
+                {% if category.description %}
+                <div class="px-4 py-2 text-[10px] text-text-sub border-t border-white/5 bg-black/20 italic">
+                    {{ category.description }}
+                </div>
+                {% endif %}
                 {% for q in category.questions_list %}
                 <div class="border-t border-white/5 p-3 flex items-center gap-3 active:bg-white/5 transition relative group"
                      onclick="window.location.href='{% url 'question_detail' %}?question_id={{ q.id }}'"

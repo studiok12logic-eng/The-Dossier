@@ -1122,10 +1122,11 @@ class QuestionListView(LoginRequiredMixin, MobileTemplateMixin, ListView):
         if uncategorized:
             # Create a dummy object to mimic category interface
             class DummyCat:
-                name = "Uncategorized"
+                name = "Unclassified"
                 id = None
                 questions_list = uncategorized
                 is_shared = False
+                description = "" # Add description to avoid template errors
             structured_list.append(DummyCat())
             
         context['structured_categories'] = structured_list
