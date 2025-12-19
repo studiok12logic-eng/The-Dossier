@@ -1,17 +1,19 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block content_wrapper_class %}flex-1 overflow-y-auto p-0 pb-20{% endblock %}
+{% block content_wrapper_class %}flex-1 overflow-y-auto pb-24 md:p-8 md:pb-8{% endblock %}
 
 {% block content %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
 
-<div class="p-4 border-b border-white/10 shrink-0 flex items-center gap-3">
-    <button onclick="window.location.href='{% url 'target_list' %}';" class="w-8 h-8 flex items-center justify-center text-text-sub hover:text-white rounded-full bg-white/5">
-        <i class="fas fa-chevron-left"></i>
-    </button>
-    <h3 class="text-sm font-bold text-text-main truncate flex-1" id="answerPageTitle">{% if is_edit %}EDIT TARGET{% else %}ADD TARGET{% endif %}</h3>
-</div>
+<div class="h-full flex flex-col p-0 pb-20 overflow-y-auto">
+    <!-- Header -->
+    <div class="p-4 border-b border-white/10 shrink-0 flex items-center gap-3">
+        <button type="button" onclick="window.location.href='{% url 'target_list' %}';" class="w-8 h-8 flex items-center justify-center text-text-sub hover:text-white rounded-full bg-white/5">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <h3 class="text-sm font-bold text-text-main truncate flex-1" id="answerPageTitle">{% if is_edit %}EDIT TARGET{% else %}ADD TARGET{% endif %}</h3>
+    </div>
 
     <style>
         /* Force Selection States */
@@ -304,7 +306,7 @@
             </button>
         </div>
     </form>
-<!-- Removed inner div closing tag -->
+</div>
 
 <!-- Crop Modal -->
 <div id="cropModal" class="hidden fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
