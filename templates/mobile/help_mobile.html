@@ -1,102 +1,212 @@
 {% extends 'mobile/base_mobile.html' %}
 
-{% block title %}ヘルプ - The Dossier{% endblock %}
+{% block title %}ヘルプ - The Dossier Mobile{% endblock %}
 
 {% block content %}
-<div class="flex-1 flex flex-col h-full bg-black">
+<div class="flex flex-col min-h-screen bg-black text-text-main pb-20">
     <!-- Header -->
-    <div class="px-6 py-8 border-b border-white/10 bg-surface/30">
-        <h1 class="text-2xl font-mono font-bold tracking-tighter text-white mb-2">OPERATIONAL GUIDE</h1>
-        <p class="text-xs text-text-sub uppercase tracking-widest opacity-60">System Version 1.0.4 // Help & Documentation</p>
+    <div class="px-6 py-8 border-b border-white/10 shrink-0 bg-surface/30 backdrop-blur-md sticky top-0 z-40">
+        <div class="flex items-center gap-3">
+            <button type="button" onclick="history.back()" class="w-10 h-10 flex items-center justify-center text-text-sub hover:text-white rounded-full bg-white/5 transition-all active:scale-90">
+                <i class="fas fa-chevron-left text-lg"></i>
+            </button>
+            <div>
+                <h1 class="text-xl font-bold text-white tracking-tight">OPERATIONAL GUIDE</h1>
+                <p class="text-[10px] text-primary/70 font-mono font-bold tracking-[0.2em] uppercase">System Documentation</p>
+            </div>
+        </div>
     </div>
 
     <!-- Scrollable Content -->
-    <div class="flex-1 overflow-y-auto px-6 py-8 space-y-12 pb-32">
-        
-        <!-- Section: Overview -->
+    <div class="p-6 space-y-12">
+        <!-- 1. システム概要 -->
         <section class="space-y-4">
             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center text-primary border border-primary/30">
+                <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
                     <i class="fas fa-microchip text-sm"></i>
                 </div>
-                <h2 class="text-lg font-bold text-white tracking-tight">システムの概要</h2>
+                <h2 class="text-lg font-bold text-white">システム概要</h2>
             </div>
-            <p class="text-sm text-text-sub leading-relaxed">
-                The Dossier（ドシエ）は、特定の対象人物に関する情報を体系的に収集・管理するためのプロトコルダー・アプリケーションです。
-                日々の些細な気づきから、戦略的な質問への回答まで、あらゆる断片を統合し、対象への理解を深めることを目的としています。
+            <p class="text-sm text-text-sub leading-relaxed bg-surface/20 p-4 rounded-xl border border-white/5">
+                The Dossierは、対象人物の断片情報を体系化し、戦略的理解を深めるためのプラットフォームです。日々の言動を一元管理し、関係性を強固にします。
             </p>
         </section>
 
-        <!-- Section: Features Grid -->
-        <div class="grid grid-cols-1 gap-6">
-            
-            <!-- Feature 1: Targets -->
-            <div class="p-5 rounded-2xl bg-surface/50 border border-white/5 space-y-3">
-                <div class="text-primary text-xl">
-                    <i class="fas fa-users-viewfinder"></i>
+        <!-- 2. ダッシュボード -->
+        <section class="space-y-4">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+                    <i class="fas fa-th-large text-sm"></i>
                 </div>
-                <h3 class="font-bold text-white">ターゲット管理</h3>
-                <p class="text-xs text-text-sub leading-relaxed">
-                    調査対象となる人物を新規登録し、基本情報（誕生日、住所、役割ランクなど）を一元的に管理します。
-                </p>
+                <h2 class="text-lg font-bold text-white">ダッシュボード</h2>
             </div>
-
-            <!-- Feature 2: Intel Log -->
-            <div class="p-5 rounded-2xl bg-surface/50 border border-white/5 space-y-3">
-                <div class="text-primary text-xl">
-                    <i class="fas fa-terminal"></i>
-                </div>
-                <h3 class="font-bold text-white">諜報ログ (Log)</h3>
-                <p class="text-xs text-text-sub leading-relaxed">
-                    タイムライン形式で情報を蓄積します。日々の言動、目撃情報、共有された秘密などをリアルタイムで記録可能です。画像添付にも対応しています。
-                </p>
-            </div>
-
-            <!-- Feature 3: Strategic Questions -->
-            <div class="p-5 rounded-2xl bg-surface/50 border border-white/5 space-y-3">
-                <div class="text-primary text-xl">
-                    <i class="fas fa-brain"></i>
-                </div>
-                <h3 class="font-bold text-white">戦略的質問 (Questions)</h3>
-                <p class="text-xs text-text-sub leading-relaxed">
-                    「オフィシャル」「ライフスタイル」などのカテゴリー分けされた質問に回答することで、ターゲットの深層を体系的に解明します。
-                </p>
-            </div>
-
-        </div>
-
-        <!-- Section: User Ranks -->
-        <section class="space-y-4 p-6 rounded-2xl bg-primary/5 border border-primary/10">
-            <h2 class="text-sm font-mono font-bold text-primary uppercase tracking-widest">User Ranks // 権限レベル</h2>
-            <div class="space-y-4 pt-2">
-                <div class="flex items-start gap-4">
-                    <div class="shrink-0 w-10 text-xs font-mono font-bold text-primary py-1 px-2 bg-primary/10 rounded border border-primary/20 text-center">MASTER</div>
-                    <div class="flex-1 space-y-1">
-                        <p class="text-xs font-bold text-white">最高特権</p>
-                        <p class="text-[10px] text-text-sub leading-normal">すべてのシステム設定、ユーザー管理、グローバル質問の編集権限を持ちます。</p>
+            <div class="grid grid-cols-1 gap-3">
+                <div class="p-4 bg-surface/20 rounded-xl border border-white/5 flex items-start gap-4">
+                    <i class="fas fa-calendar-check text-primary mt-1"></i>
+                    <div>
+                        <span class="text-white font-bold text-sm block mb-1">Upcoming</span>
+                        <span class="text-xs text-text-sub">記念日や誕生日のカウントダウン表示。</span>
                     </div>
                 </div>
-                <div class="flex items-start gap-4">
-                    <div class="shrink-0 w-10 text-xs font-mono font-bold text-white/40 py-1 px-2 bg-white/5 rounded border border-white/10 text-center">AGENT</div>
-                    <div class="flex-1 space-y-1">
-                        <p class="text-xs font-bold text-white">標準諜報員</p>
-                        <p class="text-[10px] text-text-sub leading-normal">ターゲットの管理、ログの作成、質問への回答が可能です。自身のデータの編集権限を持ちます。</p>
+                <div class="p-4 bg-surface/20 rounded-xl border border-white/5 flex items-start gap-4">
+                    <i class="fas fa-history text-primary mt-1"></i>
+                    <div>
+                        <span class="text-white font-bold text-sm block mb-1">Recent Activity</span>
+                        <span class="text-xs text-text-sub">最新ログの入ったターゲットを即座に確認。</span>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Footer Note -->
-        <div class="text-center space-y-4 pt-4 opacity-50">
-            <div class="h-px w-12 bg-white/20 mx-auto"></div>
-            <p class="text-[10px] font-mono tracking-widest uppercase">End of Documentation</p>
-        </div>
+        <!-- 3. ターゲット -->
+        <section class="space-y-4">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+                    <i class="fas fa-users-viewfinder text-sm"></i>
+                </div>
+                <h2 class="text-lg font-bold text-white">ターゲット</h2>
+            </div>
+            <div class="space-y-3">
+                <div class="p-4 bg-surface/20 rounded-xl border border-white/5">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-xs text-primary/50 font-mono">01.</span>
+                        <span class="text-sm text-white font-bold">一覧</span>
+                    </div>
+                    <p class="text-xs text-text-sub">全ターゲットを状況別に見やすく管理。検索も可能です。</p>
+                </div>
+                <div class="p-4 bg-surface/20 rounded-xl border border-white/5">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-xs text-primary/50 font-mono">02.</span>
+                        <span class="text-sm text-white font-bold">登録</span>
+                    </div>
+                    <p class="text-xs text-text-sub">ニックネームや生年月日のプロファイル構築。</p>
+                </div>
+                <div class="p-4 bg-surface/20 rounded-xl border border-white/5">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-xs text-primary/50 font-mono">03.</span>
+                        <span class="text-sm text-white font-bold">詳細</span>
+                    </div>
+                    <p class="text-xs text-text-sub">生体情報と全ログを時系列（タイムライン）で閲覧。</p>
+                </div>
+            </div>
+        </section>
 
+        <!-- 4. 諜報ログ -->
+        <section class="space-y-4">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+                    <i class="fas fa-clipboard-list text-sm"></i>
+                </div>
+                <h2 class="text-lg font-bold text-white">諜報ログ</h2>
+            </div>
+            <div class="bg-surface/20 rounded-xl border border-white/5 p-4 space-y-4">
+                <h3 class="text-xs font-mono font-bold text-primary uppercase">Event Day // イベントデイ</h3>
+                <p class="text-xs text-text-sub">接触すべきターゲットを自動選出。機会を逃しません。</p>
+                <h3 class="text-xs font-mono font-bold text-primary uppercase mt-4">Timeline // タイムライン要素</h3>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="p-3 bg-black/30 rounded-lg border border-white/5">
+                        <i class="fas fa-tag text-[10px] text-primary mb-2"></i>
+                        <span class="block text-[10px] text-white font-bold mb-1">タグ管理</span>
+                        <span class="text-[9px] text-text-sub">情報の種類を分類。</span>
+                    </div>
+                    <div class="p-3 bg-black/30 rounded-lg border border-white/5">
+                        <i class="fas fa-handshake text-[10px] text-primary mb-2"></i>
+                        <span class="block text-[10px] text-white font-bold mb-1">接触フラグ</span>
+                        <span class="text-[9px] text-text-sub">面会の事実を記録。</span>
+                    </div>
+                    <div class="p-3 bg-black/30 rounded-lg border border-white/5">
+                        <i class="fas fa-image text-[10px] text-primary mb-2"></i>
+                        <span class="block text-[10px] text-white font-bold mb-1">画像記録</span>
+                        <span class="text-[9px] text-text-sub">事実を視覚的に保存。</span>
+                    </div>
+                    <div class="p-3 bg-black/30 rounded-lg border border-white/5">
+                        <i class="fas fa-comment text-[10px] text-primary mb-2"></i>
+                        <span class="block text-[10px] text-white font-bold mb-1">アンサー</span>
+                        <span class="text-[9px] text-text-sub">質問回答と同期。</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. 質問リスト -->
+        <section class="space-y-4">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+                    <i class="fas fa-brain text-sm"></i>
+                </div>
+                <h2 class="text-lg font-bold text-white">質問リスト</h2>
+            </div>
+            <div class="space-y-3">
+                <div class="p-4 bg-surface/20 rounded-xl border border-white/5">
+                    <span class="text-white font-bold text-sm block mb-1">一覧</span>
+                    <span class="text-xs text-text-sub">カテゴリー別の質問群とターゲットの回答状況。</span>
+                </div>
+                <div class="p-4 bg-surface/20 rounded-xl border border-white/5">
+                    <span class="text-white font-bold text-sm block mb-1">登録</span>
+                    <span class="text-xs text-text-sub">独自の戦略的質問を追加定義。</span>
+                </div>
+                <div class="p-4 bg-surface/20 rounded-xl border border-white/5">
+                    <span class="text-white font-bold text-sm block mb-1">詳細</span>
+                    <span class="text-xs text-text-sub">質問内容の管理と、全ターゲットの回答横断。</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. 権限レベル -->
+        <section class="space-y-6 pt-4">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+                    <i class="fas fa-shield-halved text-sm"></i>
+                </div>
+                <h2 class="text-lg font-bold text-white">権限レベル</h2>
+            </div>
+            <div class="space-y-4">
+                <div class="bg-surface/20 rounded-2xl border border-white/5 overflow-hidden">
+                    <div class="px-5 py-3 bg-white/5 border-b border-white/10 flex items-center justify-between">
+                        <span class="text-xs font-mono font-bold text-white/40 uppercase">Rank</span>
+                        <span class="text-xs font-mono font-bold text-white/40 uppercase">AGENT</span>
+                    </div>
+                    <div class="p-5 space-y-3">
+                        <p class="text-xs text-white font-bold">標準調査員</p>
+                        <ul class="text-[11px] text-text-sub space-y-2 list-disc list-inside px-1">
+                            <li>ターゲットの新規登録・管理</li>
+                            <li>諜報ログの入力・タイムライン管理</li>
+                            <li>公開された質問への回答</li>
+                            <li>独自質問（自分用）の作成</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="bg-surface/20 rounded-2xl border border-primary/20 overflow-hidden shadow-[0_0_20px_rgba(34,197,94,0.05)]">
+                    <div class="px-5 py-3 bg-primary/10 border-b border-primary/20 flex items-center justify-between">
+                        <span class="text-xs font-mono font-bold text-primary/60 uppercase">Rank</span>
+                        <span class="text-xs font-mono font-bold text-primary uppercase">ELITE</span>
+                    </div>
+                    <div class="p-5 space-y-4">
+                        <p class="text-xs text-primary font-bold">上級エージェント</p>
+                        <ul class="space-y-3">
+                            <li class="flex items-start gap-2 bg-primary/5 p-3 rounded-xl border border-primary/10">
+                                <i class="fas fa-check-circle text-[10px] text-primary mt-1"></i>
+                                <span class="text-[11px] text-text-sub leading-tight">共通質問（Global Questions）の作成・編集権限</span>
+                            </li>
+                            <li class="flex items-start gap-2 bg-primary/5 p-3 rounded-xl border border-primary/10">
+                                <i class="fas fa-check-circle text-[10px] text-primary mt-1"></i>
+                                <span class="text-[11px] text-text-sub leading-tight">共通カテゴリーの管理</span>
+                            </li>
+                            <li class="flex items-start gap-2 bg-primary/5 p-3 rounded-xl border border-primary/10">
+                                <i class="fas fa-check-circle text-[10px] text-primary mt-1"></i>
+                                <span class="text-[11px] text-text-sub leading-tight">AGENTの全機能が利用可能</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="pt-8 pb-4 text-center">
+            <p class="text-[9px] font-mono text-text-sub/30 tracking-[0.3em] uppercase">End of Transmission</p>
+        </footer>
     </div>
 </div>
-{% endblock %}
-
-{% block bottom_nav %}
-<!-- Same bottom nav as base but can be customized if needed -->
-{{ block.super }}
 {% endblock %}
