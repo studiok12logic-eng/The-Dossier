@@ -101,93 +101,90 @@
                 <span class="text-primary/50">02.</span> 生体情報
             </h2>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Birthdate (Selects) -->
-                <div class="bg-black/20 p-4 rounded border border-white/5">
-                    <label class="block text-xs font-mono text-gray-400 mb-2">生年月日</label>
-                    <div class="flex flex-col md:flex-row gap-2 mb-2">
-                        <!-- Year -->
-                        <div class="relative flex-1">
-                            {{ form.birth_year.as_hidden }}
-                            <select id="birth_year_select"
-                                class="w-full bg-surface border border-white/10 rounded px-2 py-2 text-white text-sm appearance-none focus:border-primary">
-                                <option value="">年</option>
-                                <!-- JS Populated -->
-                            </select>
-                        </div>
-                        <!-- Month -->
-                        <div class="relative flex-1">
-                            {{ form.birth_month.as_hidden }}
-                            <select id="birth_month_select"
-                                class="w-full bg-surface border border-white/10 rounded px-2 py-2 text-white text-sm appearance-none focus:border-primary">
-                                <option value="">月</option>
-                                {% for i in "x"|ljust:"12" %}
-                                <option value="{{ forloop.counter }}">{{ forloop.counter }}月</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <!-- Day -->
-                        <div class="relative flex-1">
-                            {{ form.birth_day.as_hidden }}
-                            <select id="birth_day_select"
-                                class="w-full bg-surface border border-white/10 rounded px-2 py-2 text-white text-sm appearance-none focus:border-primary">
-                                <option value="">日</option>
-                                {% for i in "x"|ljust:"31" %}
-                                <option value="{{ forloop.counter }}">{{ forloop.counter }}日</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-4 text-xs font-mono text-gray-500 mt-2">
-                        <span id="ageDisplay">年齢: --歳</span>
-                        <span id="etoDisplay">干支: --</span>
-                    </div>
-                </div>
-
-                <!-- Zodiac -->
-                <div class="bg-black/20 p-4 rounded border border-white/5 relative">
-                    <label class="block text-xs font-mono text-gray-400 mb-2">星座 (自動判定 / 手動変更可)</label>
-                    <div class="flex gap-2 mb-1">
-                        <div class="flex-1">
-                            {{ form.zodiac_sign }}
-                        </div>
-                        <select id="zodiacParams"
-                            class="bg-surface border border-white/10 rounded px-2 text-white text-xs w-32">
-                            <option value="">自動 (Auto)</option>
-                            <option value="牡羊座">♈ 牡羊座</option>
-                            <option value="牡牛座">♉ 牡牛座</option>
-                            <option value="双子座">♊ 双子座</option>
-                            <option value="蟹座">♋ 蟹座</option>
-                            <option value="獅子座">♌ 獅子座</option>
-                            <option value="乙女座">♍ 乙女座</option>
-                            <option value="天秤座">♎ 天秤座</option>
-                            <option value="蠍座">♏ 蠍座</option>
-                            <option value="射手座">♐ 射手座</option>
-                            <option value="山羊座">♑ 山羊座</option>
-                            <option value="水瓶座">♒ 水瓶座</option>
-                            <option value="魚座">♓ 魚座</option>
+            <!-- Birthdate -->
+            <div class="mb-6">
+                <label class="block text-xs font-mono text-gray-400 mb-2">生年月日</label>
+                <div class="flex gap-2 mb-2">
+                    <!-- Year -->
+                    <div class="relative flex-1">
+                        {{ form.birth_year.as_hidden }}
+                        <select id="birth_year_select"
+                            class="w-full bg-surface border border-white/10 rounded px-2 py-2 text-white text-sm appearance-none focus:border-primary">
+                            <option value="">年</option>
+                            <!-- JS Populated -->
                         </select>
                     </div>
-                    <!-- Zodiac Date Range Display -->
-                    <div id="zodiacRangeDisplay" class="text-[10px] text-gray-500 text-right h-4"></div>
+                    <!-- Month -->
+                    <div class="relative flex-1">
+                        {{ form.birth_month.as_hidden }}
+                        <select id="birth_month_select"
+                            class="w-full bg-surface border border-white/10 rounded px-2 py-2 text-white text-sm appearance-none focus:border-primary">
+                            <option value="">月</option>
+                            {% for i in "x"|ljust:"12" %}
+                            <option value="{{ forloop.counter }}">{{ forloop.counter }}月</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <!-- Day -->
+                    <div class="relative flex-1">
+                        {{ form.birth_day.as_hidden }}
+                        <select id="birth_day_select"
+                            class="w-full bg-surface border border-white/10 rounded px-2 py-2 text-white text-sm appearance-none focus:border-primary">
+                            <option value="">日</option>
+                            {% for i in "x"|ljust:"31" %}
+                            <option value="{{ forloop.counter }}">{{ forloop.counter }}日</option>
+                            {% endfor %}
+                        </select>
+                    </div>
                 </div>
+                <div class="flex items-center gap-4 text-xs font-mono text-gray-500 mt-2">
+                    <span id="ageDisplay">年齢: --歳</span>
+                    <span id="etoDisplay">干支: --</span>
+                    <span id="zodiacDisplay">星座: --</span>
+                </div>
+            </div>
 
-                <!-- Gender & Blood -->
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-mono text-gray-400 mb-1">性別</label>
-                        {{ form.gender }}
-                    </div>
-                    <div>
-                        <label class="block text-xs font-mono text-gray-400 mb-1">血液型</label>
-                        {{ form.blood_type }}
-                    </div>
-                </div>
-                <!-- Origin -->
+            <!-- Zodiac Input (Hidden) -->
+            <div class="hidden">{{ form.zodiac_sign }}</div>
+
+            <!-- Zodiac Select, Gender, Blood -->
+            <div class="grid grid-cols-3 gap-4 mb-6">
+                <!-- Zodiac Select -->
                 <div>
-                    <label class="block text-xs font-mono text-gray-400 mb-1">出身地</label>
-                    {{ form.birthplace }}
+                     <label class="block text-xs font-mono text-gray-400 mb-1">星座</label>
+                     <select id="zodiacParams"
+                         class="w-full bg-surface border border-white/10 rounded px-2 py-2 text-white text-sm appearance-none focus:border-primary">
+                         <option value="">自動</option>
+                         <option value="牡羊座">♈ 牡羊座</option>
+                         <option value="牡牛座">♉ 牡牛座</option>
+                         <option value="双子座">♊ 双子座</option>
+                         <option value="蟹座">♋ 蟹座</option>
+                         <option value="獅子座">♌ 獅子座</option>
+                         <option value="乙女座">♍ 乙女座</option>
+                         <option value="天秤座">♎ 天秤座</option>
+                         <option value="蠍座">♏ 蠍座</option>
+                         <option value="射手座">♐ 射手座</option>
+                         <option value="山羊座">♑ 山羊座</option>
+                         <option value="水瓶座">♒ 水瓶座</option>
+                         <option value="魚座">♓ 魚座</option>
+                     </select>
                 </div>
+                <!-- Gender -->
+                <div>
+                    <label class="block text-xs font-mono text-gray-400 mb-1">性別</label>
+                    {{ form.gender }}
+                </div>
+                <!-- Blood -->
+                <div>
+                    <label class="block text-xs font-mono text-gray-400 mb-1">血液型</label>
+                    {{ form.blood_type }}
+                </div>
+            </div>
+
+            <!-- Origin -->
+            <div>
+                <label class="block text-xs font-mono text-gray-400 mb-1">出身地</label>
+                {{ form.birthplace }}
             </div>
         </section>
 
@@ -290,7 +287,7 @@
 
         <!-- Submit -->
         <!-- Submit Actions -->
-        <div class="sticky bottom-4 z-40 flex gap-4">
+        <div class="mt-8 flex gap-4">
             {% if is_edit %}
             <a href="{% url 'target_delete' form.instance.pk %}"
                class="flex-1 bg-red-500/10 text-red-500 font-bold py-4 rounded border border-red-500/30 hover:bg-red-500/20 transition font-mono flex items-center justify-center whitespace-nowrap">
@@ -469,9 +466,9 @@
     // --- Bio Logic (Age, Eto, Zodiac) ---
     const ageDisplay = document.getElementById('ageDisplay');
     const etoDisplay = document.getElementById('etoDisplay');
+    const zodiacDisplay = document.getElementById('zodiacDisplay');
     const zodiacInput = document.getElementById('id_zodiac_sign');
     const zodiacSelect = document.getElementById('zodiacParams');
-    const zodiacRangeDisplay = document.getElementById('zodiacRangeDisplay');
 
     const zodiacInfo = {
         "牡羊座": { start: "3/21", end: "4/19" },
@@ -507,6 +504,15 @@
         return "";
     }
 
+    function updateDisplay() {
+         const z = zodiacInput.value;
+         if (z && zodiacInfo[z]) {
+             zodiacDisplay.textContent = `星座: ${z}(${zodiacInfo[z].start} 〜 ${zodiacInfo[z].end})`;
+         } else {
+             zodiacDisplay.textContent = `星座: --`;
+         }
+    }
+
     function updateBio() {
         const y = parseInt(yearSelect.value);
         const m = parseInt(monthSelect.value);
@@ -526,8 +532,9 @@
             zodiacSelect.value = "";
             zodiacInput.value = z;
         } else if (zodiacSelect.value === "") {
-            zodiacInput.value = "";
+             if(!zodiacSelect.value) zodiacInput.value = "";
         }
+        updateDisplay();
     }
 
     updateBio();
@@ -535,24 +542,11 @@
     zodiacSelect.addEventListener('change', function () {
         if (this.value) {
             zodiacInput.value = this.value;
-            const info = zodiacInfo[this.value];
-            if (info) zodiacRangeDisplay.textContent = `${info.start} 〜 ${info.end}`;
+            updateDisplay();
         } else {
-            zodiacRangeDisplay.textContent = "";
             updateBio();
         }
     });
-
-    const originalUpdateBio = updateBio;
-    updateBio = function () {
-        originalUpdateBio();
-        const startEnd = zodiacInfo[zodiacInput.value];
-        if (startEnd) {
-            zodiacRangeDisplay.textContent = `${startEnd.start} 〜 ${startEnd.end}`;
-        } else {
-            zodiacRangeDisplay.textContent = "";
-        }
-    };
 
 
     // --- Avatar Logic ---
