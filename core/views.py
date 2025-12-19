@@ -288,6 +288,11 @@ class TargetDetailView(LoginRequiredMixin, MobileTemplateMixin, DetailView):
         context['base_answers'] = base_answers
         context['base_progress'] = min(round((answered_base_items / 14) * 100), 100)
         
+        # Calculate HSL color for Base Progress (Red-to-Green: 0 to 120 deg)
+        h = int(context['base_progress'] * 1.2)
+        context['base_color'] = f"hsl({h}, 70%, 45%)"
+        context['base_shadow'] = f"0 0 10px hsl({h}, 70%, 45%, 0.3)"
+        
         # Global Progress (ensure counts for display)
         context['total_q_count'] = total_q_count
         context['total_answered_count'] = total_answered_count
