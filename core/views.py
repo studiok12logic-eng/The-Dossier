@@ -1552,3 +1552,10 @@ class QuestionListAPIView(LoginRequiredMixin, View):
 
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+class HelpView(LoginRequiredMixin, MobileTemplateMixin, View):
+    template_name = 'help.html'
+    mobile_template_name = 'mobile/help_mobile.html'
+
+    def get(self, request, *args, **kwargs):
+        return render(request, self.get_template_name(), {})

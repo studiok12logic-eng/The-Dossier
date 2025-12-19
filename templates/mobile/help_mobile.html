@@ -1,0 +1,102 @@
+{% extends 'mobile/base_mobile.html' %}
+
+{% block title %}ヘルプ - The Dossier{% endblock %}
+
+{% block content %}
+<div class="flex-1 flex flex-col h-full bg-black">
+    <!-- Header -->
+    <div class="px-6 py-8 border-b border-white/10 bg-surface/30">
+        <h1 class="text-2xl font-mono font-bold tracking-tighter text-white mb-2">OPERATIONAL GUIDE</h1>
+        <p class="text-xs text-text-sub uppercase tracking-widest opacity-60">System Version 1.0.4 // Help & Documentation</p>
+    </div>
+
+    <!-- Scrollable Content -->
+    <div class="flex-1 overflow-y-auto px-6 py-8 space-y-12 pb-32">
+        
+        <!-- Section: Overview -->
+        <section class="space-y-4">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center text-primary border border-primary/30">
+                    <i class="fas fa-microchip text-sm"></i>
+                </div>
+                <h2 class="text-lg font-bold text-white tracking-tight">システムの概要</h2>
+            </div>
+            <p class="text-sm text-text-sub leading-relaxed">
+                The Dossier（ドシエ）は、特定の対象人物に関する情報を体系的に収集・管理するためのプロトコルダー・アプリケーションです。
+                日々の些細な気づきから、戦略的な質問への回答まで、あらゆる断片を統合し、対象への理解を深めることを目的としています。
+            </p>
+        </section>
+
+        <!-- Section: Features Grid -->
+        <div class="grid grid-cols-1 gap-6">
+            
+            <!-- Feature 1: Targets -->
+            <div class="p-5 rounded-2xl bg-surface/50 border border-white/5 space-y-3">
+                <div class="text-primary text-xl">
+                    <i class="fas fa-users-viewfinder"></i>
+                </div>
+                <h3 class="font-bold text-white">ターゲット管理</h3>
+                <p class="text-xs text-text-sub leading-relaxed">
+                    調査対象となる人物を新規登録し、基本情報（誕生日、住所、役割ランクなど）を一元的に管理します。
+                </p>
+            </div>
+
+            <!-- Feature 2: Intel Log -->
+            <div class="p-5 rounded-2xl bg-surface/50 border border-white/5 space-y-3">
+                <div class="text-primary text-xl">
+                    <i class="fas fa-terminal"></i>
+                </div>
+                <h3 class="font-bold text-white">諜報ログ (Log)</h3>
+                <p class="text-xs text-text-sub leading-relaxed">
+                    タイムライン形式で情報を蓄積します。日々の言動、目撃情報、共有された秘密などをリアルタイムで記録可能です。画像添付にも対応しています。
+                </p>
+            </div>
+
+            <!-- Feature 3: Strategic Questions -->
+            <div class="p-5 rounded-2xl bg-surface/50 border border-white/5 space-y-3">
+                <div class="text-primary text-xl">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <h3 class="font-bold text-white">戦略的質問 (Questions)</h3>
+                <p class="text-xs text-text-sub leading-relaxed">
+                    「オフィシャル」「ライフスタイル」などのカテゴリー分けされた質問に回答することで、ターゲットの深層を体系的に解明します。
+                </p>
+            </div>
+
+        </div>
+
+        <!-- Section: User Ranks -->
+        <section class="space-y-4 p-6 rounded-2xl bg-primary/5 border border-primary/10">
+            <h2 class="text-sm font-mono font-bold text-primary uppercase tracking-widest">User Ranks // 権限レベル</h2>
+            <div class="space-y-4 pt-2">
+                <div class="flex items-start gap-4">
+                    <div class="shrink-0 w-10 text-xs font-mono font-bold text-primary py-1 px-2 bg-primary/10 rounded border border-primary/20 text-center">MASTER</div>
+                    <div class="flex-1 space-y-1">
+                        <p class="text-xs font-bold text-white">最高特権</p>
+                        <p class="text-[10px] text-text-sub leading-normal">すべてのシステム設定、ユーザー管理、グローバル質問の編集権限を持ちます。</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-4">
+                    <div class="shrink-0 w-10 text-xs font-mono font-bold text-white/40 py-1 px-2 bg-white/5 rounded border border-white/10 text-center">AGENT</div>
+                    <div class="flex-1 space-y-1">
+                        <p class="text-xs font-bold text-white">標準諜報員</p>
+                        <p class="text-[10px] text-text-sub leading-normal">ターゲットの管理、ログの作成、質問への回答が可能です。自身のデータの編集権限を持ちます。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer Note -->
+        <div class="text-center space-y-4 pt-4 opacity-50">
+            <div class="h-px w-12 bg-white/20 mx-auto"></div>
+            <p class="text-[10px] font-mono tracking-widest uppercase">End of Documentation</p>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block bottom_nav %}
+<!-- Same bottom nav as base but can be customized if needed -->
+{{ block.super }}
+{% endblock %}

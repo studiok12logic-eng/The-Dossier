@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block title %}ヘルプ - The Dossier{% endblock %}
+
+{% block content_wrapper_class %}flex-1 overflow-y-auto p-8{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-12">
+    <!-- Hero Section -->
+    <header class="relative p-12 rounded-3xl bg-surface-2/50 border border-white/5 overflow-hidden">
+        <div class="relative z-10 space-y-4">
+            <h1 class="text-4xl font-mono font-bold tracking-tighter text-white">OPERATIONAL GUIDE</h1>
+            <p class="text-sm text-text-sub uppercase tracking-[0.2em] opacity-60">System Version 1.0.4 // Help & Documentation</p>
+            <div class="pt-4 flex items-center gap-4">
+                <span class="px-3 py-1 bg-primary text-black text-[10px] font-bold rounded-full">ENCRYPTED</span>
+                <span class="w-1.5 h-1.5 rounded-full bg-white/20"></span>
+                <p class="text-[10px] text-text-sub font-mono uppercase tracking-widest">Internal Use Only</p>
+            </div>
+        </div>
+        <!-- Background Decoration -->
+        <div class="absolute -right-12 -top-12 w-64 h-64 bg-primary/20 rounded-full blur-[100px] pointer-events-none"></div>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        
+        <!-- Section: Overview -->
+        <section class="col-span-1 md:col-span-2 space-y-6">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+                    <i class="fas fa-microchip text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold text-white tracking-tight">システムの概要</h2>
+                    <p class="text-sm text-text-sub">The Strategic Intelligence Management Platform</p>
+                </div>
+            </div>
+            <p class="text-base text-text-sub leading-relaxed max-w-2xl">
+                The Dossier（ドシエ）は、特定の対象人物に関する情報を体系的に収集・管理するためのプロトコルダー・アプリケーションです。
+                日々の些細な気づきから、戦略的な質問への回答まで、あらゆる断片を統合し、対象への理解を深めることを目的としています。
+            </p>
+        </section>
+
+        <!-- Feature Cards -->
+        <div class="p-8 rounded-2xl bg-surface/50 border border-white/5 space-y-4 group hover:border-primary/30 transition-all duration-500">
+            <div class="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                <i class="fas fa-users-viewfinder"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white">ターゲット管理</h3>
+            <p class="text-sm text-text-sub leading-relaxed">
+                調査対象となる人物を新規登録し、基本情報（誕生日、住所、役割ランクなど）を一元的に管理します。
+            </p>
+        </div>
+
+        <div class="p-8 rounded-2xl bg-surface/50 border border-white/5 space-y-4 group hover:border-primary/30 transition-all duration-500">
+            <div class="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                <i class="fas fa-terminal text-sm"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white">諜報ログ</h3>
+            <p class="text-sm text-text-sub leading-relaxed">
+                タイムライン形式で情報を蓄積します。日々の言動、目撃情報、共有された秘密などをリアルタイムで記録可能です。画像添付にも対応しています。
+            </p>
+        </div>
+
+        <div class="p-8 rounded-2xl bg-surface/50 border border-white/5 space-y-4 group hover:border-primary/30 transition-all duration-500">
+            <div class="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                <i class="fas fa-brain"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white">戦略的質問</h3>
+            <p class="text-sm text-text-sub leading-relaxed">
+                「オフィシャル」「ライフスタイル」などのカテゴリー分けされた質問に回答することで、ターゲットの深層を体系的に解明します。
+            </p>
+        </div>
+
+        <div class="p-8 rounded-2xl bg-surface/50 border border-white/5 space-y-4 group hover:border-primary/30 transition-all duration-500">
+            <div class="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                <i class="fas fa-shield-halved"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white">アクセス権限</h3>
+            <p class="text-sm text-text-sub leading-relaxed">
+                MASTERとAGENTの2つのランクがあり、データの管理範囲が異なります。MASTERはすべてのグローバル設定にアクセス可能です。
+            </p>
+        </div>
+
+    </div>
+
+    <!-- User Ranks Details Table -->
+    <section class="p-8 rounded-2xl bg-primary/5 border border-primary/10 space-y-6">
+        <h2 class="text-sm font-mono font-bold text-primary uppercase tracking-widest">Authority Protocol // 権限階層</h2>
+        <div class="overflow-hidden bg-black/20 rounded-xl border border-white/5">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-white/10">
+                        <th class="p-4 text-xs font-mono font-bold text-white/40 uppercase">Rank</th>
+                        <th class="p-4 text-xs font-mono font-bold text-white/40 uppercase">Designation</th>
+                        <th class="p-4 text-xs font-mono font-bold text-white/40 uppercase">Permissions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                    <tr>
+                        <td class="p-4">
+                            <span class="text-[10px] font-mono font-bold text-primary py-1 px-3 bg-primary/10 rounded border border-primary/20">MASTER</span>
+                        </td>
+                        <td class="p-4 text-sm font-bold text-white">最高特権管理者</td>
+                        <td class="p-4 text-xs text-text-sub leading-normal">
+                            すべてのターゲットデータ、全ユーザーのログ、共通質問の作成・編集、カテゴリー管理、システム全体の監視が可能です。
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="p-4">
+                            <span class="text-[10px] font-mono font-bold text-white/40 py-1 px-3 bg-white/5 rounded border border-white/10">AGENT</span>
+                        </td>
+                        <td class="p-4 text-sm font-bold text-white">標準調査員</td>
+                        <td class="p-4 text-xs text-text-sub leading-normal">
+                            自身が担当するターゲットの管理、諜報ログの入力、公開された質問への回答が可能です。
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="pt-8 text-center text-[10px] font-mono text-text-sub uppercase tracking-[0.3em] opacity-30">
+        <p>End of Transmission // Secure Tunnel Established</p>
+    </footer>
+</div>
+{% endblock %}

@@ -30,6 +30,7 @@ urlpatterns = [
     path('api/timeline/', views.TimelineListAPIView.as_view(), name='timeline_list'),
     path('api/tags/', views.TagListAPIView.as_view(), name='tag_list_api'),
     path('api/questions/', views.QuestionListAPIView.as_view(), name='api_questions'),
+    path('help/', views.HelpView.as_view(), name='help'),
 ]
 
 if settings.DEBUG:
