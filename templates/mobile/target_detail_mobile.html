@@ -358,7 +358,7 @@
                 <div class="space-y-2">
                     {% for q_info in cat_data.questions %}
                     <!-- Clickable Question Card -->
-                    <div data-url="{% url 'intelligence_log' %}?target_id={{ target.id }}&action=question&question_id={{ q_info.question.id }}&next={% url 'target_detail' %}?target_id={{ target.id }}"
+                    <div data-url="{% url 'intelligence_log' %}?target_id={{ target.id }}&action=question&question_id={{ q_info.question.id }}&next={% url 'target_detail' %}%3Ftarget_id%3D{{ target.id }}"
                          onclick="window.location.href=this.dataset.url" 
                          class="bg-surface rounded-lg p-3 border border-white/5 active:scale-[0.98] transition-transform cursor-pointer hover:border-primary/30">
                         <div class="flex justify-between items-start">
