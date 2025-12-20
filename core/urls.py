@@ -10,6 +10,7 @@ urlpatterns = [
     path('targets/add/', views.TargetCreateView.as_view(), name='target_add'),
     path('targets/detail/', views.TargetDetailView.as_view(), name='target_detail'), # Query param style
     path('targets/<uuid:pk>/edit/', views.TargetUpdateView.as_view(), name='target_edit'), # Edit route
+    path('targets/<uuid:pk>/export_csv/', views.TargetExportView.as_view(), name='target_export_csv'),
     path('targets/<uuid:pk>/delete/', views.TargetDeleteView.as_view(), name='target_delete'), # Delete route
     path('api/groups/create/', views.TargetGroupCreateView.as_view(), name='group_add'), # Group API
     path('api/groups/<int:pk>/edit/', views.TargetGroupUpdateView.as_view(), name='group_edit'),
