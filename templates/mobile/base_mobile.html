@@ -22,7 +22,7 @@
     <!-- Mobile Bottom Navigation (Visible on most pages, hidden on Timeline) -->
     {% block bottom_nav %}
     <nav id="mobileBottomNav" class="fixed bottom-0 left-0 right-0 bg-surface/95 backdrop-blur-xl border-t border-white/10 pb-safe z-50">
-        <div class="grid grid-cols-6 items-center h-16">
+        <div class="grid items-center h-16" style="grid-template-columns: repeat(6, 1fr);">
             <!-- Dashboard -->
             <a href="{% url 'dashboard' %}" 
                class="flex flex-col items-center gap-1 transition-colors {% if request.resolver_match.url_name == 'dashboard' %}text-primary{% else %}text-gray-400{% endif %}">
