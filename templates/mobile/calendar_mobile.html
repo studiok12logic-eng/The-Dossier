@@ -61,9 +61,9 @@
                      {% if day.anniversaries %}
                      <div class="flex flex-wrap gap-1 mb-1">
                          {% for anniv in day.anniversaries %}
-                         <div class="flex items-center gap-1.5 text-[10px] font-medium text-text-main">
-                             <div class="w-1.5 h-1.5 rounded-full {% if anniv.type == 'birthday' %}bg-pink-400{% else %}bg-yellow-400{% endif %}"></div>
-                             <span>{{ anniv.target.nickname }}: {{ anniv.label }}</span>
+                         <div class="flex items-center gap-1 pl-2 pr-2 py-0.5 rounded-md bg-yellow-500/20 border border-yellow-500/30 text-[10px] font-medium grow-0 truncate max-w-full">
+                             <i class="fas {% if anniv.type == 'birthday' %}fa-birthday-cake{% else %}fa-star{% endif %} text-yellow-400 text-[9px]"></i>
+                             <span class="text-yellow-100 truncate">{{ anniv.target.nickname }}: {{ anniv.label }}</span>
                          </div>
                          {% endfor %}
                      </div>
@@ -75,14 +75,13 @@
                          {% for plan in day.plans %}
                          <div class="flex items-center justify-between w-full h-6">
                              <!-- Left: Target Name -->
-                             <span class="text-sm font-bold text-text-main truncate pr-16">
+                             <span class="text-sm font-bold text-text-main truncate pr-16 block">
                                  {{ plan.target.nickname }}
                              </span>
                              
-                             <!-- Right: Group Count (Aligned to Right End) -->
-                             <!-- Show on first plan line if exists -->
+                             <!-- Right: Group Count -->
                              {% if forloop.first and day.group_count > 0 %}
-                             <span class="text-xs text-text-sub opacity-70 whitespace-nowrap ml-auto">
+                             <span class="text-xs text-text-sub opacity-70 whitespace-nowrap ml-auto absolute right-0 top-1">
                                  他 {{ day.group_count }} 名
                              </span>
                              {% endif %}
@@ -90,17 +89,16 @@
                          {% endfor %}
                      </div>
                      {% elif day.group_count > 0 %}
-                         <!-- No plans but has group count? Show independent line -->
                          <div class="w-full text-right h-6 flex items-center justify-end">
                              <span class="text-xs text-text-sub opacity-70">他 {{ day.group_count }} 名</span>
                          </div>
                      {% endif %}
                      
-                     <!-- C. Logs (Activity) - Small -->
+                     <!-- C. Logs (Activity) - Gray Chips -->
                      {% if day.activity_targets %}
-                     <div class="flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5 opacity-60">
+                     <div class="flex flex-wrap gap-1 mt-1">
                          {% for t in day.activity_targets %}
-                         <span class="text-[10px] text-text-sub">
+                         <span class="text-[10px] text-text-sub bg-white/10 rounded px-1.5 py-0.5 max-w-[100px] truncate block">
                              {{ t.nickname }}
                          </span>
                          {% endfor %}
@@ -116,13 +114,12 @@
 </div>
 
 <!-- Month Selection Modal -->
-<div id="dateModal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center animate-fade-in" onclick="closeDateModal()">
-    <div class="bg-surface border border-white/10 rounded-xl w-80 overflow-hidden shadow-2xl flex flex-col" onclick="event.stopPropagation()">
+<div id="dateModal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center animate-fade-in px-4" onclick="closeDateModal()">
+    <div class="bg-surface border border-white/10 rounded-xl w-full max-w-xs overflow-hidden shadow-2xl flex flex-col max-h-[85vh]" onclick="event.stopPropagation()">
         
         <!-- Year Slider (Horizontal Scroll) -->
-        <div class="relative w-full border-b border-white/10 py-6 bg-surface-2/30">
+        <div class="relative w-full border-b border-white/10 py-6 bg-surface-2/30 shrink-0">
             <!-- Scroll Container -->
-            <!-- FIX: Added w-full and better snap config -->
             <div id="yearSlider" class="flex overflow-x-auto snap-x snap-mandatory gap-0 px-[calc(50%-2.5rem)] scrollbar-hide items-center h-10 w-full touch-pan-x">
                 <!-- JS Populated -->
             </div>
@@ -132,8 +129,7 @@
         </div>
         
         <!-- Month Grid (4 cols x 3 rows = 12) -->
-        <!-- FIX: Ensured grid-cols-4 matches 12 items perfectly -->
-        <div class="p-6 grid grid-cols-4 gap-4">
+        <div class="p-6 grid grid-cols-4 gap-4 overflow-y-auto min-h-0 flex-1">
              {% for m in "123456789012"|make_list %}
              <button onclick="selectMonth({{ forloop.counter }})" 
                      class="aspect-square flex items-center justify-center rounded-lg text-lg font-mono font-bold transition-all border border-white/5
@@ -143,9 +139,9 @@
              {% endfor %}
         </div>
         
-        <!-- Close -->
-        <div class="p-3 border-t border-white/5 bg-surface-2">
-            <button onclick="closeDateModal()" class="w-full py-2 text-xs text-text-sub hover:text-white tracking-widest">CLOSE</button>
+        <!-- Close (Sticky Footer) -->
+        <div class="p-3 border-t border-white/5 bg-surface-2 shrink-0 pb-safe">
+            <button onclick="closeDateModal()" class="w-full py-3 bg-white/5 rounded-lg text-xs font-bold text-text-main hover:bg-white/10 tracking-widest active:scale-95 transition">CLOSE</button>
         </div>
     </div>
 </div>
