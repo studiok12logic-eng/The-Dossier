@@ -78,7 +78,7 @@
                              <!-- Left: Target Name -->
                              <span class="text-sm font-bold text-text-main truncate pr-16 block">
                                  {{ plan.target.nickname }} 
-                                 <span class="text-[10px] text-text-sub font-normal ml-1 opacity-70">
+                                 <span class="text-[10px] text-text-sub font-normal ml-1 opacity-90">
                                      (Log: {{ plan.target.day_log_count|default:0 }})
                                  </span>
                              </span>
@@ -125,7 +125,7 @@
         </div>
         
         <!-- Month Grid (4 cols x 3 rows = 12) -->
-        <div class="p-6 overflow-y-auto min-h-0 flex-1">
+        <div class="px-6 py-8 overflow-y-auto flex-1">
              <div class="grid grid-cols-4 gap-4 w-full">
                  {% for m in "123456789012"|make_list %}
                  <button onclick="selectMonth({{ forloop.counter }})" 
@@ -356,10 +356,23 @@
     }
     
     function selectCandidate(id) {
-        // Redirect to Intelligence Log with date and target_id
-        // This ensures the target is added to the "selected targets" for that day
-        const url = "{% url 'intelligence_log' %}?date=" + currentSelectedDate + "&target_id=" + id;
-        window.location.href = url;
+        const fd = new FormData();
+        fd.append('target_id', id);
+        fd.append('date', currentSelectedDate);
+        fd.append('title', '予定');
+        
+        // Use fetch to create plan and reload
+        fetch('', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+            body: fd
+        }).then(res => res.json()).then(data => {
+            if(data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        });
     }
 
 
