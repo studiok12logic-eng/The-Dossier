@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends request.is_mobile|yesno:'mobile/base_mobile.html,base.html' %}
 {% load static %}
 
 {% block content_wrapper_class %}flex-1 overflow-y-auto pb-24 md:p-8 md:pb-8{% endblock %}
@@ -714,9 +714,7 @@
 
     function handleMove(e) {
         // If moved significantly, cancel long press
-        // Simplify: just cancel on any move if strict, or use distance check.
-        // For now, cancel on move.
-        // clearTimeout(longPressTimer); 
+        clearTimeout(longPressTimer); 
     }
 
     function handleEnd(e) {

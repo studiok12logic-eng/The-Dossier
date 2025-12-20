@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 @source "../../../**/*.{html,py,js}";
+@source "../../../templates/**/*.html";
 
 @theme {
   --color-primary: #10b981;
