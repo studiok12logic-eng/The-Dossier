@@ -28,15 +28,14 @@ def dashboard(request):
         Q(user=user) | Q(is_shared=True)
     ).order_by('?').first()
 
-    # [MODIFIED] 2. Latest Logs (Events) - Limit 10 (Owned OR MASTER)
+    # [MODIFIED] 2. Latest Logs (Events) - Limit 10
     latest_logs = TimelineItem.objects.filter(
-        Q(target__user=user) | Q(target__user__role='MASTER')
+        target__user=user
     ).exclude(type='Question').select_related('target').prefetch_related('images').order_by('-date', '-created_at')[:10]
 
-    # [MODIFIED] 3. Latest Answers - Limit 10 (Owned OR MASTER)
+    # [MODIFIED] 3. Latest Answers - Limit 10
     latest_answers = TimelineItem.objects.filter(
-        Q(target__user=user) | Q(target__user__role='MASTER'), 
-        type='Question'
+        target__user=user, type='Question'
     ).select_related('target', 'question').order_by('-date', '-created_at')[:10]
 
     # 4. Anniversaries (Range: Today to Today+14)
@@ -47,11 +46,10 @@ def dashboard(request):
     
     date_curs = start_date
     while date_curs <= end_date:
-        # Birthdays (Owned OR MASTER)
+        # Birthdays
         b_targets = Target.objects.filter(
-            Q(user=user) | Q(user__role='MASTER'),
-            birth_month=date_curs.month, birth_day=date_curs.day
-        ).distinct()
+            user=user, birth_month=date_curs.month, birth_day=date_curs.day
+        )
         for t in b_targets:
             days_left = (date_curs - today).days
             upcoming_anniv_list.append({
@@ -62,11 +60,10 @@ def dashboard(request):
                 'is_today': days_left == 0
             })
             
-        # Custom (Owned OR MASTER)
+        # Custom
         c_annivs = CustomAnniversary.objects.filter(
-            Q(target__user=user) | Q(target__user__role='MASTER'),
-            date__month=date_curs.month, date__day=date_curs.day
-        ).select_related('target').distinct()
+            target__user=user, date__month=date_curs.month, date__day=date_curs.day
+        ).select_related('target')
         for ca in c_annivs:
             days_left = (date_curs - today).days
             upcoming_anniv_list.append({
@@ -82,9 +79,9 @@ def dashboard(request):
     upcoming_anniv_list.sort(key=lambda x: x['date'])
 
     # Filters Support (Groups, Tags)
-    groups = TargetGroup.objects.filter(Q(user=user) | Q(user__role='MASTER')).distinct()
+    groups = TargetGroup.objects.filter(user=user)
     top_tags = Tag.objects.filter(
-        Q(timelineitem__target__user=user) | Q(timelineitem__target__user__role='MASTER')
+        timelineitem__target__user=user
     ).annotate(c=Count('timelineitem')).order_by('-c')[:20]
 
     context = {
@@ -110,10 +107,8 @@ def target_list(request):
     search_query = request.GET.get('q')
     group_filter = request.GET.get('group')
     
-    # Base Query: Owned targets OR targets created by MASTER
-    targets = Target.objects.filter(
-        Q(user=request.user) | Q(user__role='MASTER')
-    ).prefetch_related('groups').distinct()
+    # Base Query
+    targets = Target.objects.filter(user=request.user).prefetch_related('groups')
 
     # Search Filter
     if search_query:
@@ -150,10 +145,8 @@ def target_list(request):
         from django.db.models import F
         targets = targets.order_by(F('last_contact').desc(nulls_last=True), 'nickname')
 
-    # Get Groups for Filter UI (Owned OR MASTER)
-    groups = TargetGroup.objects.filter(
-        Q(user=request.user) | Q(user__role='MASTER')
-    ).distinct()
+    # Get Groups for Filter UI
+    groups = TargetGroup.objects.filter(user=request.user)
 
     # Template Selection
     if request.htmx:
@@ -187,11 +180,7 @@ class TargetDetailView(LoginRequiredMixin, MobileTemplateMixin, DetailView):
         if not pk:
             # Fallback to URL kwarg if present
             return super().get_object()
-        # Allow access if owned by user OR owned by MASTER
-        return get_object_or_404(
-            Target, 
-            Q(pk=pk) & (Q(user=self.request.user) | Q(user__role='MASTER'))
-        )
+        return get_object_or_404(Target, pk=pk, user=self.request.user)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -437,10 +426,7 @@ class TargetUpdateView(LoginRequiredMixin, UpdateView):
     success_url = reverse_lazy('target_list')
 
     def get_queryset(self):
-        # Allow editing owned targets OR targets created by MASTER
-        return Target.objects.filter(
-            Q(user=self.request.user) | Q(user__role='MASTER')
-        )
+        return Target.objects.filter(user=self.request.user)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -553,12 +539,11 @@ class IntelligenceLogView(LoginRequiredMixin, View):
         
         # 1. Base Logic (Groups)
         # Filter groups that have the current weekday set to True
-        # 1. Base Logic (Weekday based)
+        # 1. Base Logic (Groups)
+        # Filter groups that have the current weekday set to True
         base_targets = Target.objects.filter(
-            Q(user=user) | Q(user__role='MASTER'),
-            groups__in=TargetGroup.objects.filter(
-                Q(user=user) | Q(user__role='MASTER')
-            ).filter(**{current_weekday_field: True})
+            user=user,
+            groups__in=TargetGroup.objects.filter(**{current_weekday_field: True})
         ).distinct()
         
         # 2. Anniversary Logic
@@ -566,7 +551,7 @@ class IntelligenceLogView(LoginRequiredMixin, View):
         
         # Birthday (Today)
         birthday_targets = Target.objects.filter(
-            Q(user=user) | Q(user__role='MASTER'),
+            user=user,
             birth_month=date.month,
             birth_day=date.day
         )
@@ -574,17 +559,14 @@ class IntelligenceLogView(LoginRequiredMixin, View):
         
         # Custom Anniv (Today)
         custom_annivs = CustomAnniversary.objects.filter(
-            Q(target__user=user) | Q(target__user__role='MASTER'),
+            target__user=user,
             date__month=date.month,
             date__day=date.day
         )
         anniv_ids.update(custom_annivs.values_list('target_id', flat=True))
         
         # 3. Manual State
-        daily_states = DailyTargetState.objects.filter(
-            Q(target__user=user) | Q(target__user__role='MASTER'), 
-            date=date
-        )
+        daily_states = DailyTargetState.objects.filter(target__user=user, date=date)
         manual_add_ids = set(daily_states.filter(is_manual_add=True).values_list('target_id', flat=True))
         hidden_ids = set(daily_states.filter(is_hidden=True).values_list('target_id', flat=True))
         
@@ -667,9 +649,7 @@ class IntelligenceLogView(LoginRequiredMixin, View):
         target_id_param = request.GET.get('target_id')
         if target_id_param:
             try:
-                auto_target = Target.objects.filter(
-                    Q(user=request.user) | Q(user__role='MASTER')
-                ).get(pk=target_id_param)
+                auto_target = Target.objects.get(pk=target_id_param, user=request.user)
                 # Ensure it's in today's list
                 state, _ = DailyTargetState.objects.get_or_create(
                     target=auto_target, date=current_date,
@@ -843,10 +823,7 @@ class IntelligenceLogView(LoginRequiredMixin, View):
             if action == 'delete':
                 item_id = data.get('item_id')
                 if not item_id: return JsonResponse({'success': False, 'error': 'Item ID required'})
-                item = get_object_or_404(
-                    TimelineItem, 
-                    Q(pk=item_id) & (Q(target__user=request.user) | Q(target__user__role='MASTER'))
-                )
+                item = get_object_or_404(TimelineItem, pk=item_id, target__user=request.user)
                 target = item.target
                 date = item.date
                 item.delete()
@@ -930,10 +907,7 @@ class IntelligenceLogView(LoginRequiredMixin, View):
 
             elif action == 'update':
                 item_id = data.get('item_id')
-                item = get_object_or_404(
-                    TimelineItem, 
-                    Q(pk=item_id) & (Q(target__user=request.user) | Q(target__user__role='MASTER'))
-                )
+                item = get_object_or_404(TimelineItem, pk=item_id, target__user=request.user)
                 
                 # Update fields
                 if 'description' in data: item.content = data.get('description')
@@ -972,10 +946,7 @@ class IntelligenceLogView(LoginRequiredMixin, View):
                 contact_made = contact_made_raw == 'true' if isinstance(contact_made_raw, str) else bool(contact_made_raw)
                 
                 if not target_id: return JsonResponse({'success': False, 'error': 'No target specified'})
-                target = get_object_or_404(
-                    Target, 
-                    Q(pk=target_id) & (Q(user=request.user) | Q(user__role='MASTER'))
-                )
+                target = get_object_or_404(Target, pk=target_id, user=request.user)
                 
                 if date_str:
                     try:
@@ -1075,10 +1046,7 @@ class TargetStateToggleView(LoginRequiredMixin, View):
             if not target_id or not action:
                 return JsonResponse({'success': False, 'error': 'Missing parameters'})
                 
-            target = get_object_or_404(
-                Target, 
-                Q(pk=target_id) & (Q(user=request.user) | Q(user__role='MASTER'))
-            )
+            target = get_object_or_404(Target, pk=target_id, user=request.user)
             
             if date_str:
                 try:
@@ -1289,11 +1257,10 @@ class QuestionDetailView(LoginRequiredMixin, MobileTemplateMixin, TemplateView):
                     Q(user=request.user) | Q(is_shared=True)
                 ).prefetch_related('category', 'rank').get(pk=question_id)
                 
-                # Get all answers for this question
+                # Get latest answer per target with count
                 answers_qs = TimelineItem.objects.filter(
-                    question=question
-                ).filter(
-                    Q(target__user=request.user) | Q(target__user__role='MASTER')
+                    question=question,
+                    target__user=request.user
                 ).select_related('target').prefetch_related('tags').order_by('target', '-date')
                 
                 # Apply filters
@@ -1344,17 +1311,13 @@ class QuestionDetailView(LoginRequiredMixin, MobileTemplateMixin, TemplateView):
             Q(user=request.user) | Q(is_shared=True)
         ).distinct().order_by('order', 'created_at')
         
-        # Get groups for filter (Owned OR MASTER)
+        # Get groups for filter
         from intelligence.models import TargetGroup
-        groups = TargetGroup.objects.filter(
-            Q(user=request.user) | Q(user__role='MASTER')
-        ).distinct()
+        groups = TargetGroup.objects.filter(user=request.user)
 
-        # Get all targets for Add Modal (Owned OR MASTER)
+        # Get all targets for Add Modal
         from intelligence.models import Target
-        all_targets = Target.objects.filter(
-            Q(user=request.user) | Q(user__role='MASTER')
-        ).distinct().order_by('nickname')
+        all_targets = Target.objects.filter(user=request.user).order_by('nickname')
         
         context = {
             'question': question,
@@ -1414,17 +1377,13 @@ class TimelineListAPIView(LoginRequiredMixin, View):
             # Base Query
             if target_id:
                 try:
-                    target = Target.objects.filter(
-                        Q(user=request.user) | Q(user__role='MASTER')
-                    ).get(pk=target_id)
+                    target = Target.objects.get(pk=target_id, user=request.user)
                     queryset = TimelineItem.objects.filter(target=target).select_related('question')
                 except Target.DoesNotExist:
                      return JsonResponse({'success': False, 'error': 'Target not found'}, status=404)
             else:
-                # Global Feed (Owned OR MASTER)
-                queryset = TimelineItem.objects.filter(
-                    Q(target__user=request.user) | Q(target__user__role='MASTER')
-                ).select_related('target', 'question')
+                # Global Feed
+                queryset = TimelineItem.objects.filter(target__user=request.user).select_related('target', 'question')
 
             # Filtering
             import datetime
@@ -1517,10 +1476,8 @@ class TagListAPIView(LoginRequiredMixin, View):
             
             target_id = request.GET.get('target_id')
             
-            # 1. All Tags (Global frequency) - Owned OR MASTER
-            all_tags_qs = Tag.objects.filter(
-                Q(user=request.user) | Q(user__role='MASTER')
-            ).distinct().annotate(
+            # 1. All Tags (Global frequency)
+            all_tags_qs = Tag.objects.filter(user=request.user).annotate(
                 count=Count('timelineitem')
             ).order_by('-count')
             
@@ -1530,9 +1487,9 @@ class TagListAPIView(LoginRequiredMixin, View):
             target_tags_data = []
             if target_id:
                 target_tags = Tag.objects.filter(
-                    Q(user=request.user) | Q(user__role='MASTER'),
+                    user=request.user,
                     timelineitem__target_id=target_id
-                ).distinct().annotate(
+                ).annotate(
                     target_count=Count('timelineitem', filter=Q(timelineitem__target_id=target_id))
                 ).order_by('-target_count')[:5]
                 
@@ -1583,10 +1540,7 @@ class QuestionListAPIView(LoginRequiredMixin, View):
                 return JsonResponse({'success': False, 'error': 'Target ID required'})
             
             # Access Check
-            get_object_or_404(
-                Target, 
-                Q(pk=target_id) & (Q(user=request.user) | Q(user__role='MASTER'))
-            )
+            get_object_or_404(Target, pk=target_id, user=request.user)
             
             # Fetch all categories
             # Including 'Uncategorized'? Maybe handling null category questions separately or generic
