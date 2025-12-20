@@ -7455,6 +7455,8 @@ class CalendarView(LoginRequiredMixin, MobileTemplateMixin, View):
             
             if not target_id or not date_str or not title:
                 return JsonResponse({'success': False, 'error': 'Missing fields'})
+            
+            target = Target.objects.get(pk=target_id, user=request.user)
                 
             TimelineItem.objects.create(
                 target=target,
