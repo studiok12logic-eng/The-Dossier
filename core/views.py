@@ -277,8 +277,8 @@ class TargetDetailView(LoginRequiredMixin, MobileTemplateMixin, DetailView):
                 if is_answered:
                     cat_data['answered_count'] += 1
                     total_answered_count += 1
-                    # Check if this is a Base Profile question (Shared Only? User said "Shared flag True")
-                    if q.is_shared and q.title in base_title_map:
+                    # Check if this is a Base Profile question (Shared Only or matching title)
+                    if q.title in base_title_map:
                         key = base_title_map[q.title]
                         base_answers[key] = answer_item.content
                         answered_base_qs_count += 1
@@ -728,19 +728,18 @@ class IntelligenceLogView(LoginRequiredMixin, View):
                 'nearest_anniversary': anniv_display
             })
 
-        # Questions & Tags
-        from intelligence.models import Question, Tag, QuestionCategory
+        # Questions & Tags (Owned OR Shared)
         questions = Question.objects.filter(
             Q(is_shared=True) | Q(user=request.user)
-        ).order_by('category', 'order', 'title')
+        ).select_related('category', 'rank').order_by('category__order', 'category__created_at', 'order', 'title')
         
         # Get IDs of categories used by these questions
         category_ids = questions.values_list('category_id', flat=True).distinct()
 
-        # Fetch Categories (User's OR Used by Questions)
+        # Fetch Categories (User's OR Shared OR Used by Questions)
         categories = QuestionCategory.objects.filter(
-            Q(user=request.user) | Q(id__in=category_ids)
-        ).order_by('id').distinct()
+            Q(user=request.user) | Q(is_shared=True) | Q(id__in=category_ids)
+        ).distinct().order_by('order', 'created_at')
 
         from django.db.models import Count
         # Filter tags used by THIS user's targets
