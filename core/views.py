@@ -7449,8 +7449,6 @@ class CalendarView(LoginRequiredMixin, MobileTemplateMixin, View):
             if not target_id or not date_str or not title:
                 return JsonResponse({'success': False, 'error': 'Missing fields'})
                 
-            target = Target.objects.get(pk=target_id, user=request.user)
-            
             TimelineItem.objects.create(
                 target=target,
                 date=date_str,
@@ -7459,6 +7457,19 @@ class CalendarView(LoginRequiredMixin, MobileTemplateMixin, View):
                 contact_made=False
             )
             
+            # Ensure target is added to Intelligence Log (DailyTargetState)
+            from intelligence.models import DailyTargetState
+            state, _ = DailyTargetState.objects.get_or_create(
+                target=target, date=date_str,
+                defaults={'is_manual_add': True, 'is_hidden': False}
+            )
+            if not state.is_manual_add:
+                state.is_manual_add = True
+                state.save()
+            if state.is_hidden:
+                state.is_hidden = False
+                state.save()
+                
             return JsonResponse({'success': True})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
