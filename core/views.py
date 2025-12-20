@@ -228,13 +228,14 @@ class TargetDetailView(LoginRequiredMixin, MobileTemplateMixin, DetailView):
         # Previous list had others. We keep iterating all questions for progress but extract specific ones.
         
         # Mapping Title to Key
+        # Mapping Title to Key
         base_title_map = {
-            '職業': 'occupation',
-            '現在住所': 'address',
-            '家族構成': 'family_structure',
-            '趣味': 'hobbies',
-            '弱点': 'weakness',
-            '得意分野': 'skills'
+            '職業': 'occupation', 'ご職業': 'occupation',
+            '現在住所': 'address', '住所': 'address', 'お住まい': 'address',
+            '家族構成': 'family_structure', '家族': 'family_structure',
+            '趣味': 'hobbies', 'ご趣味': 'hobbies',
+            '弱点': 'weakness', '苦手': 'weakness', '苦手なもの': 'weakness',
+            '得意分野': 'skills', '得意': 'skills', '特技': 'skills'
         }
         base_answers = {
             'occupation': None, 
@@ -278,8 +279,9 @@ class TargetDetailView(LoginRequiredMixin, MobileTemplateMixin, DetailView):
                     cat_data['answered_count'] += 1
                     total_answered_count += 1
                     # Check if this is a Base Profile question (Shared Only or matching title)
-                    if q.title in base_title_map:
-                        key = base_title_map[q.title]
+                    clean_title = q.title.strip()
+                    if clean_title in base_title_map:
+                        key = base_title_map[clean_title]
                         base_answers[key] = answer_item.content
                         answered_base_qs_count += 1
 
@@ -294,9 +296,50 @@ class TargetDetailView(LoginRequiredMixin, MobileTemplateMixin, DetailView):
             if q_count > 0:
                 cat_data['progress'] = round((cat_data['answered_count'] / q_count) * 100)
             qa_data.append(cat_data)
+
+        # 3. Handle Uncategorized Questions for Base Profile and Progress
+        uncategorized_qs = Question.objects.filter(
+            category__isnull=True
+        ).filter(
+            Q(user=self.request.user) | Q(is_shared=True)
+        ).order_by('order', 'title')
+        
+        if uncategorized_qs.exists():
+            u_q_count = uncategorized_qs.count()
+            total_q_count += u_q_count
+            u_cat_data = {
+                'category': None,
+                'questions': [],
+                'answered_count': 0,
+                'total_count': u_q_count,
+                'progress': 0
+            }
+            for q in uncategorized_qs:
+                answer_item = TimelineItem.objects.filter(
+                    target=target, type='Question', question=q
+                ).order_by('-date', '-created_at').first()
+                
+                is_answered = bool(answer_item)
+                if is_answered:
+                    u_cat_data['answered_count'] += 1
+                    total_answered_count += 1
+                    clean_title = q.title.strip()
+                    if clean_title in base_title_map:
+                        key = base_title_map[clean_title]
+                        base_answers[key] = answer_item.content
+                        answered_base_qs_count += 1
+                
+                u_cat_data['questions'].append({
+                    'question': q,
+                    'answer': answer_item.content if is_answered else None,
+                    'answer_date': answer_item.date if is_answered else None,
+                    'is_answered': is_answered
+                })
+            u_cat_data['progress'] = round((u_cat_data['answered_count'] / u_q_count) * 100)
+            qa_data.append(u_cat_data)
             
         # Sort category progress: Exclude "基本情報" for the category bar display
-        context['qa_data_progress'] = [c for c in qa_data if c['category'].name != "基本情報"]
+        context['qa_data_progress'] = [c for c in qa_data if c['category'] is None or c['category'].name != "基本情報"]
         context['qa_data'] = qa_data # Keep full list for the Q&A tab
         
         # Calculate Base Profile Progress (14 items: 3 Bio + 1 Anniversary + 10 Questions)
@@ -1498,10 +1541,10 @@ class QuestionListAPIView(LoginRequiredMixin, View):
             # Get IDs of categories used by these questions
             category_ids = questions_qs.values_list('category_id', flat=True).distinct()
 
-            # Fetch Categories (User's OR Used by Questions)
+            # Fetch Categories (User's OR Shared OR Used by Questions)
             categories = QuestionCategory.objects.filter(
-                Q(user=request.user) | Q(id__in=category_ids)
-            ).order_by('id').distinct()
+                Q(user=request.user) | Q(is_shared=True) | Q(id__in=category_ids)
+            ).distinct().order_by('order', 'created_at')
             
             # We can't easily annotate a filtered count inside a related manager query for serialization 
             # without complex Prefetch or annotation.
