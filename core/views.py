@@ -25,8 +25,8 @@ def dashboard(request):
     
     # [MODIFIED] 1. Random Question for "Today's Topic"
     random_question = Question.objects.filter(
-        Q(user=user) | Q(is_shared=True)
-    ).order_by('?').first()
+        Q(user=user) | Q(is_shared=True) | Q(user__role='MASTER')
+    ).distinct().order_by('?').first()
 
     # [MODIFIED] 2. Latest Logs (Events) - Limit 10
     latest_logs = TimelineItem.objects.filter(
@@ -180,6 +180,7 @@ class TargetDetailView(LoginRequiredMixin, MobileTemplateMixin, DetailView):
         if not pk:
             # Fallback to URL kwarg if present
             return super().get_object()
+        
         return get_object_or_404(Target, pk=pk, user=self.request.user)
 
     def get_context_data(self, **kwargs):
@@ -213,22 +214,26 @@ class TargetDetailView(LoginRequiredMixin, MobileTemplateMixin, DetailView):
         context['total_points'] = points_data['total_points'] or 0
         context['total_answers'] = points_data['total_answers'] or 0
         
-        # 2. Q&A and Progress Calculation
+        # 2. Q&A and Progress Calculation (Robust Question-First Approach)
         from intelligence.models import Question, QuestionCategory
-        # Get all categories (Owned OR Shared)
-        categories = QuestionCategory.objects.filter(
-            Q(user=self.request.user) | Q(is_shared=True)
-        ).distinct().order_by('order', 'created_at')
-        qa_data = []
-        total_q_count = 0
-        total_answered_count = 0
+        from accounts.models import CustomUser
         
-        # Specific titles for Base Profile (10 Questions -> updated to user list)
-        # User requested specific list: '職業', '現在住所', '家族構成', '趣味', '弱点', '得意分野'
-        # Previous list had others. We keep iterating all questions for progress but extract specific ones.
+        # 2.1 Fetch all visible questions once
+        visible_qs = Question.objects.filter(
+            Q(user=self.request.user) | Q(is_shared=True) | Q(user__role='MASTER')
+        ).distinct().select_related('category', 'user').order_by('category__order', 'category__created_at', 'order', 'title')
+
+        # 2.2 Prepare grouping
+        from collections import defaultdict
+        cat_to_qs = defaultdict(list)
+        all_visible_cats = set()
         
-        # Mapping Title to Key
-        # Mapping Title to Key
+        for q in visible_qs:
+            cat_to_qs[q.category].append(q)
+            if q.category:
+                all_visible_cats.add(q.category)
+
+        # 2.3 Mapping Title to Key for Base Profile
         base_title_map = {
             '職業': 'occupation', 'ご職業': 'occupation',
             '現在住所': 'address', '住所': 'address', 'お住まい': 'address',
@@ -238,106 +243,67 @@ class TargetDetailView(LoginRequiredMixin, MobileTemplateMixin, DetailView):
             '得意分野': 'skills', '得意': 'skills', '特技': 'skills'
         }
         base_answers = {
-            'occupation': None, 
-            'address': None, 
-            'family_structure': None, 
-            'hobbies': None, 
-            'weakness': None, 
-            'skills': None
+            'occupation': None, 'address': None, 'family_structure': None, 
+            'hobbies': None, 'weakness': None, 'skills': None
         }
-        
         answered_base_qs_count = 0
 
-        for cat in categories:
-            # Get questions for this category (Owned OR Shared)
-            questions = Question.objects.filter(
-                category=cat
-            ).filter(
-                Q(user=self.request.user) | Q(is_shared=True)
-            ).order_by('order', 'title')
-            q_count = questions.count()
-            total_q_count += q_count
-            
-            cat_data = {
-                'category': cat,
+        # 2.4 Process Categories
+        # Sort categories based on the same logic as QuestionListView: Order/CreatedAt
+        sorted_cats = sorted(list(all_visible_cats), key=lambda x: (x.order, x.created_at))
+        
+        qa_data = [] # List of {category, questions: [{question, answer, is_answered}], answered_count, total_count, progress}
+        total_q_count = 0
+        total_answered_count = 0
+
+        def process_q_list(category_obj, q_list):
+            nonlocal total_q_count, total_answered_count, answered_base_qs_count
+            q_count = len(q_list)
+            data = {
+                'category': category_obj,
                 'questions': [],
                 'answered_count': 0,
                 'total_count': q_count,
                 'progress': 0
             }
+            total_q_count += q_count
             
-            for q in questions:
-                # Find latest answer
-                answer_item = TimelineItem.objects.filter(
-                    target=target, 
-                    type='Question', 
-                    question=q
-                ).order_by('-date', '-created_at').first()
-                
-                is_answered = bool(answer_item)
-                if is_answered:
-                    cat_data['answered_count'] += 1
-                    total_answered_count += 1
-                    # [STRICT] BASE Profile must use SHARED questions only
-                    clean_title = q.title.strip()
-                    if q.is_shared and clean_title in base_title_map:
-                        key = base_title_map[clean_title]
-                        base_answers[key] = answer_item.content
-                        answered_base_qs_count += 1
-
-                q_info = {
-                    'question': q,
-                    'answer': answer_item.content if is_answered else None,
-                    'answer_date': answer_item.date if is_answered else None,
-                    'is_answered': is_answered
-                }
-                cat_data['questions'].append(q_info)
-                
-            if q_count > 0:
-                cat_data['progress'] = round((cat_data['answered_count'] / q_count) * 100)
-            qa_data.append(cat_data)
-
-        # 3. Handle Uncategorized Questions for Base Profile and Progress
-        uncategorized_qs = Question.objects.filter(
-            category__isnull=True
-        ).filter(
-            Q(user=self.request.user) | Q(is_shared=True)
-        ).order_by('order', 'title')
-        
-        if uncategorized_qs.exists():
-            u_q_count = uncategorized_qs.count()
-            total_q_count += u_q_count
-            u_cat_data = {
-                'category': None,
-                'questions': [],
-                'answered_count': 0,
-                'total_count': u_q_count,
-                'progress': 0
-            }
-            for q in uncategorized_qs:
+            for q in q_list:
                 answer_item = TimelineItem.objects.filter(
                     target=target, type='Question', question=q
                 ).order_by('-date', '-created_at').first()
                 
                 is_answered = bool(answer_item)
                 if is_answered:
-                    u_cat_data['answered_count'] += 1
+                    data['answered_count'] += 1
                     total_answered_count += 1
-                    # [STRICT] BASE Profile must use SHARED questions only
+                    
+                    # [REQUIREMENT 2] BASE PROFILE REFLECTION
+                    # Link by Title, strictly. If title matches, show it.
                     clean_title = q.title.strip()
-                    if q.is_shared and clean_title in base_title_map:
+                    if clean_title in base_title_map:
                         key = base_title_map[clean_title]
                         base_answers[key] = answer_item.content
                         answered_base_qs_count += 1
                 
-                u_cat_data['questions'].append({
+                data['questions'].append({
                     'question': q,
                     'answer': answer_item.content if is_answered else None,
                     'answer_date': answer_item.date if is_answered else None,
                     'is_answered': is_answered
                 })
-            u_cat_data['progress'] = round((u_cat_data['answered_count'] / u_q_count) * 100)
-            qa_data.append(u_cat_data)
+            
+            if q_count > 0:
+                data['progress'] = round((data['answered_count'] / q_count) * 100)
+            return data
+
+        # Add categorized groups
+        for cat in sorted_cats:
+            qa_data.append(process_q_list(cat, cat_to_qs[cat]))
+        
+        # Add uncategorized group (if exists)
+        if None in cat_to_qs:
+            qa_data.append(process_q_list(None, cat_to_qs[None]))
             
         # Sort category progress: Exclude "基本情報" for the category bar display
         context['qa_data_progress'] = [c for c in qa_data if c['category'] is None or c['category'].name != "基本情報"]
@@ -772,15 +738,15 @@ class IntelligenceLogView(LoginRequiredMixin, View):
 
         # Questions & Tags (Owned OR Shared)
         questions = Question.objects.filter(
-            Q(is_shared=True) | Q(user=request.user)
-        ).select_related('category', 'rank').order_by('category__order', 'category__created_at', 'order', 'title')
+            Q(user=request.user) | Q(is_shared=True) | Q(user__role='MASTER')
+        ).distinct().select_related('category', 'rank').order_by('category__order', 'category__created_at', 'order', 'title')
         
         # Get IDs of categories used by these questions
         category_ids = questions.values_list('category_id', flat=True).distinct()
 
-        # Fetch Categories (User's OR Shared OR Used by Questions)
+        # Fetch Categories (User's OR Shared OR MASTER OR Used by Questions)
         categories = QuestionCategory.objects.filter(
-            Q(user=request.user) | Q(is_shared=True) | Q(id__in=category_ids)
+            Q(user=request.user) | Q(is_shared=True) | Q(user__role='MASTER') | Q(id__in=category_ids)
         ).distinct().order_by('order', 'created_at')
 
         from django.db.models import Count
@@ -823,6 +789,7 @@ class IntelligenceLogView(LoginRequiredMixin, View):
             if action == 'delete':
                 item_id = data.get('item_id')
                 if not item_id: return JsonResponse({'success': False, 'error': 'Item ID required'})
+                
                 item = get_object_or_404(TimelineItem, pk=item_id, target__user=request.user)
                 target = item.target
                 date = item.date
@@ -886,7 +853,7 @@ class IntelligenceLogView(LoginRequiredMixin, View):
                 from django.db.models import Max, Q
                 # Candidates: Owned OR MASTER-owned
                 candidates = Target.objects.filter(
-                    Q(user=request.user) | Q(user__role='MASTER')
+                    Q(user=request.user)
                 ).exclude(id__in=current_ids).annotate(
                     real_last_contact=Max('timelineitem__date', filter=Q(timelineitem__contact_made=True))
                 ).order_by('real_last_contact', 'nickname').distinct()
@@ -946,6 +913,7 @@ class IntelligenceLogView(LoginRequiredMixin, View):
                 contact_made = contact_made_raw == 'true' if isinstance(contact_made_raw, str) else bool(contact_made_raw)
                 
                 if not target_id: return JsonResponse({'success': False, 'error': 'No target specified'})
+                
                 target = get_object_or_404(Target, pk=target_id, user=request.user)
                 
                 if date_str:
@@ -1097,10 +1065,10 @@ class QuestionListView(LoginRequiredMixin, MobileTemplateMixin, ListView):
     def get_queryset(self):
         from django.db.models import Q, Count
         
-        # Base Query: User's Own OR Shared Questions
+        # Base Query: My Own OR Shared OR MASTER Questions
         qs = Question.objects.filter(
-            Q(user=self.request.user) | Q(is_shared=True)
-        ).annotate(
+            Q(user=self.request.user) | Q(is_shared=True) | Q(user__role='MASTER')
+        ).distinct().annotate(
             answer_count=Count('timelineitem', filter=Q(timelineitem__target__user=self.request.user))
         ).order_by('category', 'order', 'created_at')
         
@@ -1137,9 +1105,9 @@ class QuestionListView(LoginRequiredMixin, MobileTemplateMixin, ListView):
 
         # 1. Fetch Categories properly sorted
         # User's Private Categories: Created At ASC
-        private_cats = list(QuestionCategory.objects.filter(user=user, is_shared=False).order_by('created_at'))
-        # Shared Categories: Order ASC, then Created At ASC
-        shared_cats = list(QuestionCategory.objects.filter(is_shared=True).order_by('order', 'created_at'))
+        private_cats = list(QuestionCategory.objects.filter(user=user, is_shared=False).exclude(user__role='MASTER').order_by('created_at'))
+        # Shared Categories (Shared flag OR MASTER creation)
+        shared_cats = list(QuestionCategory.objects.filter(Q(is_shared=True) | Q(user__role='MASTER')).distinct().order_by('order', 'created_at'))
         
         # Combined List: Private (Top) -> Shared (Bottom)
         all_cats = private_cats + shared_cats
@@ -1194,6 +1162,12 @@ class QuestionCreateView(LoginRequiredMixin, CreateView):
         kwargs['user'] = self.request.user
         return kwargs
 
+    def dispatch(self, request, *args, **kwargs):
+        if getattr(request.user, 'role', '') != 'MASTER':
+             from django.core.exceptions import PermissionDenied
+             raise PermissionDenied("Only MASTER can create questions.")
+        return super().dispatch(request, *args, **kwargs)
+
     def form_valid(self, form):
         form.instance.user = self.request.user
         return super().form_valid(form)
@@ -1205,11 +1179,10 @@ class QuestionUpdateView(LoginRequiredMixin, UpdateView):
     success_url = reverse_lazy('question_list')
 
     def get_queryset(self):
-        # Allow editing shared if MASTER, otherwise only own
-        from django.db.models import Q
+        # Only MASTER can edit questions (Shared or MASTER-owned)
         if hasattr(self.request.user, 'role') and self.request.user.role == 'MASTER':
             return Question.objects.filter(Q(user=self.request.user) | Q(is_shared=True))
-        return Question.objects.filter(user=self.request.user)
+        return Question.objects.none() # Non-MASTER cannot edit any question
 
     def dispatch(self, request, *args, **kwargs):
         # Double check for shared edit permission
@@ -1233,6 +1206,12 @@ class QuestionDeleteView(LoginRequiredMixin, DeleteView):
     success_url = reverse_lazy('question_list')
     template_name = 'question_confirm_delete.html' 
     
+    def dispatch(self, request, *args, **kwargs):
+        if getattr(request.user, 'role', '') != 'MASTER':
+             from django.core.exceptions import PermissionDenied
+             raise PermissionDenied("Only MASTER can delete questions.")
+        return super().dispatch(request, *args, **kwargs)
+
     def get_queryset(self):
         return Question.objects.filter(user=self.request.user)
 
@@ -1254,8 +1233,8 @@ class QuestionDetailView(LoginRequiredMixin, MobileTemplateMixin, TemplateView):
         if question_id:
             try:
                 question = Question.objects.filter(
-                    Q(user=request.user) | Q(is_shared=True)
-                ).prefetch_related('category', 'rank').get(pk=question_id)
+                    Q(user=request.user) | Q(is_shared=True) | Q(user__role='MASTER')
+                ).distinct().prefetch_related('category', 'rank').get(pk=question_id)
                 
                 # Get latest answer per target with count
                 answers_qs = TimelineItem.objects.filter(
@@ -1296,8 +1275,8 @@ class QuestionDetailView(LoginRequiredMixin, MobileTemplateMixin, TemplateView):
         
         # Get all questions for dropdown with category info
         questions = Question.objects.filter(
-            Q(user=request.user) | Q(is_shared=True)
-        ).select_related('category').order_by('category', 'order', 'title')
+            Q(user=request.user) | Q(is_shared=True) | Q(user__role='MASTER')
+        ).distinct().select_related('category').order_by('category', 'order', 'title')
         
         # Prepare questions data for JavaScript
         questions_json = json.dumps([{
@@ -1306,9 +1285,9 @@ class QuestionDetailView(LoginRequiredMixin, MobileTemplateMixin, TemplateView):
             'category_id': q.category.id if q.category else None
         } for q in questions])
         
-        # Get categories for filter (Owned OR Shared)
+        # Get categories for filter (Owned OR Shared OR MASTER)
         categories = QuestionCategory.objects.filter(
-            Q(user=request.user) | Q(is_shared=True)
+            Q(user=request.user) | Q(is_shared=True) | Q(user__role='MASTER')
         ).distinct().order_by('order', 'created_at')
         
         # Get groups for filter
@@ -1546,15 +1525,15 @@ class QuestionListAPIView(LoginRequiredMixin, View):
             # Including 'Uncategorized'? Maybe handling null category questions separately or generic
             # Fetch Questions first to know which categories are needed
             questions_qs = Question.objects.filter(
-                Q(is_shared=True) | Q(user=request.user)
-            ).select_related('category', 'rank').order_by('category__id', 'order', 'title')
+                Q(is_shared=True) | Q(user=request.user) | Q(user__role='MASTER')
+            ).distinct().select_related('category', 'rank').order_by('category__id', 'order', 'title')
             
             # Get IDs of categories used by these questions
             category_ids = questions_qs.values_list('category_id', flat=True).distinct()
 
-            # Fetch Categories (User's OR Shared OR Used by Questions)
+            # Fetch Categories (User's OR Shared OR MASTER OR Used by Questions)
             categories = QuestionCategory.objects.filter(
-                Q(user=request.user) | Q(is_shared=True) | Q(id__in=category_ids)
+                Q(user=request.user) | Q(is_shared=True) | Q(user__role='MASTER') | Q(id__in=category_ids)
             ).distinct().order_by('order', 'created_at')
             
             # We can't easily annotate a filtered count inside a related manager query for serialization 

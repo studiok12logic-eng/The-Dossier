@@ -12,9 +12,11 @@
             <button onclick="toggleSearch()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/5 text-text-sub transition-colors">
                 <i class="fas fa-search"></i>
             </button>
+            {% if user.role == "MASTER" %}
             <a href="{% url 'question_add' %}" class="w-8 h-8 flex items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors">
                 <i class="fas fa-plus"></i>
             </a>
+            {% endif %}
         </div>
     </header>
 
@@ -204,7 +206,7 @@
         currentQId = id;
         
         // Handling visibility of Edit button
-        if(isMaster || !isShared) {
+        if(isMaster) {
             editBtn.classList.remove('hidden');
         } else {
             editBtn.classList.add('hidden');

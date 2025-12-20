@@ -40,10 +40,12 @@
             {% endif %}
         </form>
 
+        {% if user.role == "MASTER" %}
         <a href="{% url 'question_add' %}"
             class="px-4 py-2 bg-primary text-black font-bold font-mono text-sm rounded hover:bg-primary/90 transition shadow-[0_0_15px_rgba(34,197,94,0.3)] flex items-center gap-2 whitespace-nowrap">
             <span>+</span> ADD
         </a>
+        {% endif %}
     </div>
 </div>
 
@@ -102,7 +104,7 @@
         <!-- Card Footer: Actions -->
         <div class="mt-4 pt-3 border-t border-white/5 flex justify-between items-center">
              <div class="flex gap-2">
-                {% if user.role == "MASTER" or not q.is_shared %}
+                {% if user.role == "MASTER" %}
                 <a href="{% url 'question_edit' q.pk %}" class="bg-white/5 hover:bg-white/10 text-gray-300 text-[10px] px-2 py-1 rounded border border-white/10 transition">
                     EDIT
                 </a>

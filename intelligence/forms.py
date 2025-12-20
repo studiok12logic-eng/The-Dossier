@@ -104,7 +104,7 @@ from django.contrib.auth import get_user_model
 class QuestionCategoryForm(forms.ModelForm):
     class Meta:
         model = QuestionCategory
-        fields = ['name'] # Description removed
+        fields = ['name', 'order', 'is_shared']
         widgets = {
             'name': forms.TextInput(attrs={'class': STYLE_INPUT, 'placeholder': 'カテゴリー名'}),
             'order': forms.NumberInput(attrs={'class': 'w-32 bg-white/5 border border-white/20 rounded px-3 py-2 text-white'}), # Custom width for order
@@ -135,6 +135,14 @@ class QuestionCategoryForm(forms.ModelForm):
         if qs.exists():
             raise forms.ValidationError(f"カテゴリー「{name}」は既に存在します。")
         return name
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if self.user and getattr(self.user, 'role', '') == 'MASTER':
+            instance.is_shared = True
+        if commit:
+            instance.save()
+        return instance
 
 class QuestionRankForm(forms.ModelForm):
     class Meta:
@@ -216,8 +224,8 @@ class QuestionForm(forms.ModelForm):
         if not is_master and self.user:
             instance.is_shared = False
             instance.rank = None # No rank for non-master
-            # Category is selected by user from shared list, so no forced default needed unless field is missing.
-            # If category field was removed, we'd need default. It's not removed now.
+        elif is_master:
+            instance.is_shared = True
             
         if commit:
             instance.save()
