@@ -98,6 +98,86 @@
                  </div>
              </div>
         </div>
+        {% for day in days %}
+        
+        <!-- Sticky Month Header (Insert if month changes) -->
+        {% ifchanged day.date.month %}
+        <div class="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-white/5 px-4 py-2 flex items-center justify-between shadow-sm">
+            <span class="text-sm font-bold text-text-main font-mono tracking-widest">
+                {{ day.date|date:"Y" }} <span class="text-primary text-base ml-1">{{ day.date|date:"m" }}</span>
+            </span>
+        </div>
+        {% endifchanged %}
+        
+        <div class="border-b border-white/5 last:border-0 relative {% if day.is_past %}bg-surface/50{% else %}bg-surface{% endif %}">
+            <div class="flex min-h-[4rem]"> <!-- Min height ensures tap target size -->
+                 
+                 <!-- Date Column (Left) -->
+                 <div class="w-14 shrink-0 flex flex-col items-center justify-start pt-3 border-r border-white/5 bg-surface-2/10 relative"
+                      onclick="handleDayClick('{{ day.date|date:'Y-m-d' }}', {% if day.is_past %}true{% else %}false{% endif %})">
+                     <!-- Day Name (Mon, Tue...) -->
+                     <span class="text-[10px] font-bold uppercase tracking-wider mb-0.5
+                         {% if day.date.weekday == 6 %}text-red-400{% elif day.date.weekday == 5 %}text-blue-400{% else %}text-text-sub{% endif %}">
+                         {{ day.date|date:"D" }}
+                     </span>
+                     
+                     <!-- Day Number -->
+                     <span class="text-xl font-mono font-bold leading-none
+                         {% if day.is_today %}text-primary scale-110{% else %}text-text-main{% endif %}">
+                         {{ day.date.day }}
+                     </span>
+                     
+                     <!-- Small Icon for Today -->
+                     {% if day.is_today %}
+                     <div class="mt-1 w-1.5 h-1.5 rounded-full bg-primary shadow-sm shadow-primary/50"></div>
+                     {% endif %}
+                 </div>
+                 
+                 <!-- Content Column (Right) -->
+                 <div class="flex-1 p-2 pl-3 cursor-pointer active:bg-white/5 transition-colors relative flex flex-col justify-center gap-1"
+                      onclick="handleDayClick('{{ day.date|date:'Y-m-d' }}', {% if day.is_past %}true{% else %}false{% endif %})">
+                     
+                     <!-- A. Anniversaries (Full Width, Light Yellow, No Icon) -->
+                     {% if day.anniversaries %}
+                     <div class="space-y-1 mb-1 w-full">
+                         {% for anniv in day.anniversaries %}
+                         <div class="w-full px-2 py-1 bg-[#FFF9C4]/10 border border-[#FFF9C4]/20 rounded text-[11px] font-medium text-[#FFF9C4] truncate">
+                             {{ anniv.target.nickname }}: {{ anniv.label }}
+                         </div>
+                         {% endfor %}
+                     </div>
+                     {% endif %}
+                     
+                     <!-- B. Plans (Manual Events) -->
+                     {% if day.plans %}
+                     <div class="space-y-1 w-full relative">
+                         {% for plan in day.plans %}
+                         <div class="flex items-center justify-between w-full h-6">
+                             <!-- Left: Target Name -->
+                             <span class="text-sm font-bold text-text-main truncate pr-16 block">
+                                 {{ plan.target.nickname }}
+                             </span>
+                             
+                             <!-- Right: Group Count -->
+                             {% if forloop.first and day.group_count > 0 %}
+                             <span class="text-xs text-text-sub opacity-70 whitespace-nowrap ml-auto absolute right-0 top-1.5">
+                                 他 {{ day.group_count }} 名
+                             </span>
+                             {% endif %}
+                         </div>
+                         {% endfor %}
+                     </div>
+                     {% elif day.group_count > 0 %}
+                         <div class="w-full text-right h-6 flex items-center justify-end">
+                             <span class="text-xs text-text-sub opacity-70">他 {{ day.group_count }} 名</span>
+                         </div>
+                     {% endif %}
+                     
+                     <!-- C. Logs (Activity) - REMOVED -->
+                     
+                 </div>
+             </div>
+        </div>
         {% endfor %}
     </div>
 

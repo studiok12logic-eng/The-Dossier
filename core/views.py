@@ -7398,9 +7398,11 @@ class CalendarView(LoginRequiredMixin, MobileTemplateMixin, View):
                     # Generic Anniversary
                     # Logic: If anniv date is 2020, and current is 2023, it's 3rd or 4th?
                     # Usually "3rd Anniversary" = 3 years passed.
-                    count = current.year - anniv.date.year
+                    # Logic: User says "0th is impossible". Start from 1st.
+                    # If current.year == anniv.year, it is the 1st time (1回目).
+                    count = current.year - anniv.date.year + 1
                     label = f"{anniv.label}"
-                    if count >= 0: label += f" ({count}回目)"
+                    if count >= 1: label += f" ({count}回目)"
                     day_info['anniversaries'].append({'target': anniv.target, 'label': label, 'type': 'custom'})
             
             for t in targets:
