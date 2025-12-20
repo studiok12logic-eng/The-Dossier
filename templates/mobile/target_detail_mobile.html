@@ -13,6 +13,11 @@
             <i class="fas fa-chevron-left"></i>
         </button>
         <h3 class="text-sm font-bold text-text-main truncate flex-1">{{ target.nickname }}</h3>
+        {% if request.user.role == 'MASTER' or request.user.role == 'ELITE_AGENT' %}
+        <a href="{% url 'target_export_csv' target.id %}" class="w-8 h-8 flex items-center justify-center bg-white/5 text-text-sub rounded-full hover:bg-white/10 hover:text-white transition">
+            <i class="fas fa-file-csv"></i>
+        </a>
+        {% endif %}
         <a href="{% url 'target_edit' target.id %}" class="w-8 h-8 flex items-center justify-center bg-primary text-black rounded-full shadow-lg">
             <i class="fas fa-pen text-xs"></i>
         </a>
