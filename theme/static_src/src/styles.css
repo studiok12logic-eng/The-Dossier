@@ -1,7 +1,12 @@
+@config "../../../tailwind.config.js";
 @import "tailwindcss";
 
-@source "../../../**/*.{html,py,js}";
-@source "../../../templates/**/*.html";
+/* Fail-safe Grid Utilities (Scanner Workaround) */
+@layer utilities {
+  .grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .grid-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .gap-4 { gap: 1rem; }
+}
 
 @theme {
   --color-primary: #10b981;
