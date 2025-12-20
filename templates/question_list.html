@@ -5,6 +5,16 @@
     <div id="question-list-container">
         {% include '_question_list_partial.html' %}
     </div>
+    
+    <!-- Footer Actions -->
+    <div class="flex justify-end gap-3 pt-4 border-t border-white/10">
+        <a href="{% url 'question_export' %}" class="px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 rounded text-sm text-gray-300 transition flex items-center gap-2">
+            <i class="fas fa-file-export"></i> Export CSV
+        </a>
+        <a href="{% url 'question_import' %}" class="px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 rounded text-sm text-gray-300 transition flex items-center gap-2">
+             <i class="fas fa-file-import"></i> Import CSV
+        </a>
+    </div>
 </div>
 
 <!-- Log Target Selection Modal -->

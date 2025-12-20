@@ -245,3 +245,10 @@ class QuestionForm(forms.ModelForm):
         if qs.exists():
             raise forms.ValidationError(f"質問「{title}」は既に存在します。")
         return title
+
+class QuestionImportForm(forms.Form):
+    file = forms.FileField(
+        label='CSVファイル',
+        widget=forms.FileInput(attrs={'class': STYLE_FILE, 'accept': '.csv'})
+    )
+

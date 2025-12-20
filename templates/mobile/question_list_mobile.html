@@ -105,6 +105,16 @@
         {% endfor %}
     </div>
 
+    <!-- Footer Actions -->
+    <div class="p-4 flex gap-3 pb-safe">
+        <a href="{% url 'question_export' %}" class="flex-1 py-3 bg-surface border border-white/10 rounded-lg text-xs text-text-sub font-bold text-center active:scale-95 transition">
+             <i class="fas fa-file-export mr-1"></i> Export
+        </a>
+        <a href="{% url 'question_import' %}" class="flex-1 py-3 bg-surface border border-white/10 rounded-lg text-xs text-text-sub font-bold text-center active:scale-95 transition">
+             <i class="fas fa-file-import mr-1"></i> Import
+        </a>
+    </div>
+
 </div>
 
 <!-- Context Menu -->
