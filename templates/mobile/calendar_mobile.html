@@ -344,23 +344,12 @@
     }
     
     function selectCandidate(id) {
-        const fd = new FormData();
-        fd.append('target_id', id);
-        fd.append('date', currentSelectedDate);
-        fd.append('title', '予定');
-        
-        fetch('', {
-            method: 'POST',
-            headers: { 'X-CSRFToken': '{{ csrf_token }}' },
-            body: fd
-        }).then(res => res.json()).then(data => {
-            if(data.success) {
-                location.reload();
-            } else {
-                alert('Error: ' + data.error);
-            }
-        });
+        // Redirect to Intelligence Log with date and target_id
+        // This ensures the target is added to the "selected targets" for that day
+        const url = "{% url 'intelligence_log' %}?date=" + currentSelectedDate + "&target_id=" + id;
+        window.location.href = url;
     }
+
 
     // Scroll to Today
     document.addEventListener('DOMContentLoaded', () => {
