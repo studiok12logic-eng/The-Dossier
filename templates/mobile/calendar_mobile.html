@@ -126,7 +126,7 @@
         
         <!-- Month Grid (4 cols x 3 rows = 12) -->
         <div class="p-6 overflow-y-auto min-h-0 flex-1">
-             <div class="grid grid-cols-4 gap-4 w-full h-full content-center">
+             <div class="grid grid-cols-4 gap-4 w-full">
                  {% for m in "123456789012"|make_list %}
                  <button onclick="selectMonth({{ forloop.counter }})" 
                          class="aspect-square flex items-center justify-center rounded-lg text-lg font-mono font-bold transition-all border border-white/5 w-full
@@ -235,50 +235,62 @@
     
     // Init Year Slider
     function initYearSlider() {
-        if(yearSlider.children.length > 0) return; // Already inited
-        
-        yearSlider.innerHTML = '';
-        const range = 10; // +/- 10 years
-        const startY = selectedYear - range;
-        const endY = selectedYear + range;
-        
-        for(let y = startY; y <= endY; y++) {
-            const el = document.createElement('div');
-            el.className = `snap-center shrink-0 w-20 flex items-center justify-center text-xl font-mono font-bold transition-all cursor-pointer opacity-50`;
-            el.innerText = y;
-            el.dataset.year = y;
+        // Populate if empty
+        if(yearSlider.children.length === 0) {
+            yearSlider.innerHTML = '';
+            const range = 10; // +/- 10 years
+            const startY = selectedYear - range;
+            const endY = selectedYear + range;
             
-            el.onclick = () => {
-                selectYear(y);
-            };
-            yearSlider.appendChild(el);
+            for(let y = startY; y <= endY; y++) {
+                const el = document.createElement('div');
+                el.className = `snap-center shrink-0 w-20 flex items-center justify-center text-xl font-mono font-bold transition-all cursor-pointer opacity-50`;
+                el.innerText = y;
+                el.dataset.year = y;
+                
+                el.onclick = () => {
+                   // Center this year and update state
+                   scrollToYear(y);
+                };
+                yearSlider.appendChild(el);
+            }
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if(entry.isIntersecting) {
+                        entry.target.classList.replace('opacity-50', 'opacity-100');
+                        entry.target.classList.add('scale-110');
+                        // Update global state only if triggered by scroll? 
+                        // We want the CENTER item to be the selected year.
+                        // But IntersectionObserver triggers for ANY visible item.
+                        // We need to know which one is CENTER.
+                        // Actually, 'snap-center' does the physics.
+                        // The observer is just for visual "active" style.
+                        // Let's rely on click or explicit scroll for logic.
+                        // But if user scrolls manually, we need to update selectedYear.
+                        // For now, let's trust the click/scroll-to.
+                        currentScrollYear = parseInt(entry.target.dataset.year);
+                    } else {
+                        entry.target.classList.replace('opacity-100', 'opacity-50');
+                        entry.target.classList.remove('scale-110');
+                    }
+                });
+            }, { root: yearSlider, threshold: 0.5 });
+    
+            Array.from(yearSlider.children).forEach(c => observer.observe(c));
         }
-        
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if(entry.isIntersecting) {
-                    entry.target.classList.replace('opacity-50', 'opacity-100');
-                    entry.target.classList.add('scale-110');
-                    currentScrollYear = parseInt(entry.target.dataset.year);
-                    selectedYear = currentScrollYear; 
-                } else {
-                    entry.target.classList.replace('opacity-100', 'opacity-50');
-                    entry.target.classList.remove('scale-110');
-                }
-            });
-        }, { root: yearSlider, threshold: 0.5 });
 
-        Array.from(yearSlider.children).forEach(c => observer.observe(c));
-
-        // Initial Scroll
-        const selectedEl = Array.from(yearSlider.children).find(el => el.dataset.year == selectedYear);
-        if(selectedEl) selectedEl.scrollIntoView({ inline: 'center' });
+        // Always scroll to selected
+        setTimeout(() => scrollToYear(selectedYear), 50);
     }
     
-    function selectYear(y) {
+    function scrollToYear(y) {
          selectedYear = y;
          const el = Array.from(yearSlider.children).find(c => c.dataset.year == y);
-         if(el) el.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+         if(el) {
+             el.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+             // Manually trigger visual update if needed, but Observer handles it
+         }
     }
     
     function selectMonth(m) {
