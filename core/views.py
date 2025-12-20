@@ -3411,23 +3411,48 @@ class QuestionExportView(LoginRequiredMixin, View):
         writer = csv.writer(response)
         
         # Header
-        # ‡eÿ	‡^û0û0ÊaM0]~û0V0]~jÿ]~|ÿ7‡>d}ÿ÷aû0>š
-Ysÿjÿ`‡şd}ÿÆaaÿhÿIzÿ›û0}ÿÊa›]~sÿg~oÿû0Æasÿjÿ`‡N“û0ÆajÿlÿO‹1_û0âŠNÙ\û0Æasÿjÿ`‡N~ÿwQ}ÿ÷aS\rÌl}ÿbÿˆşd}ÿºa"‹ÁjD0
-        header = ['‡eÿ	‡^û0', 'g~kÿ]~û0V0]~jÿ]~|ÿ7‡û0, '‡qÿ>š
-Ysÿjÿ`‡û0, 'f–hÿIzÿ›û0, ']~iÿ]~sÿg~oÿ', 'É–jÿ`‡N“', '±–lÿO‹1_û0âŠNÙ\', 'É–jÿ`‡N~ÿû0, 'W‡jmÿÌl}ÿbÿˆû0, 'Ušxÿ‹ÁjD0']
+        # 
+
+
+class QuestionExportView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        # 1. Fetch visible questions
+        user = request.user
+        questions = Question.objects.filter(
+            Q(user=user) | Q(is_shared=True)
+        ).select_related('category', 'rank').order_by('category__order', 'order')
+
+        # 2. Prepare Response (Shift-JIS)
+        filename = "questions_export.csv"
+        quoted_filename = urllib.parse.quote(filename)
+        
+        response = HttpResponse(content_type='text/csv; charset=Shift-JIS')
+        response['Content-Disposition'] = f'attachment; filename="{quoted_filename}"; filename*=UTF-8\'\'{quoted_filename}'
+        
+        # 3. CSV Writer
+        # Helper to clean text for Shift-JIS
+        def clean(text):
+            if text is None: return ""
+            text = str(text)
+            return text.encode('cp932', 'replace').decode('cp932')
+            
+        writer = csv.writer(response)
+        
+        # Header
+        header = ['å…¥åŠ›åˆ—', 'ã‚«ãƒ†ã‚´ãƒªãƒ¼å', 'å…±é€šè³ªå•', 'è¡¨ç¤ºé †', 'ãƒ©ãƒ³ã‚¯', 'è³ªå•å', 'èª¬æ˜ãƒ»æ„å›³', 'è³ªå•ä¾‹', 'å›ç­”å½¢å¼', 'é¸æŠè‚¢']
         writer.writerow([clean(h) for h in header])
         
         for q in questions:
             row = [
-                '', # Input column (Empty for export)
-                q.category.name if q.category else '[‹jÿû†û0aÿû0,
+                '', # Input column
+                q.category.name if q.category else 'æœªåˆ†é¡',
                 'TRUE' if q.is_shared else 'FALSE',
                 q.order,
                 q.rank.name if q.rank else '',
                 q.title,
                 q.description,
                 q.example,
-                q.get_answer_type_display(), # 'Ušxÿ‹ëi|ÿû0 or '¾•jÿqÿª–)Pÿpÿ'
+                q.get_answer_type_display(),
                 q.choices
             ]
             writer.writerow([clean(col) for col in row])
@@ -3449,32 +3474,25 @@ class QuestionImportView(LoginRequiredMixin, View):
         csv_file = request.FILES['file']
         
         # 1. Detect Encoding
-        # Read a chunk to detect
         sample = csv_file.read(2048)
         csv_file.seek(0)
         encoding = 'utf-8'
         try:
             sample.decode('utf-8')
         except UnicodeDecodeError:
-            encoding = 'cp932' # Shift-JIS fallback
+            encoding = 'cp932'
             
         # 2. Read lines
         try:
-            # Use TextIOWrapper
             io_text = io.TextIOWrapper(csv_file, encoding=encoding, newline='')
             reader = csv.reader(io_text)
             rows = list(reader)
         except Exception as e:
-            return render(request, self.template_name, {'form': form, 'error_msg': f']~C0g~dÿ]~kÿ:~nÿ±–mÿ:~ÿ—|ÿ:~ÿ:~kÿŸ‡qÿ(‹±R ÿ:~~ÿ:~±RÆ%: {str(e)}'})
+            return render(request, self.template_name, {'form': form, 'error_msg': f'ãƒ•ã‚¡ã‚¤ãƒ«ã®èª­ã¿è¾¼ã¿ã«å¤±æ•—ã—ã¾ã—ãŸ: {str(e)}'})
 
         if not rows:
-             return render(request, self.template_name, {'form': form, 'error_msg': 'CSV]~C0g~dÿ]~kÿ:~jiÿzÿ:~gÿ:~6T€û0})
+             return render(request, self.template_name, {'form': form, 'error_msg': 'CSVãƒ•ã‚¡ã‚¤ãƒ«ãŒç©ºã§ã™ã€‚'})
 
-        # Headers check (Skip row 0)
-        # Expected index map
-        # 0:Input, 1:Cat, 2:Shared, 3:Order, 4:Rank, 5:Title, 6:Desc, 7:Ex, 8:Type, 9:Choices
-        
-        # 3. Processing
         logs = []
         errors = []
         success_count = 0
@@ -3482,9 +3500,8 @@ class QuestionImportView(LoginRequiredMixin, View):
         try:
             with transaction.atomic():
                 for idx, row in enumerate(rows):
-                    if idx == 0: continue # Skip header
-                    if len(row) < 6: # At least up to Title
-                         continue
+                    if idx == 0: continue
+                    if len(row) < 6: continue
                          
                     line_no = idx + 1
                     input_act = row[0].strip().lower()
@@ -3495,34 +3512,21 @@ class QuestionImportView(LoginRequiredMixin, View):
                     title = row[5].strip()
                     desc = row[6].strip() if len(row) > 6 else ""
                     example = row[7].strip() if len(row) > 7 else ""
-                    type_str = row[8].strip() if len(row) > 8 else "¾•jÿqÿª–)Pÿpÿ"
+                    type_str = row[8].strip() if len(row) > 8 else "è‡ªç”±è¨˜è¿°"
                     choices = row[9].strip() if len(row) > 9 else ""
                     
                     if not input_act:
-                        logs.append(f"{line_no}f–j¼\: g~yÿg~mÿ]~û0û0 (‡eÿ	‡^û0:~jiÿzÿ)")
+                        logs.append(f"{line_no}è¡Œç›®: ã‚¹ã‚­ãƒƒãƒ— (å…¥åŠ›åˆ—ãŒç©º)")
                         continue
                     if input_act not in ['n', 'u', 'd']:
-                        logs.append(f"{line_no}f–j¼\: g~yÿg~mÿ]~û0û0 (‡eÿ	‡^û0 '{input_act}' :~oÿŸaÿ	‡yÿ)")
+                        logs.append(f"{line_no}è¡Œç›®: ã‚¹ã‚­ãƒƒãƒ— (å…¥åŠ›åˆ— '{input_act}' ã¯ç„¡åŠ¹)")
                         continue
                         
                     if not title:
-                         errors.append(f"{line_no}f–j¼\: É–jÿ`‡N“:~Ÿ`ÿû0ğø;S0:~6T€û0)
+                         errors.append(f"{line_no}è¡Œç›®: è³ªå•åãŒå¿…é ˆã§ã™ã€‚")
                          continue
                          
-                    # -- Validation & Preparation --
-                    
-                    # Category
                     category = None
-                    if not cat_name:
-                         cat_name = 'Unclassified' # Default? or Error? Specs said default unclassified on empty
-                         # Spec: "hzÿ:Œû0şQ:~nÿ]~û0õ0g~iÿ]~kÿ]~Áhÿmÿ³‡û0g~kÿ]~û0V0]~jÿ]~|ÿ7‡>d|ÿ4fD0]~sÿg~oÿ]~iÿg~wÿ]~C0g~dÿ]~û0
-                         
-                    # Find Category
-                    # Search In: User's or Shared.
-                    # Creating new category? Spec doesn't strictly say. 
-                    # Spec: "g~kÿ]~û0V0]~jÿ]~|ÿ7‡*–2 Ušg"c‡tÿ7‡(ƒ|ÿ4fJ0]~iÿ]~|ÿ û0)Paÿj¼\û0üXû0	‡^ ÿ:~˜nM0]~û0V0]~jÿ]~|ÿ7‡*–2 •–]N½%:~]NJÿ:~~ÿ:~^Sÿ:~gÿ:~±RÆ%2~û0
-                    # So strict search.
-                    # BUT Spec also says "Default = Unclassified". So if empty, looking for Unclassified.
                     if not cat_name: cat_name = 'Unclassified'
                     
                     category = QuestionCategory.objects.filter(
@@ -3532,67 +3536,48 @@ class QuestionImportView(LoginRequiredMixin, View):
                     
                     if not category:
                          if cat_name == 'Unclassified':
-                              # Allow auto-create for default? Or error?
-                              # Let's error strictly as per spec "‡eÿ	‡^ ÿ:~˜nM0]~û0V0]~jÿ]~|ÿ7‡*–2 •–]N½%:~]NJÿ:~~ÿ:~^Sÿ:~gÿ:~±RÆ%"
-                              errors.append(f"{line_no}f–j¼\: g~kÿ]~û0V0]~jÿ]~|ÿ2~cat_name}2~*–2 •–]N½%:~]NJÿ:~~ÿ:~^Sÿ:~gÿ:~±RÆ%2~û0)
+                              errors.append(f"{line_no}è¡Œç›®: ã‚«ãƒ†ã‚´ãƒªãƒ¼ã€Œ{cat_name}ã€ãŒè¦‹ã¤ã‹ã‚Šã¾ã›ã‚“ã§ã—ãŸã€‚")
                               continue
                          else:
-                              errors.append(f"{line_no}f–j¼\: g~kÿ]~û0V0]~jÿ]~|ÿ2~cat_name}2~*–2 •–]N½%:~]NJÿ:~~ÿ:~^Sÿ:~gÿ:~±RÆ%2~û0)
+                              errors.append(f"{line_no}è¡Œç›®: ã‚«ãƒ†ã‚´ãƒªãƒ¼ã€Œ{cat_name}ã€ãŒè¦‹ã¤ã‹ã‚Šã¾ã›ã‚“ã§ã—ãŸã€‚")
                               continue
 
-                    # Rank
                     rank = None
                     if rank_name and rank_name != 'Null':
                         rank = QuestionRank.objects.filter(user=request.user, name=rank_name).first()
                         if not rank:
-                             # Try shared? Rank is user specific usually?
-                             # Model: QuestionRank user=FK. Not shared.
-                             # If MASTER, they have ranks. If AGENT, they have ranks.
-                             # Maybe rank name mismatch.
-                             errors.append(f"{line_no}f–j¼\: ]~iÿ]~sÿg~oÿ2~rank_name}2~*–2 •–]N½%:~]NJÿ:~~ÿ:~^Sÿ:~gÿ:~±RÆ%2~û0)
+                             errors.append(f"{line_no}è¡Œç›®: ãƒ©ãƒ³ã‚¯ã€Œ{rank_name}ã€ãŒè¦‹ã¤ã‹ã‚Šã¾ã›ã‚“ã§ã—ãŸã€‚")
                              continue
                     
-                    # Type
-                    # ¾•jÿqÿª–)Pÿpÿ or Ušxÿ‹ëi|ÿû0
                     answer_type = 'TEXT'
-                    if type_str == 'Ušxÿ‹ëi|ÿû0:
+                    if type_str == 'é¸æŠå¼':
                         answer_type = 'SELECTION'
                         if not choices:
-                             errors.append(f"{line_no}f–j¼\: Ušxÿ‹ëi|ÿ
-NRÿUšxÿg~™…¡%c‡tÿ7‡;S€û0"‹ÁjD0:~oÿ"ˆû0ğø;S0:~6T€û0)
+                             errors.append(f"{line_no}è¡Œç›®: é¸æŠå¼ã‚’é¸ã‚“ã å ´åˆã€é¸æŠè‚¢ã¯å¿…é ˆã§ã™ã€‚")
                              continue
-                    elif type_str == '¾•jÿqÿª–)Pÿpÿ':
+                    elif type_str == 'è‡ªç”±è¨˜è¿°':
                         answer_type = 'TEXT'
                     else:
-                         errors.append(f"{line_no}f–j¼\: W‡jmÿÌl}ÿbÿˆ
-N€type_str}2~*–2 •–]N½%:~]NJÿ:~~ÿ:~^Sÿ:~gÿ:~±RÆ%2~û0)
+                         errors.append(f"{line_no}è¡Œç›®: å›ç­”å½¢å¼ã€Œ{type_str}ã€ãŒè¦‹ã¤ã‹ã‚Šã¾ã›ã‚“ã§ã—ãŸã€‚")
                          continue
                          
-                    # Is Shared
                     is_shared = False
                     if is_shared_str == 'TRUE': is_shared = True
                     
-                    # Order
                     try:
                         order = int(order_str) if order_str else 0
                     except ValueError:
                         order = 0
 
-                    # -- Execution --
-                    
-                    # Check duplication
-                    # Search existing question by Title
                     existing_q = Question.objects.filter(
                         Q(user=request.user) | Q(is_shared=True),
                         title=title
                     ).first()
                     
-                    if input_act == 'n': # New
+                    if input_act == 'n':
                         if existing_q:
-                            errors.append(f"{line_no}f–j¼\: 7‡Œ_§É–jÿ`‡N“:~nÿÉ–jÿ`‡
-N2 Ä‡Oà`:~±R*":~6T€û0)
+                            errors.append(f"{line_no}è¡Œç›®: åŒã˜è³ªå•åã®è³ªå•ãŒå­˜åœ¨ã—ã¾ã™ã€‚")
                             continue
-                        
                         Question.objects.create(
                             user=request.user,
                             category=category,
@@ -3607,13 +3592,10 @@ N2 Ä‡Oà`:~±R*":~6T€û0)
                         )
                         success_count += 1
                         
-                    elif input_act == 'u': # Update
+                    elif input_act == 'u':
                         if not existing_q:
-                            errors.append(f"{line_no}f–j¼\: V‹tÿA‹pÿÇ‡~ÿÎ–aÿ:~nÿÉ–jÿ`‡
-N€title}2~*–2 •–]N½%:~]NJÿ:~~ÿ:~^Sÿ:~gÿ:~±RÆ%2~û0)
+                            errors.append(f"{line_no}è¡Œç›®: æ›´æ–°å¯¾è±¡ã®è³ªå•ã€Œ{title}ã€ãŒè¦‹ã¤ã‹ã‚Šã¾ã›ã‚“ã§ã—ãŸã€‚")
                             continue
-                        
-                        # Update fields
                         existing_q.category = category
                         existing_q.rank = rank
                         existing_q.description = desc
@@ -3625,23 +3607,21 @@ N€title}2~*–2 •–]N½%:~]NJÿ:~~ÿ:~^Sÿ:~gÿ:~±RÆ%2~û0)
                         existing_q.save()
                         success_count += 1
                         
-                    elif input_act == 'd': # Delete
+                    elif input_act == 'd':
                         if not existing_q:
-                             logs.append(f"{line_no}f–j¼\: ‡OÁRÇ‡~ÿÎ–aÿ:~nÿÉ–jÿ`‡
-N€title}2~*–2 •–]N½%:~]NJÿ:~~ÿ:~^Sÿ:~gÿ:~±RÆ%û0;S[0g~mÿ]~û0û0û0è\€û0)
+                             logs.append(f"{line_no}è¡Œç›®: å‰Šé™¤å¯¾è±¡ã®è³ªå•ã€Œ{title}ã€ãŒè¦‹ã¤ã‹ã‚Šã¾ã›ã‚“ã§ã—ãŸã€‚")
                              continue
                         existing_q.delete()
                         success_count += 1
 
                 if errors:
-                    # If any error, RAISE exception to rollback
                     raise Exception("Validation Error")
                     
         except Exception as e:
             if str(e) == "Validation Error":
-                pass # Handled by returning errors
+                pass
             else:
-                errors.append(f"g~wÿg~yÿ]~û0’g~hÿ]~iÿ]~|ÿ: {str(e)}")
+                errors.append(f"ã‚·ã‚¹ãƒ†ãƒ ã‚¨ãƒ©ãƒ¼: {str(e)}")
         
         if errors:
             return render(request, self.template_name, {
@@ -3652,6 +3632,6 @@ N€title}2~*–2 •–]N½%:~]NJÿ:~~ÿ:~^Sÿ:~gÿ:~±RÆ%û0;S[0g~mÿ]~û0û0û0è\€û0)
             
         return render(request, self.template_name, {
             'form': form,
-            'success_msg': f'{success_count}‰ƒvÿ:~nÿ‡fÿû02 ³‡¡_zÿû0 ÿ:~~ÿ:~±RÆ%2~û0,
+            'success_msg': f'{success_count}ä»¶ã®å‡¦ç†ãŒå®Œäº†ã—ã¾ã—ãŸã€‚',
             'logs': logs
         })
