@@ -750,6 +750,7 @@ class IntelligenceLogView(LoginRequiredMixin, View):
         ).distinct().order_by('order', 'created_at')
 
         from django.db.models import Count
+        from intelligence.models import Tag
         # Filter tags used by THIS user's targets
         top_tags = Tag.objects.filter(
             timelineitem__target__user=request.user
