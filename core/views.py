@@ -215,8 +215,10 @@ class TargetDetailView(LoginRequiredMixin, MobileTemplateMixin, DetailView):
         
         # 2. Q&A and Progress Calculation
         from intelligence.models import Question, QuestionCategory
-        # Get all categories
-        categories = QuestionCategory.objects.filter(user=self.request.user)
+        # Get all categories (Owned OR Shared)
+        categories = QuestionCategory.objects.filter(
+            Q(user=self.request.user) | Q(is_shared=True)
+        ).distinct().order_by('order', 'created_at')
         qa_data = []
         total_q_count = 0
         total_answered_count = 0
@@ -246,7 +248,12 @@ class TargetDetailView(LoginRequiredMixin, MobileTemplateMixin, DetailView):
         answered_base_qs_count = 0
 
         for cat in categories:
-            questions = Question.objects.filter(category=cat).order_by('order', 'title')
+            # Get questions for this category (Owned OR Shared)
+            questions = Question.objects.filter(
+                category=cat
+            ).filter(
+                Q(user=self.request.user) | Q(is_shared=True)
+            ).order_by('order', 'title')
             q_count = questions.count()
             total_q_count += q_count
             
@@ -1255,8 +1262,10 @@ class QuestionDetailView(LoginRequiredMixin, MobileTemplateMixin, TemplateView):
             'category_id': q.category.id if q.category else None
         } for q in questions])
         
-        # Get categories for filter
-        categories = QuestionCategory.objects.filter(user=request.user)
+        # Get categories for filter (Owned OR Shared)
+        categories = QuestionCategory.objects.filter(
+            Q(user=request.user) | Q(is_shared=True)
+        ).distinct().order_by('order', 'created_at')
         
         # Get groups for filter
         from intelligence.models import TargetGroup
