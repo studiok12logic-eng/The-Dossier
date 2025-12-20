@@ -12,6 +12,6 @@ sudo systemctl restart gunicorn
 
 # Collect Static
 echo "Collecting static files..."
-python3 manage.py collectstatic --noinput
+./venv/bin/python manage.py collectstatic --noinput
 
 echo "Deployment complete!"
