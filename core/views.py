@@ -7418,13 +7418,7 @@ class CalendarView(LoginRequiredMixin, MobileTemplateMixin, View):
             
             days_data.append(day_info)
             current += datetime.timedelta(days=1)
-                        label = f"誕生日 ({age_at_date}歳)"
-                    else:
-                        label = "誕生日"
-                    day_info['anniversaries'].append({'target': t, 'label': label, 'type': 'birthday'})
 
-            days_data.append(day_info)
-            current += datetime.timedelta(days=1)
             
         context = {
             'days': days_data,
