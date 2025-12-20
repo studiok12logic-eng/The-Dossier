@@ -7346,10 +7346,12 @@ class CalendarView(LoginRequiredMixin, MobileTemplateMixin, View):
         
         # C. Group Rotations (DailyTargetState) - Count per day
         from django.db.models import Count
-        group_states = TimelineItem.objects.filter(
+        from intelligence.models import DailyTargetState
+        
+        group_states = DailyTargetState.objects.filter(
             target__user=user,
             date__range=[start_date, end_date],
-            type='DailyState'
+            is_hidden=False
         ).values('date').annotate(count=Count('id'))
         group_counts = {item['date']: item['count'] for item in group_states}
         
@@ -7396,7 +7398,12 @@ class CalendarView(LoginRequiredMixin, MobileTemplateMixin, View):
             # --- Group Count Logic ---
             # Others X = Generated (DailyState) - Manual (Plans)
             raw_group_count = group_counts.get(current, 0)
-            manual_plan_count = len(day_info['plans'])
+            
+            # manual_plan_count should count UNIQUE targets that have plans, not total plans
+            # getting set of target_ids from the plans list
+            manual_plan_targets = {p.target_id for p in day_info['plans']}
+            manual_plan_count = len(manual_plan_targets)
+            
             final_group_count = max(0, raw_group_count - manual_plan_count)
             day_info['group_count'] = final_group_count
             
