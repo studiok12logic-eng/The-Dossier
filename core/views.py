@@ -7360,6 +7360,16 @@ class CalendarView(LoginRequiredMixin, MobileTemplateMixin, View):
         days_data = []
         current = start_date
         
+        # Custom: Calculate Log Counts for targets in plans for display
+        plan_target_ids = {p.target_id for p in plans}
+        log_counts_qs = TimelineItem.objects.filter(
+            target__id__in=plan_target_ids
+        ).exclude(
+            type__in=['Event', 'DailyState']
+        ).values('target_id').annotate(count=Count('id'))
+        
+        log_count_map = {item['target_id']: item['count'] for item in log_counts_qs}
+
         plans_by_date = {}
         for p in plans:
             if p.date not in plans_by_date: plans_by_date[p.date] = []
@@ -7367,6 +7377,7 @@ class CalendarView(LoginRequiredMixin, MobileTemplateMixin, View):
             # Check if target already in this day's list
             existing_targets = {x.target_id for x in plans_by_date[p.date]}
             if p.target_id not in existing_targets:
+                p.target.log_count = log_count_map.get(p.target_id, 0)
                 plans_by_date[p.date].append(p)
             
         activities_by_date = {}
