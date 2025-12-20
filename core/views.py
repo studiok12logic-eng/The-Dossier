@@ -7383,21 +7383,41 @@ class CalendarView(LoginRequiredMixin, MobileTemplateMixin, View):
                 'plans': plans_by_date.get(current, []),
                 'activity_targets': list(activities_by_date.get(current, [])),
                 'anniversaries': [],
-                'group_count': group_counts.get(current, 0)
             }
             
-            # Anniversaries logic matches previous...
+            # --- Group Count Logic ---
+            # Others X = Generated (DailyState) - Manual (Plans)
+            raw_group_count = group_counts.get(current, 0)
+            manual_plan_count = len(day_info['plans'])
+            final_group_count = max(0, raw_group_count - manual_plan_count)
+            day_info['group_count'] = final_group_count
+            
+            # --- Anniversary Logic ---
             for anniv in custom_anniversaries:
                 if anniv.date.month == current.month and anniv.date.day == current.day:
-                    years_diff = current.year - anniv.date.year
+                    # Generic Anniversary
+                    # Logic: If anniv date is 2020, and current is 2023, it's 3rd or 4th?
+                    # Usually "3rd Anniversary" = 3 years passed.
+                    count = current.year - anniv.date.year
                     label = f"{anniv.label}"
-                    if years_diff > 0: label += f" ({years_diff}周年)"
-                    day_info['anniversaries'].append({'target': anniv.target, 'label': label, 'type': 'anniv'})
-                    
+                    if count >= 0: label += f" ({count}回目)"
+                    day_info['anniversaries'].append({'target': anniv.target, 'label': label, 'type': 'custom'})
+            
             for t in targets:
+                # Assuming t has a date property, previous code used t.birth_month/day? 
+                # Checking `Target` model fields from context... usually it's `birthday` (date) field.
+                # Adjusting to use `birthday` field if available or construct from parts.
+                # Assuming `birthday` field exists due to previous usage line 7398 in read file (birth_month, birth_day).
+                # Actually previous file read shows `if t.birth_month == current.month...`. So it uses parts.
                 if t.birth_month == current.month and t.birth_day == current.day:
+                    age_label = "誕生日"
                     if t.birth_year:
-                        age_at_date = current.year - t.birth_year
+                        age = current.year - t.birth_year
+                        age_label += f" ({age}歳)"
+                    day_info['anniversaries'].append({'target': t, 'label': age_label, 'type': 'birthday'})
+            
+            days_data.append(day_info)
+            current += datetime.timedelta(days=1)
                         label = f"誕生日 ({age_at_date}歳)"
                     else:
                         label = "誕生日"

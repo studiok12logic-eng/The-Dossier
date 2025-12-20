@@ -57,13 +57,12 @@
                  <div class="flex-1 p-2 pl-3 cursor-pointer active:bg-white/5 transition-colors relative flex flex-col justify-center gap-1"
                       onclick="handleDayClick('{{ day.date|date:'Y-m-d' }}', {% if day.is_past %}true{% else %}false{% endif %})">
                      
-                     <!-- A. Anniversaries -->
+                     <!-- A. Anniversaries (Rounded Block, Yellow, No Icon) -->
                      {% if day.anniversaries %}
-                     <div class="flex flex-wrap gap-1 mb-1">
+                     <div class="space-y-1 mb-1">
                          {% for anniv in day.anniversaries %}
-                         <div class="flex items-center gap-1 pl-2 pr-2 py-0.5 rounded-md bg-yellow-500/20 border border-yellow-500/30 text-[10px] font-medium grow-0 truncate max-w-full">
-                             <i class="fas {% if anniv.type == 'birthday' %}fa-birthday-cake{% else %}fa-star{% endif %} text-yellow-400 text-[9px]"></i>
-                             <span class="text-yellow-100 truncate">{{ anniv.target.nickname }}: {{ anniv.label }}</span>
+                         <div class="px-2 py-0.5 rounded bg-yellow-400/20 border border-yellow-400/30 text-[10px] font-medium text-yellow-100 truncate">
+                             {{ anniv.target.nickname }}: {{ anniv.label }}
                          </div>
                          {% endfor %}
                      </div>
@@ -81,7 +80,7 @@
                              
                              <!-- Right: Group Count -->
                              {% if forloop.first and day.group_count > 0 %}
-                             <span class="text-xs text-text-sub opacity-70 whitespace-nowrap ml-auto absolute right-0 top-1">
+                             <span class="text-xs text-text-sub opacity-70 whitespace-nowrap ml-auto absolute right-0 top-1.5">
                                  他 {{ day.group_count }} 名
                              </span>
                              {% endif %}
@@ -94,16 +93,7 @@
                          </div>
                      {% endif %}
                      
-                     <!-- C. Logs (Activity) - Gray Chips -->
-                     {% if day.activity_targets %}
-                     <div class="flex flex-wrap gap-1 mt-1">
-                         {% for t in day.activity_targets %}
-                         <span class="text-[10px] text-text-sub bg-white/10 rounded px-1.5 py-0.5 max-w-[100px] truncate block">
-                             {{ t.nickname }}
-                         </span>
-                         {% endfor %}
-                     </div>
-                     {% endif %}
+                     <!-- C. Logs (Activity) - REMOVED as per request -->
                      
                  </div>
              </div>
@@ -125,18 +115,21 @@
             </div>
             
             <!-- Center Highlight Box (Absolute center) -->
-            <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-10 rounded-lg border-2 border-primary pointer-events-none shadow-[0_0_15px_rgba(var(--primary-rgb),0.3)]"></div>
+            <!-- Rounded Background for Selected Year -->
+            <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-10 rounded-lg bg-white/10 border-2 border-primary pointer-events-none shadow-[0_0_15px_rgba(var(--primary-rgb),0.3)] z-10"></div>
         </div>
         
         <!-- Month Grid (4 cols x 3 rows = 12) -->
-        <div class="p-6 grid grid-cols-4 gap-4 overflow-y-auto min-h-0 flex-1">
-             {% for m in "123456789012"|make_list %}
-             <button onclick="selectMonth({{ forloop.counter }})" 
-                     class="aspect-square flex items-center justify-center rounded-lg text-lg font-mono font-bold transition-all border border-white/5
-                     {% if forloop.counter == selected_month %}bg-primary text-black shadow-lg scale-110 border-primary{% else %}bg-white/5 hover:bg-white/10 text-text-sub hover:text-white{% endif %}">
-                 {{ forloop.counter }}
-             </button>
-             {% endfor %}
+        <div class="p-6 overflow-y-auto min-h-0 flex-1">
+             <div class="grid grid-cols-4 gap-4 w-full h-full content-center">
+                 {% for m in "123456789012"|make_list %}
+                 <button onclick="selectMonth({{ forloop.counter }})" 
+                         class="aspect-square flex items-center justify-center rounded-lg text-lg font-mono font-bold transition-all border border-white/5 w-full
+                         {% if forloop.counter == selected_month %}bg-primary text-black shadow-lg scale-110 border-primary{% else %}bg-white/5 hover:bg-white/10 text-text-sub hover:text-white{% endif %}">
+                     {{ forloop.counter }}
+                 </button>
+                 {% endfor %}
+             </div>
         </div>
         
         <!-- Close (Sticky Footer) -->
@@ -145,6 +138,37 @@
         </div>
     </div>
 </div>
+
+<!-- Sticky Header Script Injector -->
+<!-- We need to ensure headers stick. The structure above puts headers INSIDE the loop. 
+     If the container `calendarList` has `overflow-y-auto`, `sticky` works relative to it.
+     Each header will stick until pushed. 
+     However, standard sticky behavior stacks if not separated.
+     But user wants "Corresponding month list interval". 
+     The current `if day.day == 1` logic inserts a header. 
+     If we want strictly "Current Month" at the top, `position: sticky` does that naturally. 
+     As you scroll past Jan 1, Jan Header sticks. 
+     When Feb 1 comes, Feb Header pushes Jan Header up (if they are siblings). 
+     Yes, this is standard sticky behavior. 
+     My previous code had `top-0`. 
+     If `header` is inside `calendarList` (which is `relative`), it should work.
+-->
+
+<script>
+    // Just to ensure sticky works, verify parent overflow. 
+    // #calendarList is overflow-y-auto. 
+    // Headers are direct children or children of wrapper?
+    // In template: 
+    // <div id="calendarList">
+    //    {% for day in days %}
+    //       {% if day.day == 1 %} <div class="sticky ...">Header</div> {% endif %}
+    //       <div class="day-row">...</div>
+    //    {% endfor %}
+    // </div>
+    // This structure works for sticky headers (they stack/push).
+    
+    // ... (Existing Scripts) ...
+</script>
 
 <!-- Add Plan Modal -->
 <div id="addCandidateModal" class="fixed inset-0 z-[60] hidden bg-background flex flex-col animate-slide-up">
