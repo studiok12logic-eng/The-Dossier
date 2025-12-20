@@ -24,48 +24,49 @@ def dashboard(request):
     user = request.user
     
     # [MODIFIED] 1. Random Question for "Today's Topic"
-    random_question = Question.objects.filter(user=user).order_by('?').first() or \
-                      Question.objects.filter(is_shared=True).order_by('?').first()
+    random_question = Question.objects.filter(
+        Q(user=user) | Q(is_shared=True)
+    ).order_by('?').first()
 
-    # [MODIFIED] 2. Latest Logs (Events) - Limit 10
+    # [MODIFIED] 2. Latest Logs (Events) - Limit 10 (Owned OR MASTER)
     latest_logs = TimelineItem.objects.filter(
-        target__user=user
+        Q(target__user=user) | Q(target__user__role='MASTER')
     ).exclude(type='Question').select_related('target').prefetch_related('images').order_by('-date', '-created_at')[:10]
 
-    # [MODIFIED] 3. Latest Answers - Limit 10
+    # [MODIFIED] 3. Latest Answers - Limit 10 (Owned OR MASTER)
     latest_answers = TimelineItem.objects.filter(
-        target__user=user, type='Question'
+        Q(target__user=user) | Q(target__user__role='MASTER'), 
+        type='Question'
     ).select_related('target', 'question').order_by('-date', '-created_at')[:10]
 
-    # 4. Anniversaries (Range: Today to Today+7)
+    # 4. Anniversaries (Range: Today to Today+14)
     start_date = today
-    # ... (Keep existing anniversary logic below) ...
-    end_date = today + datetime.timedelta(days=14) # Extended range slightly for better upcoming visibility
+    end_date = today + datetime.timedelta(days=14)
     
     upcoming_anniv_list = []
     
-    # Helper to check range
     date_curs = start_date
     while date_curs <= end_date:
-        # Birthdays
+        # Birthdays (Owned OR MASTER)
         b_targets = Target.objects.filter(
-            user=user, birth_month=date_curs.month, birth_day=date_curs.day
-        )
+            Q(user=user) | Q(user__role='MASTER'),
+            birth_month=date_curs.month, birth_day=date_curs.day
+        ).distinct()
         for t in b_targets:
-            # Calc Days Left
             days_left = (date_curs - today).days
             upcoming_anniv_list.append({
                 'date': date_curs,
-                'name': 'Birthday', # Standardize label
+                'name': 'Birthday',
                 'target': t,
                 'days_left': days_left,
                 'is_today': days_left == 0
             })
             
-        # Custom
+        # Custom (Owned OR MASTER)
         c_annivs = CustomAnniversary.objects.filter(
-            target__user=user, date__month=date_curs.month, date__day=date_curs.day
-        ).select_related('target')
+            Q(target__user=user) | Q(target__user__role='MASTER'),
+            date__month=date_curs.month, date__day=date_curs.day
+        ).select_related('target').distinct()
         for ca in c_annivs:
             days_left = (date_curs - today).days
             upcoming_anniv_list.append({
@@ -78,11 +79,13 @@ def dashboard(request):
             
         date_curs += datetime.timedelta(days=1)
         
-    upcoming_anniv_list.sort(key=lambda x: x['date']) # Sort by date
+    upcoming_anniv_list.sort(key=lambda x: x['date'])
 
     # Filters Support (Groups, Tags)
-    groups = TargetGroup.objects.filter(user=user)
-    top_tags = Tag.objects.filter(timelineitem__target__user=user).annotate(c=Count('timelineitem')).order_by('-c')[:20]
+    groups = TargetGroup.objects.filter(Q(user=user) | Q(user__role='MASTER')).distinct()
+    top_tags = Tag.objects.filter(
+        Q(timelineitem__target__user=user) | Q(timelineitem__target__user__role='MASTER')
+    ).annotate(c=Count('timelineitem')).order_by('-c')[:20]
 
     context = {
         'random_question': random_question,
@@ -107,8 +110,10 @@ def target_list(request):
     search_query = request.GET.get('q')
     group_filter = request.GET.get('group')
     
-    # Base Query
-    targets = Target.objects.filter(user=request.user).prefetch_related('groups')
+    # Base Query: Owned targets OR targets created by MASTER
+    targets = Target.objects.filter(
+        Q(user=request.user) | Q(user__role='MASTER')
+    ).prefetch_related('groups').distinct()
 
     # Search Filter
     if search_query:
@@ -145,8 +150,10 @@ def target_list(request):
         from django.db.models import F
         targets = targets.order_by(F('last_contact').desc(nulls_last=True), 'nickname')
 
-    # Get Groups for Filter UI
-    groups = TargetGroup.objects.filter(user=request.user)
+    # Get Groups for Filter UI (Owned OR MASTER)
+    groups = TargetGroup.objects.filter(
+        Q(user=request.user) | Q(user__role='MASTER')
+    ).distinct()
 
     # Template Selection
     if request.htmx:
@@ -180,7 +187,11 @@ class TargetDetailView(LoginRequiredMixin, MobileTemplateMixin, DetailView):
         if not pk:
             # Fallback to URL kwarg if present
             return super().get_object()
-        return get_object_or_404(Target, pk=pk, user=self.request.user)
+        # Allow access if owned by user OR owned by MASTER
+        return get_object_or_404(
+            Target, 
+            Q(pk=pk) & (Q(user=self.request.user) | Q(user__role='MASTER'))
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -278,9 +289,9 @@ class TargetDetailView(LoginRequiredMixin, MobileTemplateMixin, DetailView):
                 if is_answered:
                     cat_data['answered_count'] += 1
                     total_answered_count += 1
-                    # Check if this is a Base Profile question (Shared Only or matching title)
+                    # [STRICT] BASE Profile must use SHARED questions only
                     clean_title = q.title.strip()
-                    if clean_title in base_title_map:
+                    if q.is_shared and clean_title in base_title_map:
                         key = base_title_map[clean_title]
                         base_answers[key] = answer_item.content
                         answered_base_qs_count += 1
@@ -323,8 +334,9 @@ class TargetDetailView(LoginRequiredMixin, MobileTemplateMixin, DetailView):
                 if is_answered:
                     u_cat_data['answered_count'] += 1
                     total_answered_count += 1
+                    # [STRICT] BASE Profile must use SHARED questions only
                     clean_title = q.title.strip()
-                    if clean_title in base_title_map:
+                    if q.is_shared and clean_title in base_title_map:
                         key = base_title_map[clean_title]
                         base_answers[key] = answer_item.content
                         answered_base_qs_count += 1
@@ -425,7 +437,10 @@ class TargetUpdateView(LoginRequiredMixin, UpdateView):
     success_url = reverse_lazy('target_list')
 
     def get_queryset(self):
-        return Target.objects.filter(user=self.request.user)
+        # Allow editing owned targets OR targets created by MASTER
+        return Target.objects.filter(
+            Q(user=self.request.user) | Q(user__role='MASTER')
+        )
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -538,9 +553,12 @@ class IntelligenceLogView(LoginRequiredMixin, View):
         
         # 1. Base Logic (Groups)
         # Filter groups that have the current weekday set to True
+        # 1. Base Logic (Weekday based)
         base_targets = Target.objects.filter(
-            user=user,
-            groups__in=TargetGroup.objects.filter(**{current_weekday_field: True})
+            Q(user=user) | Q(user__role='MASTER'),
+            groups__in=TargetGroup.objects.filter(
+                Q(user=user) | Q(user__role='MASTER')
+            ).filter(**{current_weekday_field: True})
         ).distinct()
         
         # 2. Anniversary Logic
@@ -548,7 +566,7 @@ class IntelligenceLogView(LoginRequiredMixin, View):
         
         # Birthday (Today)
         birthday_targets = Target.objects.filter(
-            user=user,
+            Q(user=user) | Q(user__role='MASTER'),
             birth_month=date.month,
             birth_day=date.day
         )
@@ -556,14 +574,17 @@ class IntelligenceLogView(LoginRequiredMixin, View):
         
         # Custom Anniv (Today)
         custom_annivs = CustomAnniversary.objects.filter(
-            target__user=user,
+            Q(target__user=user) | Q(target__user__role='MASTER'),
             date__month=date.month,
             date__day=date.day
         )
         anniv_ids.update(custom_annivs.values_list('target_id', flat=True))
         
         # 3. Manual State
-        daily_states = DailyTargetState.objects.filter(target__user=user, date=date)
+        daily_states = DailyTargetState.objects.filter(
+            Q(target__user=user) | Q(target__user__role='MASTER'), 
+            date=date
+        )
         manual_add_ids = set(daily_states.filter(is_manual_add=True).values_list('target_id', flat=True))
         hidden_ids = set(daily_states.filter(is_hidden=True).values_list('target_id', flat=True))
         
@@ -608,12 +629,8 @@ class IntelligenceLogView(LoginRequiredMixin, View):
                     state.is_manual_add = True
                     state.save()
             
-            # [SSR] Fetch Timeline Items for rendering
-            # Pass ALL items for the target, or filtered?
-            # User wants "Timeline items content". Usually full history or recent.
-            # Let's pass all for now, ordered by date desc (or match render logic).
-            # renderJS does sort. Let's pass objects.
             # [SSR] Fetch and Group Timeline Items
+            # Note: TimelineItem is shared if target is shared.
             raw_items = TimelineItem.objects.filter(target=target).prefetch_related('images').order_by('date', 'created_at')
             
             grouped_timeline = []
@@ -650,7 +667,9 @@ class IntelligenceLogView(LoginRequiredMixin, View):
         target_id_param = request.GET.get('target_id')
         if target_id_param:
             try:
-                auto_target = Target.objects.get(pk=target_id_param, user=request.user)
+                auto_target = Target.objects.filter(
+                    Q(user=request.user) | Q(user__role='MASTER')
+                ).get(pk=target_id_param)
                 # Ensure it's in today's list
                 state, _ = DailyTargetState.objects.get_or_create(
                     target=auto_target, date=current_date,
@@ -824,7 +843,10 @@ class IntelligenceLogView(LoginRequiredMixin, View):
             if action == 'delete':
                 item_id = data.get('item_id')
                 if not item_id: return JsonResponse({'success': False, 'error': 'Item ID required'})
-                item = get_object_or_404(TimelineItem, pk=item_id, target__user=request.user)
+                item = get_object_or_404(
+                    TimelineItem, 
+                    Q(pk=item_id) & (Q(target__user=request.user) | Q(target__user__role='MASTER'))
+                )
                 target = item.target
                 date = item.date
                 item.delete()
@@ -885,9 +907,12 @@ class IntelligenceLogView(LoginRequiredMixin, View):
                 current_ids = self.get_daily_target_ids(request.user, date)
                 
                 from django.db.models import Max, Q
-                candidates = Target.objects.filter(user=request.user).exclude(id__in=current_ids).annotate(
+                # Candidates: Owned OR MASTER-owned
+                candidates = Target.objects.filter(
+                    Q(user=request.user) | Q(user__role='MASTER')
+                ).exclude(id__in=current_ids).annotate(
                     real_last_contact=Max('timelineitem__date', filter=Q(timelineitem__contact_made=True))
-                ).order_by('real_last_contact', 'nickname') # Nulls first (never contacted)? or last? Django defaults. ASC means old dates first.
+                ).order_by('real_last_contact', 'nickname').distinct()
                 
                 # Manual serialization for simple list
                 candidate_list = []
@@ -905,7 +930,10 @@ class IntelligenceLogView(LoginRequiredMixin, View):
 
             elif action == 'update':
                 item_id = data.get('item_id')
-                item = get_object_or_404(TimelineItem, pk=item_id, target__user=request.user)
+                item = get_object_or_404(
+                    TimelineItem, 
+                    Q(pk=item_id) & (Q(target__user=request.user) | Q(target__user__role='MASTER'))
+                )
                 
                 # Update fields
                 if 'description' in data: item.content = data.get('description')
@@ -944,7 +972,10 @@ class IntelligenceLogView(LoginRequiredMixin, View):
                 contact_made = contact_made_raw == 'true' if isinstance(contact_made_raw, str) else bool(contact_made_raw)
                 
                 if not target_id: return JsonResponse({'success': False, 'error': 'No target specified'})
-                target = get_object_or_404(Target, pk=target_id, user=request.user)
+                target = get_object_or_404(
+                    Target, 
+                    Q(pk=target_id) & (Q(user=request.user) | Q(user__role='MASTER'))
+                )
                 
                 if date_str:
                     try:
@@ -1044,7 +1075,10 @@ class TargetStateToggleView(LoginRequiredMixin, View):
             if not target_id or not action:
                 return JsonResponse({'success': False, 'error': 'Missing parameters'})
                 
-            target = get_object_or_404(Target, pk=target_id, user=request.user)
+            target = get_object_or_404(
+                Target, 
+                Q(pk=target_id) & (Q(user=request.user) | Q(user__role='MASTER'))
+            )
             
             if date_str:
                 try:
@@ -1257,8 +1291,9 @@ class QuestionDetailView(LoginRequiredMixin, MobileTemplateMixin, TemplateView):
                 
                 # Get all answers for this question
                 answers_qs = TimelineItem.objects.filter(
-                    question=question,
-                    target__user=request.user
+                    question=question
+                ).filter(
+                    Q(target__user=request.user) | Q(target__user__role='MASTER')
                 ).select_related('target').prefetch_related('tags').order_by('target', '-date')
                 
                 # Apply filters
@@ -1309,13 +1344,17 @@ class QuestionDetailView(LoginRequiredMixin, MobileTemplateMixin, TemplateView):
             Q(user=request.user) | Q(is_shared=True)
         ).distinct().order_by('order', 'created_at')
         
-        # Get groups for filter
+        # Get groups for filter (Owned OR MASTER)
         from intelligence.models import TargetGroup
-        groups = TargetGroup.objects.filter(user=request.user)
+        groups = TargetGroup.objects.filter(
+            Q(user=request.user) | Q(user__role='MASTER')
+        ).distinct()
 
-        # Get all targets for Add Modal
+        # Get all targets for Add Modal (Owned OR MASTER)
         from intelligence.models import Target
-        all_targets = Target.objects.filter(user=request.user).order_by('nickname')
+        all_targets = Target.objects.filter(
+            Q(user=request.user) | Q(user__role='MASTER')
+        ).distinct().order_by('nickname')
         
         context = {
             'question': question,
@@ -1334,13 +1373,17 @@ class QuestionDetailView(LoginRequiredMixin, MobileTemplateMixin, TemplateView):
 # API Views for Dynamic Add
 class CategoryCreateView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
+        if getattr(request.user, 'role', '') != 'MASTER':
+             return JsonResponse({'success': False, 'error': 'Only MASTER can create categories.'})
         try:
             data = json.loads(request.body)
             name = data.get('name')
             desc = data.get('description', '')
             if not name: return JsonResponse({'success': False, 'error': 'Name required'})
             
-            cat = QuestionCategory.objects.create(user=request.user, name=name, description=desc)
+            # Categories are shared by default if created by MASTER? 
+            # Looking at init_data.py, they have is_shared=True.
+            cat = QuestionCategory.objects.create(user=request.user, name=name, description=desc, is_shared=True)
             return JsonResponse({'success': True, 'id': cat.id, 'name': cat.name})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
@@ -1348,6 +1391,8 @@ class CategoryCreateView(LoginRequiredMixin, View):
 
 class RankCreateView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
+        if getattr(request.user, 'role', '') != 'MASTER':
+             return JsonResponse({'success': False, 'error': 'Only MASTER can create ranks.'})
         try:
             data = json.loads(request.body)
             name = data.get('name')
@@ -1369,13 +1414,17 @@ class TimelineListAPIView(LoginRequiredMixin, View):
             # Base Query
             if target_id:
                 try:
-                    target = Target.objects.get(pk=target_id, user=request.user)
+                    target = Target.objects.filter(
+                        Q(user=request.user) | Q(user__role='MASTER')
+                    ).get(pk=target_id)
                     queryset = TimelineItem.objects.filter(target=target).select_related('question')
                 except Target.DoesNotExist:
                      return JsonResponse({'success': False, 'error': 'Target not found'}, status=404)
             else:
-                # Global Feed
-                queryset = TimelineItem.objects.filter(target__user=request.user).select_related('target', 'question')
+                # Global Feed (Owned OR MASTER)
+                queryset = TimelineItem.objects.filter(
+                    Q(target__user=request.user) | Q(target__user__role='MASTER')
+                ).select_related('target', 'question')
 
             # Filtering
             import datetime
@@ -1468,8 +1517,10 @@ class TagListAPIView(LoginRequiredMixin, View):
             
             target_id = request.GET.get('target_id')
             
-            # 1. All Tags (Global frequency)
-            all_tags_qs = Tag.objects.filter(user=request.user).annotate(
+            # 1. All Tags (Global frequency) - Owned OR MASTER
+            all_tags_qs = Tag.objects.filter(
+                Q(user=request.user) | Q(user__role='MASTER')
+            ).distinct().annotate(
                 count=Count('timelineitem')
             ).order_by('-count')
             
@@ -1479,9 +1530,9 @@ class TagListAPIView(LoginRequiredMixin, View):
             target_tags_data = []
             if target_id:
                 target_tags = Tag.objects.filter(
-                    user=request.user,
+                    Q(user=request.user) | Q(user__role='MASTER'),
                     timelineitem__target_id=target_id
-                ).annotate(
+                ).distinct().annotate(
                     target_count=Count('timelineitem', filter=Q(timelineitem__target_id=target_id))
                 ).order_by('-target_count')[:5]
                 
@@ -1530,6 +1581,12 @@ class QuestionListAPIView(LoginRequiredMixin, View):
             target_id = request.GET.get('target_id')
             if not target_id:
                 return JsonResponse({'success': False, 'error': 'Target ID required'})
+            
+            # Access Check
+            get_object_or_404(
+                Target, 
+                Q(pk=target_id) & (Q(user=request.user) | Q(user__role='MASTER'))
+            )
             
             # Fetch all categories
             # Including 'Uncategorized'? Maybe handling null category questions separately or generic

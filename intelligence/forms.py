@@ -36,7 +36,10 @@ class TargetForm(forms.ModelForm):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         if user:
-            self.fields['groups'].queryset = TargetGroup.objects.filter(user=user)
+            from django.db.models import Q
+            self.fields['groups'].queryset = TargetGroup.objects.filter(
+                Q(user=user) | Q(user__role='MASTER')
+            ).distinct()
         else:
              self.fields['groups'].queryset = TargetGroup.objects.none()
 
