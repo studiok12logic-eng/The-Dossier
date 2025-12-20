@@ -7295,30 +7295,49 @@ class CalendarView(LoginRequiredMixin, MobileTemplateMixin, View):
             year = selected_date.year
             month = selected_date.month
 
-        # 2. Calculate Range (1 Year Ago -> 3 Months Future)
-        start_date = (selected_date.replace(day=1) - datetime.timedelta(days=365)).replace(day=1)
+        # 2. Calculate Date Range (1 month prior, 3 months future -> Total ~5 months)
+        # User request: "1 month prior... combined 5 months"
+        # Actually logic: Start = 1 month before selected. End = 3 months after selected.
         
-        future_month_year = year
-        future_month_month = month + 3
-        while future_month_month > 12:
-            future_month_month -= 12
-            future_month_year += 1
-            
-        last_day_of_future = calendar.monthrange(future_month_year, future_month_month)[1]
-        end_date = datetime.date(future_month_year, future_month_month, last_day_of_future)
+        # Start: 1st day of previous month
+        start_date = (today.replace(day=1) - datetime.timedelta(days=1)).replace(day=1)
+        # If user selected a specific month, base it on that?
+        # "Display 1 year prior" was the old logic based on `today` usually, or selected?
+        # Let's base it on the selected month if provided, else today.
+        
+        base_date = datetime.date(year, month, 1)
+        # 1 month prior
+        start_date = (base_date - datetime.timedelta(days=1)).replace(day=1)
+        # 3 months after (End of 3rd month)
+        # month + 3
+        # Logic: 
+        # m=1, +3 = 4. End date = Last day of Month 4.
+        
+        def add_months(d, months):
+            month = d.month - 1 + months
+            year = d.year + month // 12
+            month = month % 12 + 1
+            day = min(d.day, [31,
+                29 if year % 4 == 0 and not year % 100 == 0 or year % 400 == 0 else 28,
+                31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1])
+            return d.replace(year=year, month=month, day=day)
+
+        end_date = add_months(base_date, 3) 
+        # Get end of that month
+        next_month = end_date.replace(day=28) + datetime.timedelta(days=4)
+        end_date = next_month - datetime.timedelta(days=next_month.day)
         
         # 3. Fetch Data within Range
         user = request.user
         
-        # Logs: Manual Events only (Contact, Event, Note, Question)
-        # Exclude DailyTargetState explicitly
+        # Logs: ONLY 'Event' (Plans) as per user request ("Log is unnecessary. Only plans...")
         logs = TimelineItem.objects.filter(
             target__user=user,
-            date__range=[start_date, end_date]
-        ).exclude(type='DailyState').select_related('target').order_by('date')
+            date__range=[start_date, end_date],
+            type='Event'  # STRICTLY Event only
+        ).select_related('target').order_by('date')
         
         # Group Rotations (DailyTargetState) - Count per day
-        # We need to count distinct targets per day where type='DailyState'
         from django.db.models import Count
         group_states = TimelineItem.objects.filter(
             target__user=user,
@@ -7350,6 +7369,7 @@ class CalendarView(LoginRequiredMixin, MobileTemplateMixin, View):
                 'group_count': group_counts.get(current, 0)
             }
             
+            # Anniversaries logic matches previous...
             for anniv in custom_anniversaries:
                 if anniv.date.month == current.month and anniv.date.day == current.day:
                     years_diff = current.year - anniv.date.year
