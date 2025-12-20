@@ -7310,13 +7310,25 @@ class CalendarView(LoginRequiredMixin, MobileTemplateMixin, View):
         # 3. Fetch Data within Range
         user = request.user
         
+        # Logs: Manual Events only (Contact, Event, Note, Question)
+        # Exclude DailyTargetState explicitly
         logs = TimelineItem.objects.filter(
             target__user=user,
             date__range=[start_date, end_date]
         ).exclude(type='DailyState').select_related('target').order_by('date')
         
-        custom_anniversaries = CustomAnniversary.objects.filter(target__user=user).select_related('target')
+        # Group Rotations (DailyTargetState) - Count per day
+        # We need to count distinct targets per day where type='DailyState'
+        from django.db.models import Count
+        group_states = TimelineItem.objects.filter(
+            target__user=user,
+            date__range=[start_date, end_date],
+            type='DailyState'
+        ).values('date').annotate(count=Count('id'))
         
+        group_counts = {item['date']: item['count'] for item in group_states}
+        
+        custom_anniversaries = CustomAnniversary.objects.filter(target__user=user).select_related('target')
         targets = Target.objects.filter(user=user)
         
         # 4. Organize into Days
@@ -7334,7 +7346,8 @@ class CalendarView(LoginRequiredMixin, MobileTemplateMixin, View):
                 'is_today': (current == today),
                 'is_selected_month': (current.year == year and current.month == month),
                 'logs': logs_by_date.get(current, []),
-                'anniversaries': []
+                'anniversaries': [],
+                'group_count': group_counts.get(current, 0)
             }
             
             for anniv in custom_anniversaries:

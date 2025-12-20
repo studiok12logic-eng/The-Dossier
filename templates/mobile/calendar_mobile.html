@@ -3,202 +3,312 @@
 {% block title %}Calendar{% endblock %}
 
 {% block content %}
-<div class="flex flex-col h-full bg-background relative">
-
-    <!-- Header (Year/Month) -->
+<div class="flex flex-col h-full bg-background pb-20">
+    
+    <!-- 1. Header (Redesigned) -->
     <header class="h-14 px-4 flex items-center justify-between border-b border-white/10 bg-surface/95 backdrop-blur sticky top-0 z-30">
-        <div class="flex items-center gap-4">
-            <!-- Year/Month Picker (Simplified as Text for now, or clickable?) -->
-            <h1 class="text-lg font-bold font-mono text-white flex items-center gap-2">
-                {{ selected_year }} / {{ selected_month|stringformat:"02d" }}
-                <button onclick="document.getElementById('dateSelectModal').classList.remove('hidden')" class="text-xs text-primary bg-primary/10 px-2 py-1 rounded border border-primary/20 hover:bg-primary/20 transition">
-                    CHANGE
-                </button>
-            </h1>
-        </div>
-        <button onclick="scrollToToday()" class="text-xs text-gray-400 hover:text-white border border-white/10 px-2 py-1 rounded">
-            TODAY
+        <!-- Left: Title (Match /targets/ style) -->
+        <span class="text-xs font-bold text-text-sub uppercase tracking-wider">CALENDAR</span>
+        
+        <!-- Right: Month Selector (Date Picker Style) -->
+        <button onclick="openDateModal()" class="bg-white/5 rounded-lg h-9 border border-white/10 hover:bg-white/10 transition-colors flex items-center px-3 gap-2">
+            <i class="fas fa-calendar-alt text-text-sub text-xs"></i>
+            <span class="text-sm font-bold font-mono">{{ selected_year }}/{{ selected_month|stringformat:"02d" }}</span>
+            <i class="fas fa-caret-down text-text-sub text-[10px]"></i>
         </button>
     </header>
 
-    <!-- Calendar List -->
-    <div id="calendarList" class="flex-1 overflow-y-auto pb-20 scroll-smooth">
-        <!-- Month Header Observer Markers could go here -->
-        
+    <!-- 2. Calendar List -->
+    <div class="flex-1 overflow-y-auto" id="calendarList">
         {% for day in days %}
-        <!-- Check for Month Header Insertion -->
-        {% if day.date.day == 1 %}
-        <div id="month-header-{{ day.date.year }}-{{ day.date.month }}" class="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-y border-white/10 py-1 px-4 text-xs font-bold font-mono text-primary shadow-lg">
-            {{ day.date.year }} / {{ day.date.month|stringformat:"02d" }}
-        </div>
-        {% endif %}
-
-        <div id="day-{{ day.date|date:'Y-m-d' }}" 
-             class="min-h-[80px] border-b border-white/5 relative group {% if day.is_today %}bg-primary/5{% elif day.is_selected_month %}bg-white/[0.02]{% else %}bg-transparent opacity-80{% endif %}"
-             onclick="openAddPlanModal('{{ day.date|date:'Y-m-d' }}')"
-             oncontextmenu="handleLongPress(event, '{{ day.date|date:'Y-m-d' }}'); return false;">
-            
-            <!-- Date Column -->
-            <div class="absolute left-0 top-0 bottom-0 w-14 border-r border-white/5 flex flex-col items-center pt-3 pointer-events-none">
-                <span class="text-xs font-mono {% if day.date.weekday == 5 %}text-blue-400{% elif day.date.weekday == 6 %}text-red-400{% else %}text-gray-400{% endif %}">
-                    {{ day.date|date:"D"|upper }}
-                </span>
-                <span class="text-xl font-bold font-mono {% if day.is_today %}text-primary{% else %}text-white{% endif %}">
-                    {{ day.date.day }}
-                </span>
-                {% if day.is_today %}
-                <div class="w-1.5 h-1.5 rounded-full bg-primary mt-1"></div>
-                {% endif %}
-            </div>
-
-            <!-- Content Column -->
-            <div class="ml-14 p-2 pl-3 space-y-1.5 min-h-[80px]">
-                
-                <!-- Anniversaries/Birthdays -->
-                {% for anniv in day.anniversaries %}
-                <div class="flex items-center gap-2 text-[10px] text-yellow-400 bg-yellow-400/10 px-2 py-1 rounded border border-yellow-400/20 max-w-fit">
-                    <i class="fas fa-birthday-cake"></i> {{ anniv.label }} [{{ anniv.target.nickname }}]
-                </div>
-                {% endfor %}
-
-                <!-- Logs -->
-                {% for log in day.logs %}
-                <div class="flex items-center gap-2 text-xs p-1.5 rounded border border-white/5 hover:bg-white/5 transition {% if log.type == 'Contact' %}bg-green-500/10 text-green-400 border-green-500/20{% elif log.type == 'Event' %}bg-blue-500/10 text-blue-400 border-blue-500/20{% else %}bg-surface text-gray-300{% endif %}">
-                    <!-- Icon based on Type -->
-                    <div class="w-5 h-5 flex items-center justify-center shrink-0">
-                        {% if log.type == 'Contact' %}<i class="fas fa-handshake"></i>
-                        {% elif log.type == 'Event' %}<i class="fas fa-calendar-check"></i>
-                        {% elif log.type == 'Note' %}<i class="fas fa-sticky-note"></i>
-                        {% elif log.type == 'Question' %}<i class="fas fa-question-circle"></i>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2">
-                             <span class="font-bold truncate">{{ log.target.nickname }}</span>
-                             {% if log.title %}<span class="text-[10px] opacity-70 truncate">- {{ log.title }}</span>{% endif %}
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-
-                <!-- Empty State Check? No, just empty space for clicking -->
-            </div>
-            
-            <!-- Add Button (Visible on Active/Hover? Mobile has no hover. Maybe just tap area) -->
+        <div class="border-b border-white/5 bg-surface relative min-h-[80px]" id="day-{{ day.date|date:'Y-m-d' }}">
+             <!-- Day Row Container -->
+             <div class="flex items-stretch min-h-[80px]">
+                 
+                 <!-- Date Column (Left) -->
+                 <div class="w-16 flex flex-col items-center justify-start pt-3 border-r border-white/5 shrink-0 {% if day.is_today %}bg-primary/5{% endif %}"
+                      onclick="openAddPlanModal('{{ day.date|date:'Y-m-d' }}')">
+                     
+                     <!-- Day Number -->
+                     <span class="text-xl font-bold font-mono leading-none {% if day.is_today %}text-primary{% elif day.date.weekday == 6 %}text-red-400{% elif day.date.weekday == 5 %}text-blue-400{% else %}text-text-main{% endif %}">
+                         {{ day.date.day }}
+                     </span>
+                     
+                     <!-- Day Name -->
+                     <span class="text-[10px] uppercase font-bold mt-1 opacity-50">
+                         {{ day.date|date:"D" }}
+                     </span>
+                     
+                     {% if day.is_today %}
+                     <span class="mt-1 text-[8px] bg-primary text-black px-1.5 rounded-full font-bold">TODAY</span>
+                     {% endif %}
+                 </div>
+                 
+                 <!-- Content Column (Right) -->
+                 <div class="flex-1 p-3 cursor-pointer active:bg-white/5 transition-colors relative"
+                      onclick="openAddPlanModal('{{ day.date|date:'Y-m-d' }}')">
+                     
+                     <!-- Anniversaries (Rounded Tags) -->
+                     {% if day.anniversaries %}
+                     <div class="flex flex-wrap gap-1.5 mb-2">
+                         {% for anniv in day.anniversaries %}
+                         <div class="flex items-center gap-1.5 pl-1.5 pr-2 py-0.5 rounded-full bg-surface-2 border border-white/10 text-[10px] font-medium grow-0">
+                             <!-- Icon -->
+                             <div class="w-3.5 h-3.5 rounded-full flex items-center justify-center 
+                                 {% if anniv.type == 'birthday' %}bg-pink-500/20 text-pink-400
+                                 {% elif '忌' in anniv.label %}bg-gray-500/20 text-gray-400
+                                 {% else %}bg-yellow-500/20 text-yellow-400{% endif %}">
+                                 <i class="fas {% if anniv.type == 'birthday' %}fa-birthday-cake{% else %}fa-star{% endif %} text-[8px]"></i>
+                             </div>
+                             <span class="text-text-main">{{ anniv.target.nickname }}: {{ anniv.label }}</span>
+                         </div>
+                         {% endfor %}
+                     </div>
+                     {% endif %}
+                     
+                     <!-- Logs (Manual) & Group Summary -->
+                     <div class="space-y-1.5">
+                         <!-- Manual Logs -->
+                         {% for log in day.logs %}
+                         <div class="flex items-center gap-2 group">
+                             <!-- Time -->
+                             <span class="text-[10px] font-mono text-text-sub opacity-50 w-8">{{ log.created_at|date:"H:i" }}</span>
+                             
+                             <!-- Icon -->
+                             <span class="w-4 flex justify-center text-[10px]">
+                                 {% if log.type == 'Contact' %}<i class="fas fa-handshake text-primary"></i>
+                                 {% elif log.type == 'Event' %}<i class="fas fa-calendar-check text-blue-400"></i>
+                                 {% elif log.type == 'Note' %}<i class="fas fa-sticky-note text-yellow-400"></i>
+                                 {% elif log.type == 'Question' %}<i class="fas fa-question-circle text-purple-400"></i>
+                                 {% endif %}
+                             </span>
+                             
+                             <!-- Title/Content -->
+                             <span class="text-xs text-text-main line-clamp-1 flex-1">
+                                 {% if log.target %}<span class="font-bold mr-1 opacity-70">{{ log.target.nickname }}</span>{% endif %}
+                                 {{ log.title|default:log.content|truncatechars:20 }}
+                             </span>
+                             
+                             <!-- Delete (Small X, visible on row active?) -->
+                         </div>
+                         {% endfor %}
+                     </div>
+                     
+                     <!-- Group Count (Right Side) -->
+                     {% if day.group_count > 0 %}
+                     <div class="absolute right-3 bottom-2 text-[10px] text-text-sub opacity-60 font-medium">
+                         他 {{ day.group_count }} 名
+                     </div>
+                     {% endif %}
+                     
+                     <!-- Click hint if empty? No, cleaner without -->
+                 </div>
+             </div>
         </div>
         {% endfor %}
     </div>
 
 </div>
 
-<!-- Date Selection Modal -->
-<div id="dateSelectModal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
-    <div class="bg-surface border border-white/20 p-6 rounded-xl w-64 text-center">
-        <h3 class="text-white font-mono mb-4">JUMP TO</h3>
-        <form method="get" class="space-y-4">
-            <input type="number" name="year" value="{{ selected_year }}" class="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-white text-center font-mono">
-            <select name="month" class="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-white text-center font-mono appearance-none">
-                {% for i in "x"|ljust:"12" %}
-                <option value="{{ forloop.counter }}" {% if forloop.counter == selected_month %}selected{% endif %}>{{ forloop.counter }}月</option>
-                {% endfor %}
-            </select>
-            <button type="submit" class="w-full bg-primary text-black font-bold py-2 rounded">GO</button>
-        </form>
-        <button onclick="document.getElementById('dateSelectModal').classList.add('hidden')" class="mt-4 text-xs text-gray-400 hover:text-white">Cancel</button>
-    </div>
-</div>
-
-<!-- Add Plan Modal -->
-<div id="addPlanModal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
-    <div class="bg-surface border border-white/20 p-6 rounded-xl w-full max-w-sm shadow-2xl">
-        <h3 class="text-white font-mono mb-4 flex items-center gap-2">
-            <i class="fas fa-plus text-primary"></i> NEW EVENT
-        </h3>
-        
-        <form id="addPlanForm" class="space-y-4">
-            <input type="hidden" name="date" id="planDateInput">
-            
-            <div>
-                <label class="block text-xs font-mono text-gray-400 mb-1">DATE</label>
-                <div id="planDateDisplay" class="text-lg font-bold text-white font-mono"></div>
-            </div>
-
-            <div>
-                 <label class="block text-xs font-mono text-gray-400 mb-1">TARGET</label>
-                 <select name="target_id" class="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-white text-sm">
-                     <option value="">Select Target...</option>
-                     {% for t in all_targets %}
-                     <option value="{{ t.id }}">{{ t.nickname }}</option>
+<!-- Month Selection Modal -->
+<div id="dateModal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center animate-fade-in" onclick="closeDateModal()">
+    <div class="bg-surface border border-white/10 rounded-xl w-64 overflow-hidden shadow-2xl" onclick="event.stopPropagation()">
+        <div class="p-3 bg-surface-2 border-b border-white/10 text-center font-bold text-sm">Select Month</div>
+        <div class="h-64 overflow-y-auto p-2 grid grid-cols-3 gap-2">
+            <!-- Generate a range of months (Past 1 year -> Future 1 year) -->
+            <!-- JS will populate or we use server side loop? Server side loop easier if passed. 
+                 But user navigation is year/month. 
+                 Let's keep it simple: Current Year +/- 1 -->
+             <!-- Simple Year/Month inputs for now -->
+             <div class="col-span-3 flex flex-col gap-4 p-4">
+                 <div class="flex items-center justify-center gap-2">
+                     <button onclick="changeYear(-1)" class="p-2 hover:bg-white/5 rounded"><i class="fas fa-chevron-left"></i></button>
+                     <span id="modalYear" class="font-mono text-xl font-bold">{{ selected_year }}</span>
+                     <button onclick="changeYear(1)" class="p-2 hover:bg-white/5 rounded"><i class="fas fa-chevron-right"></i></button>
+                 </div>
+                 <div class="grid grid-cols-4 gap-2">
+                     {% for m in "123456789012"|make_list %} <!-- 1-12 loop trick or just write it -->
+                     <button onclick="selectMonth({{ forloop.counter }})" 
+                             class="p-2 rounded hover:bg-primary/20 hover:text-primary text-sm font-mono transition-colors
+                             {% if forloop.counter == selected_month %}bg-primary text-black font-bold{% else %}bg-white/5{% endif %}">
+                         {{ forloop.counter }}
+                     </button>
                      {% endfor %}
-                 </select>
-            </div>
-            
-            <div>
-                 <label class="block text-xs font-mono text-gray-400 mb-1">TITLE / PLAN</label>
-                 <input type="text" name="title" placeholder="Dinner, Meeting, etc." class="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-white text-sm">
-            </div>
-
-            <button type="submit" class="w-full bg-primary text-black font-bold py-3 rounded mt-2">INSERT</button>
-        </form>
-        
-        <button onclick="document.getElementById('addPlanModal').classList.add('hidden')" class="w-full mt-4 py-2 text-xs text-gray-400 hover:text-white transition">Cancel</button>
+                 </div>
+             </div>
+        </div>
     </div>
 </div>
+
+<!-- Add Plan Modal (Target Select Style) -->
+<div id="addCandidateModal" class="fixed inset-0 z-[60] hidden bg-background flex flex-col animate-slide-up">
+    <!-- Header -->
+    <div class="p-4 border-b border-white/10 shrink-0 bg-surface z-10">
+         <div class="flex items-center gap-3 mb-3">
+            <button onclick="closeAddModal()" class="w-8 h-8 flex items-center justify-center text-text-sub hover:text-white rounded-full bg-white/5">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <h3 class="text-sm font-bold tracking-wider text-text-main uppercase">Select Target</h3>
+        </div>
+        <!-- Search -->
+        <div class="relative">
+            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-text-sub opacity-50 text-xs"></i>
+            <input type="text" id="candidateSearch" placeholder="Search targets..." 
+                   class="w-full bg-surface-2 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm text-text-main focus:border-primary/50 focus:ring-0 outline-none placeholder-text-sub/40"
+                   oninput="filterCandidates(this.value)" autocomplete="off">
+        </div>
+    </div>
+    
+    <!-- List -->
+    <div id="candidateList" class="flex-1 overflow-y-auto p-4 space-y-1">
+        <div class="text-center py-10 opacity-50">
+            <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+            <p>Loading...</p>
+        </div>
+    </div>
+</div>
+
 
 <script>
-    // Initial Scroll to Selected Month (or Today if inside)
-    function scrollToToday() {
-        const todayEl = document.querySelector('.bg-primary\\/5'); // Assuming today class
-        if(todayEl) {
-            todayEl.scrollIntoView({behavior: 'smooth', block: 'center'});
-        } else {
-            // Scroll to start of selected month
-            const mHeader = document.getElementById('month-header-{{ selected_year }}-{{ selected_month }}');
-            if(mHeader) mHeader.scrollIntoView({behavior: 'smooth', block: 'start'});
-        }
+    // State
+    let currentSelectedDate = null;
+    let modalYear = {{ selected_year }};
+    
+    // Pre-loaded Targets (Avoid AJAX for speed)
+    const allTargets = [
+        {% for t in all_targets %}
+        {
+            id: "{{ t.id }}",
+            nickname: "{{ t.nickname|escapejs }}",
+            name_text: "{{ t.last_name }}{{ t.first_name }}",
+            last_contact: "{% if t.last_contact %}{{ t.last_contact|date:'m/d' }}{% else %}New{% endif %}",
+            avatar_url: "{% if t.avatar %}{{ t.avatar.url }}{% endif %}"
+        },
+        {% endfor %}
+    ];
+    let loadedCandidates = allTargets; // For filtering
+    
+    const addModal = document.getElementById('addCandidateModal');
+    const candidateList = document.getElementById('candidateList');
+    
+    // Header Logic
+    function openDateModal() {
+        document.getElementById('dateModal').classList.remove('hidden');
     }
     
-    // Auto scroll on load
-    window.addEventListener('load', () => {
-        // Wait a tick for layout
-        setTimeout(scrollToToday, 100);
-    });
-
+    function closeDateModal() {
+        document.getElementById('dateModal').classList.add('hidden');
+    }
+    
+    function changeYear(delta) {
+        modalYear += delta;
+        document.getElementById('modalYear').innerText = modalYear;
+    }
+    
+    function selectMonth(m) {
+        window.location.href = `?year=${modalYear}&month=${m}`;
+    }
+    
     // Add Plan Logic
     function openAddPlanModal(dateStr) {
-        document.getElementById('planDateInput').value = dateStr;
-        document.getElementById('planDateDisplay').textContent = dateStr;
-        document.getElementById('addPlanModal').classList.remove('hidden');
+        currentSelectedDate = dateStr;
+        addModal.classList.remove('hidden');
+        document.getElementById('candidateSearch').value = '';
+        renderCandidates(allTargets); // Render all initially
+    }
+    
+    function closeAddModal() {
+        addModal.classList.add('hidden');
     }
 
-    document.getElementById('addPlanForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const formData = new FormData(this);
+    function renderCandidates(list) {
+         if(list.length === 0) {
+            candidateList.innerHTML = '<div class="text-center py-10 opacity-50"><p>No targets found.</p></div>';
+            return;
+        }
         
-        fetch('{% url "calendar" %}', {
+        candidateList.innerHTML = list.map(c => `
+            <div onclick="selectCandidate('${c.id}')" class="p-3 bg-white/5 rounded-lg flex items-center gap-3 active:bg-primary/20 transition border border-white/5 cursor-pointer">
+                <div class="w-10 h-10 rounded-full bg-surface-2 flex items-center justify-center shrink-0 overflow-hidden">
+                    ${c.avatar_url ? `<img src="${c.avatar_url}" class="w-full h-full object-cover">` : `<span class="opacity-50">${c.nickname.charAt(0)}</span>`}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="font-bold text-text-main truncate">${c.nickname}</div>
+                    ${c.name_text ? `<div class="text-[10px] text-text-sub truncate">${c.name_text}</div>` : ''}
+                </div>
+                <div class="text-[10px] text-text-sub text-right">
+                    Last: ${c.last_contact}
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    function filterCandidates(query) {
+        if(!query) {
+             renderCandidates(allTargets);
+             return;
+        }
+        const q = query.toLowerCase();
+        const filtered = allTargets.filter(c => 
+            c.nickname.toLowerCase().includes(q) || 
+            (c.name_text && c.name_text.includes(q))
+        );
+        renderCandidates(filtered);
+    }
+    
+    function selectCandidate(id) {
+        // Create Event
+        const fd = new FormData();
+        fd.append('target_id', id);
+        fd.append('date', currentSelectedDate);
+        fd.append('title', '予定'); // Default title as requested (implicit)
+        
+        fetch('', {
             method: 'POST',
-            body: formData,
-            headers: {'X-CSRFToken': '{{ csrf_token }}'}
-        })
-        .then(res => res.json())
-        .then(data => {
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+            body: fd
+        }).then(res => res.json()).then(data => {
             if(data.success) {
-                // Determine redirect or reload
-                // Reload to show new plan
-                location.reload(); 
+                location.reload();
             } else {
                 alert('Error: ' + data.error);
             }
         });
+    }
+
+    // Scroll to Today
+    document.addEventListener('DOMContentLoaded', () => {
+        const todayId = "day-{{ today|date:'Y-m-d' }}";
+        const el = document.getElementById(todayId);
+        if(el) {
+            setTimeout(() => el.scrollIntoView({ block: 'center', behavior: 'smooth' }), 100);
+        }
+    });
+    
+    // Long Press Logic (Navigate to Log)
+    document.querySelectorAll('[id^="day-"]').forEach(el => {
+        const contentCol = el.querySelector('.flex-1');
+        if(!contentCol) return;
+        
+        let timer;
+        const dateStr = el.id.replace('day-', '');
+        
+        contentCol.addEventListener('touchstart', (e) => {
+            timer = setTimeout(() => {
+                window.location.href = "{% url 'intelligence_log' %}?date=" + dateStr;
+            }, 600);
+        });
+        
+        contentCol.addEventListener('touchend', () => clearTimeout(timer));
+        contentCol.addEventListener('touchmove', () => clearTimeout(timer));
     });
 
-    // Long Press Logic
-    function handleLongPress(e, dateStr) {
-        e.preventDefault();
-        if(confirm('Go to Intelligence Log for ' + dateStr + '?')) {
-            window.location.href = `{% url 'intelligence_log' %}?date=${dateStr}`;
-        }
-    }
 </script>
+
+<style>
+    @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .animate-slide-up { animation: slide-up 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+    @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+    .animate-fade-in { animation: fade-in 0.1s ease-out; }
+</style>
 {% endblock %}
