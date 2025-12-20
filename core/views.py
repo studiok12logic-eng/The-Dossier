@@ -3372,287 +3372,286 @@ class TargetExportView(LoginRequiredMixin, View):
             writer.writerow([clean(col) for col in row])
 
         return response
-i m p o r t   c s v  
- i m p o r t   i o  
- i m p o r t   c o d e c s  
- f r o m   d j a n g o . d b   i m p o r t   t r a n s a c t i o n  
- f r o m   d j a n g o . s h o r t c u t s   i m p o r t   r e n d e r ,   r e d i r e c t  
- f r o m   d j a n g o . v i e w s   i m p o r t   V i e w  
- f r o m   d j a n g o . c o n t r i b . a u t h . m i x i n s   i m p o r t   L o g i n R e q u i r e d M i x i n  
- f r o m   d j a n g o . h t t p   i m p o r t   H t t p R e s p o n s e ,   J s o n R e s p o n s e  
- f r o m   d j a n g o . u t i l s   i m p o r t   t i m e z o n e  
- f r o m   d j a n g o . d b . m o d e l s   i m p o r t   Q  
- f r o m   i n t e l l i g e n c e . m o d e l s   i m p o r t   Q u e s t i o n ,   Q u e s t i o n C a t e g o r y ,   Q u e s t i o n R a n k  
- f r o m   i n t e l l i g e n c e . f o r m s   i m p o r t   Q u e s t i o n I m p o r t F o r m  
- i m p o r t   u r l l i b . p a r s e  
-  
- c l a s s   Q u e s t i o n E x p o r t V i e w ( L o g i n R e q u i r e d M i x i n ,   V i e w ) :  
-         d e f   g e t ( s e l f ,   r e q u e s t ,   * a r g s ,   * * k w a r g s ) :  
-                 #   1 .   F e t c h   v i s i b l e   q u e s t i o n s  
-                 u s e r   =   r e q u e s t . u s e r  
-                 q u e s t i o n s   =   Q u e s t i o n . o b j e c t s . f i l t e r (  
-                         Q ( u s e r = u s e r )   |   Q ( i s _ s h a r e d = T r u e )  
-                 ) . s e l e c t _ r e l a t e d ( ' c a t e g o r y ' ,   ' r a n k ' ) . o r d e r _ b y ( ' c a t e g o r y _ _ o r d e r ' ,   ' o r d e r ' )  
-  
-                 #   2 .   P r e p a r e   R e s p o n s e   ( S h i f t - J I S )  
-                 f i l e n a m e   =   " q u e s t i o n s _ e x p o r t . c s v "  
-                 q u o t e d _ f i l e n a m e   =   u r l l i b . p a r s e . q u o t e ( f i l e n a m e )  
-                  
-                 r e s p o n s e   =   H t t p R e s p o n s e ( c o n t e n t _ t y p e = ' t e x t / c s v ;   c h a r s e t = S h i f t - J I S ' )  
-                 r e s p o n s e [ ' C o n t e n t - D i s p o s i t i o n ' ]   =   f ' a t t a c h m e n t ;   f i l e n a m e = " { q u o t e d _ f i l e n a m e } " ;   f i l e n a m e * = U T F - 8 \ ' \ ' { q u o t e d _ f i l e n a m e } '  
-                  
-                 #   3 .   C S V   W r i t e r  
-                 #   H e l p e r   t o   c l e a n   t e x t   f o r   S h i f t - J I S  
-                 d e f   c l e a n ( t e x t ) :  
-                         i f   t e x t   i s   N o n e :   r e t u r n   " "  
-                         t e x t   =   s t r ( t e x t )  
-                         r e t u r n   t e x t . e n c o d e ( ' c p 9 3 2 ' ,   ' r e p l a c e ' ) . d e c o d e ( ' c p 9 3 2 ' )  
-                          
-                 w r i t e r   =   c s v . w r i t e r ( r e s p o n s e )  
-                  
-                 #   H e a d e r  
-                 #   ‡eÿ	‡^û0û0ÊaM0]~û0V0]~jÿ]~|ÿ7‡>d}ÿ÷aû0>š
-Ysÿjÿ`‡şd}ÿÆaaÿhÿIzÿ›û0}ÿÊa›]~sÿg~oÿû0Æasÿjÿ`‡N“û0ÆajÿlÿO‹1_û0âŠNÙ\û0Æasÿjÿ`‡N~ÿwQ}ÿ÷aS\rÌl}ÿbÿˆşd}ÿºa"‹ÁjD0 
-                 h e a d e r   =   [ ' ‡eÿ	‡^û0' ,   ' g~kÿ]~û0V0]~jÿ]~|ÿ7‡û0,   ' ‡qÿ>š
-Ysÿjÿ`‡û0,   ' f–hÿIzÿ›û0,   ' ]~iÿ]~sÿg~oÿ' ,   ' É–jÿ`‡N“' ,   ' ±–lÿO‹1_û0âŠNÙ\' ,   ' É–jÿ`‡N~ÿû0,   ' W‡jmÿÌl}ÿbÿˆû0,   ' Ušxÿ‹ÁjD0' ]  
-                 w r i t e r . w r i t e r o w ( [ c l e a n ( h )   f o r   h   i n   h e a d e r ] )  
-                  
-                 f o r   q   i n   q u e s t i o n s :  
-                         r o w   =   [  
-                                 ' ' ,   #   I n p u t   c o l u m n   ( E m p t y   f o r   e x p o r t )  
-                                 q . c a t e g o r y . n a m e   i f   q . c a t e g o r y   e l s e   ' [‹jÿû†û0aÿû0,  
-                                 ' T R U E '   i f   q . i s _ s h a r e d   e l s e   ' F A L S E ' ,  
-                                 q . o r d e r ,  
-                                 q . r a n k . n a m e   i f   q . r a n k   e l s e   ' ' ,  
-                                 q . t i t l e ,  
-                                 q . d e s c r i p t i o n ,  
-                                 q . e x a m p l e ,  
-                                 q . g e t _ a n s w e r _ t y p e _ d i s p l a y ( ) ,   #   ' Ušxÿ‹ëi|ÿû0  o r   ' ¾•jÿqÿª–)Pÿpÿ'  
-                                 q . c h o i c e s  
-                         ]  
-                         w r i t e r . w r i t e r o w ( [ c l e a n ( c o l )   f o r   c o l   i n   r o w ] )  
-                          
-                 r e t u r n   r e s p o n s e  
-  
- c l a s s   Q u e s t i o n I m p o r t V i e w ( L o g i n R e q u i r e d M i x i n ,   V i e w ) :  
-         t e m p l a t e _ n a m e   =   ' q u e s t i o n _ i m p o r t . h t m l '  
-          
-         d e f   g e t ( s e l f ,   r e q u e s t ) :  
-                 f o r m   =   Q u e s t i o n I m p o r t F o r m ( )  
-                 r e t u r n   r e n d e r ( r e q u e s t ,   s e l f . t e m p l a t e _ n a m e ,   { ' f o r m ' :   f o r m } )  
-                  
-         d e f   p o s t ( s e l f ,   r e q u e s t ) :  
-                 f o r m   =   Q u e s t i o n I m p o r t F o r m ( r e q u e s t . P O S T ,   r e q u e s t . F I L E S )  
-                 i f   n o t   f o r m . i s _ v a l i d ( ) :  
-                         r e t u r n   r e n d e r ( r e q u e s t ,   s e l f . t e m p l a t e _ n a m e ,   { ' f o r m ' :   f o r m } )  
-                          
-                 c s v _ f i l e   =   r e q u e s t . F I L E S [ ' f i l e ' ]  
-                  
-                 #   1 .   D e t e c t   E n c o d i n g  
-                 #   R e a d   a   c h u n k   t o   d e t e c t  
-                 s a m p l e   =   c s v _ f i l e . r e a d ( 2 0 4 8 )  
-                 c s v _ f i l e . s e e k ( 0 )  
-                 e n c o d i n g   =   ' u t f - 8 '  
-                 t r y :  
-                         s a m p l e . d e c o d e ( ' u t f - 8 ' )  
-                 e x c e p t   U n i c o d e D e c o d e E r r o r :  
-                         e n c o d i n g   =   ' c p 9 3 2 '   #   S h i f t - J I S   f a l l b a c k  
-                          
-                 #   2 .   R e a d   l i n e s  
-                 t r y :  
-                         #   U s e   T e x t I O W r a p p e r  
-                         i o _ t e x t   =   i o . T e x t I O W r a p p e r ( c s v _ f i l e ,   e n c o d i n g = e n c o d i n g ,   n e w l i n e = ' ' )  
-                         r e a d e r   =   c s v . r e a d e r ( i o _ t e x t )  
-                         r o w s   =   l i s t ( r e a d e r )  
-                 e x c e p t   E x c e p t i o n   a s   e :  
-                         r e t u r n   r e n d e r ( r e q u e s t ,   s e l f . t e m p l a t e _ n a m e ,   { ' f o r m ' :   f o r m ,   ' e r r o r _ m s g ' :   f ' ]~C0g~dÿ]~kÿ:~nÿ±–mÿ:~ÿ—|ÿ:~ÿ:~kÿŸ‡qÿ(‹±R ÿ:~~ÿ:~±RÆ%:   { s t r ( e ) } ' } )  
-  
-                 i f   n o t   r o w s :  
-                           r e t u r n   r e n d e r ( r e q u e s t ,   s e l f . t e m p l a t e _ n a m e ,   { ' f o r m ' :   f o r m ,   ' e r r o r _ m s g ' :   ' C S V ]~C0g~dÿ]~kÿ:~jiÿzÿ:~gÿ:~6T€ û0} )  
-  
-                 #   H e a d e r s   c h e c k   ( S k i p   r o w   0 )  
-                 #   E x p e c t e d   i n d e x   m a p  
-                 #   0 : I n p u t ,   1 : C a t ,   2 : S h a r e d ,   3 : O r d e r ,   4 : R a n k ,   5 : T i t l e ,   6 : D e s c ,   7 : E x ,   8 : T y p e ,   9 : C h o i c e s  
-                  
-                 #   3 .   P r o c e s s i n g  
-                 l o g s   =   [ ]  
-                 e r r o r s   =   [ ]  
-                 s u c c e s s _ c o u n t   =   0  
-                  
-                 t r y :  
-                         w i t h   t r a n s a c t i o n . a t o m i c ( ) :  
-                                 f o r   i d x ,   r o w   i n   e n u m e r a t e ( r o w s ) :  
-                                         i f   i d x   = =   0 :   c o n t i n u e   #   S k i p   h e a d e r  
-                                         i f   l e n ( r o w )   <   6 :   #   A t   l e a s t   u p   t o   T i t l e  
-                                                   c o n t i n u e  
-                                                    
-                                         l i n e _ n o   =   i d x   +   1  
-                                         i n p u t _ a c t   =   r o w [ 0 ] . s t r i p ( ) . l o w e r ( )  
-                                         c a t _ n a m e   =   r o w [ 1 ] . s t r i p ( )  
-                                         i s _ s h a r e d _ s t r   =   r o w [ 2 ] . s t r i p ( ) . u p p e r ( )  
-                                         o r d e r _ s t r   =   r o w [ 3 ] . s t r i p ( )  
-                                         r a n k _ n a m e   =   r o w [ 4 ] . s t r i p ( )  
-                                         t i t l e   =   r o w [ 5 ] . s t r i p ( )  
-                                         d e s c   =   r o w [ 6 ] . s t r i p ( )   i f   l e n ( r o w )   >   6   e l s e   " "  
-                                         e x a m p l e   =   r o w [ 7 ] . s t r i p ( )   i f   l e n ( r o w )   >   7   e l s e   " "  
-                                         t y p e _ s t r   =   r o w [ 8 ] . s t r i p ( )   i f   l e n ( r o w )   >   8   e l s e   " ¾•jÿqÿª–)Pÿpÿ"  
-                                         c h o i c e s   =   r o w [ 9 ] . s t r i p ( )   i f   l e n ( r o w )   >   9   e l s e   " "  
-                                          
-                                         i f   n o t   i n p u t _ a c t :  
-                                                 l o g s . a p p e n d ( f " { l i n e _ n o } f–j¼\:   g~yÿg~mÿ]~û0û0  ( ‡eÿ	‡^û0:~jiÿzÿ) " )  
-                                                 c o n t i n u e  
-                                         i f   i n p u t _ a c t   n o t   i n   [ ' n ' ,   ' u ' ,   ' d ' ] :  
-                                                 l o g s . a p p e n d ( f " { l i n e _ n o } f–j¼\:   g~yÿg~mÿ]~û0û0  ( ‡eÿ	‡^û0  ' { i n p u t _ a c t } '   :~oÿŸaÿ	‡yÿ) " )  
-                                                 c o n t i n u e  
-                                                  
-                                         i f   n o t   t i t l e :  
-                                                   e r r o r s . a p p e n d ( f " { l i n e _ n o } f–j¼\:   É–jÿ`‡N“:~Ÿ`ÿû0ğø;S0:~6T€ û0)  
-                                                   c o n t i n u e  
-                                                    
-                                         #   - -   V a l i d a t i o n   &   P r e p a r a t i o n   - -  
-                                          
-                                         #   C a t e g o r y  
-                                         c a t e g o r y   =   N o n e  
-                                         i f   n o t   c a t _ n a m e :  
-                                                   c a t _ n a m e   =   ' U n c l a s s i f i e d '   #   D e f a u l t ?   o r   E r r o r ?   S p e c s   s a i d   d e f a u l t   u n c l a s s i f i e d   o n   e m p t y  
-                                                   #   S p e c :   " hzÿ:Œû0şQ:~nÿ]~û0õ0g~iÿ]~kÿ]~Áhÿmÿ³‡û0g~kÿ]~û0V0]~jÿ]~|ÿ7‡>d|ÿ4fD0]~sÿg~oÿ]~iÿg~wÿ]~C0g~dÿ]~û0 
-                                                    
-                                         #   F i n d   C a t e g o r y  
-                                         #   S e a r c h   I n :   U s e r ' s   o r   S h a r e d .  
-                                         #   C r e a t i n g   n e w   c a t e g o r y ?   S p e c   d o e s n ' t   s t r i c t l y   s a y .    
-                                         #   S p e c :   " g~kÿ]~û0V0]~jÿ]~|ÿ7‡*–2 Ušg"c‡tÿ7‡(ƒ|ÿ4fJ0]~iÿ]~|ÿ  û0)Paÿj¼\û0üXû0	‡^ ÿ:~˜nM0]~û0V0]~jÿ]~|ÿ7‡*–2 •–]N½%:~]NJÿ:~~ÿ:~^Sÿ:~gÿ:~±RÆ%2~û0 
-                                         #   S o   s t r i c t   s e a r c h .  
-                                         #   B U T   S p e c   a l s o   s a y s   " D e f a u l t   =   U n c l a s s i f i e d " .   S o   i f   e m p t y ,   l o o k i n g   f o r   U n c l a s s i f i e d .  
-                                         i f   n o t   c a t _ n a m e :   c a t _ n a m e   =   ' U n c l a s s i f i e d '  
-                                          
-                                         c a t e g o r y   =   Q u e s t i o n C a t e g o r y . o b j e c t s . f i l t e r (  
-                                                 Q ( u s e r = r e q u e s t . u s e r )   |   Q ( i s _ s h a r e d = T r u e ) ,  
-                                                 n a m e = c a t _ n a m e  
-                                         ) . f i r s t ( )  
-                                          
-                                         i f   n o t   c a t e g o r y :  
-                                                   i f   c a t _ n a m e   = =   ' U n c l a s s i f i e d ' :  
-                                                             #   A l l o w   a u t o - c r e a t e   f o r   d e f a u l t ?   O r   e r r o r ?  
-                                                             #   L e t ' s   e r r o r   s t r i c t l y   a s   p e r   s p e c   " ‡eÿ	‡^ ÿ:~˜nM0]~û0V0]~jÿ]~|ÿ7‡*–2 •–]N½%:~]NJÿ:~~ÿ:~^Sÿ:~gÿ:~±RÆ%"  
-                                                             e r r o r s . a p p e n d ( f " { l i n e _ n o } f–j¼\:   g~kÿ]~û0V0]~jÿ]~|ÿ2~c a t _ n a m e } 2~*–2 •–]N½%:~]NJÿ:~~ÿ:~^Sÿ:~gÿ:~±RÆ%2~û0)  
-                                                             c o n t i n u e  
-                                                   e l s e :  
-                                                             e r r o r s . a p p e n d ( f " { l i n e _ n o } f–j¼\:   g~kÿ]~û0V0]~jÿ]~|ÿ2~c a t _ n a m e } 2~*–2 •–]N½%:~]NJÿ:~~ÿ:~^Sÿ:~gÿ:~±RÆ%2~û0)  
-                                                             c o n t i n u e  
-  
-                                         #   R a n k  
-                                         r a n k   =   N o n e  
-                                         i f   r a n k _ n a m e   a n d   r a n k _ n a m e   ! =   ' N u l l ' :  
-                                                 r a n k   =   Q u e s t i o n R a n k . o b j e c t s . f i l t e r ( u s e r = r e q u e s t . u s e r ,   n a m e = r a n k _ n a m e ) . f i r s t ( )  
-                                                 i f   n o t   r a n k :  
-                                                           #   T r y   s h a r e d ?   R a n k   i s   u s e r   s p e c i f i c   u s u a l l y ?  
-                                                           #   M o d e l :   Q u e s t i o n R a n k   u s e r = F K .   N o t   s h a r e d .  
-                                                           #   I f   M A S T E R ,   t h e y   h a v e   r a n k s .   I f   A G E N T ,   t h e y   h a v e   r a n k s .  
-                                                           #   M a y b e   r a n k   n a m e   m i s m a t c h .  
-                                                           e r r o r s . a p p e n d ( f " { l i n e _ n o } f–j¼\:   ]~iÿ]~sÿg~oÿ2~r a n k _ n a m e } 2~*–2 •–]N½%:~]NJÿ:~~ÿ:~^Sÿ:~gÿ:~±RÆ%2~û0)  
-                                                           c o n t i n u e  
-                                          
-                                         #   T y p e  
-                                         #   ¾•jÿqÿª–)Pÿpÿ  o r   Ušxÿ‹ëi|ÿû0 
-                                         a n s w e r _ t y p e   =   ' T E X T '  
-                                         i f   t y p e _ s t r   = =   ' Ušxÿ‹ëi|ÿû0:  
-                                                 a n s w e r _ t y p e   =   ' S E L E C T I O N '  
-                                                 i f   n o t   c h o i c e s :  
-                                                           e r r o r s . a p p e n d ( f " { l i n e _ n o } f–j¼\:   Ušxÿ‹ëi|ÿ
-NRÿUšxÿg~™…¡%c‡tÿ7‡;S€ û0"‹ÁjD0:~oÿ"ˆû0ğø;S0:~6T€ û0)  
-                                                           c o n t i n u e  
-                                         e l i f   t y p e _ s t r   = =   ' ¾•jÿqÿª–)Pÿpÿ' :  
-                                                 a n s w e r _ t y p e   =   ' T E X T '  
-                                         e l s e :  
-                                                   e r r o r s . a p p e n d ( f " { l i n e _ n o } f–j¼\:   W‡jmÿÌl}ÿbÿˆ
-N€ t y p e _ s t r } 2~*–2 •–]N½%:~]NJÿ:~~ÿ:~^Sÿ:~gÿ:~±RÆ%2~û0)  
-                                                   c o n t i n u e  
-                                                    
-                                         #   I s   S h a r e d  
-                                         i s _ s h a r e d   =   F a l s e  
-                                         i f   i s _ s h a r e d _ s t r   = =   ' T R U E ' :   i s _ s h a r e d   =   T r u e  
-                                          
-                                         #   O r d e r  
-                                         t r y :  
-                                                 o r d e r   =   i n t ( o r d e r _ s t r )   i f   o r d e r _ s t r   e l s e   0  
-                                         e x c e p t   V a l u e E r r o r :  
-                                                 o r d e r   =   0  
-  
-                                         #   - -   E x e c u t i o n   - -  
-                                          
-                                         #   C h e c k   d u p l i c a t i o n  
-                                         #   S e a r c h   e x i s t i n g   q u e s t i o n   b y   T i t l e  
-                                         e x i s t i n g _ q   =   Q u e s t i o n . o b j e c t s . f i l t e r (  
-                                                 Q ( u s e r = r e q u e s t . u s e r )   |   Q ( i s _ s h a r e d = T r u e ) ,  
-                                                 t i t l e = t i t l e  
-                                         ) . f i r s t ( )  
-                                          
-                                         i f   i n p u t _ a c t   = =   ' n ' :   #   N e w  
-                                                 i f   e x i s t i n g _ q :  
-                                                         e r r o r s . a p p e n d ( f " { l i n e _ n o } f–j¼\:   7‡Œ_§ É–jÿ`‡N“:~nÿÉ–jÿ`‡
-N2 Ä‡Oà`:~±R*":~6T€ û0)  
-                                                         c o n t i n u e  
-                                                  
-                                                 Q u e s t i o n . o b j e c t s . c r e a t e (  
-                                                         u s e r = r e q u e s t . u s e r ,  
-                                                         c a t e g o r y = c a t e g o r y ,  
-                                                         r a n k = r a n k ,  
-                                                         t i t l e = t i t l e ,  
-                                                         d e s c r i p t i o n = d e s c ,  
-                                                         e x a m p l e = e x a m p l e ,  
-                                                         a n s w e r _ t y p e = a n s w e r _ t y p e ,  
-                                                         c h o i c e s = c h o i c e s ,  
-                                                         i s _ s h a r e d = i s _ s h a r e d ,  
-                                                         o r d e r = o r d e r  
-                                                 )  
-                                                 s u c c e s s _ c o u n t   + =   1  
-                                                  
-                                         e l i f   i n p u t _ a c t   = =   ' u ' :   #   U p d a t e  
-                                                 i f   n o t   e x i s t i n g _ q :  
-                                                         e r r o r s . a p p e n d ( f " { l i n e _ n o } f–j¼\:   V‹tÿA‹pÿÇ‡~ÿÎ–aÿ:~nÿÉ–jÿ`‡
-N€ t i t l e } 2~*–2 •–]N½%:~]NJÿ:~~ÿ:~^Sÿ:~gÿ:~±RÆ%2~û0)  
-                                                         c o n t i n u e  
-                                                  
-                                                 #   U p d a t e   f i e l d s  
-                                                 e x i s t i n g _ q . c a t e g o r y   =   c a t e g o r y  
-                                                 e x i s t i n g _ q . r a n k   =   r a n k  
-                                                 e x i s t i n g _ q . d e s c r i p t i o n   =   d e s c  
-                                                 e x i s t i n g _ q . e x a m p l e   =   e x a m p l e  
-                                                 e x i s t i n g _ q . a n s w e r _ t y p e   =   a n s w e r _ t y p e  
-                                                 e x i s t i n g _ q . c h o i c e s   =   c h o i c e s  
-                                                 e x i s t i n g _ q . i s _ s h a r e d   =   i s _ s h a r e d  
-                                                 e x i s t i n g _ q . o r d e r   =   o r d e r  
-                                                 e x i s t i n g _ q . s a v e ( )  
-                                                 s u c c e s s _ c o u n t   + =   1  
-                                                  
-                                         e l i f   i n p u t _ a c t   = =   ' d ' :   #   D e l e t e  
-                                                 i f   n o t   e x i s t i n g _ q :  
-                                                           l o g s . a p p e n d ( f " { l i n e _ n o } f–j¼\:   ‡OÁRÇ‡~ÿÎ–aÿ:~nÿÉ–jÿ`‡
-N€ t i t l e } 2~*–2 •–]N½%:~]NJÿ:~~ÿ:~^Sÿ:~gÿ:~±RÆ%û0;S[0g~mÿ]~û0û0û0è\€ û0)  
-                                                           c o n t i n u e  
-                                                 e x i s t i n g _ q . d e l e t e ( )  
-                                                 s u c c e s s _ c o u n t   + =   1  
-  
-                                 i f   e r r o r s :  
-                                         #   I f   a n y   e r r o r ,   R A I S E   e x c e p t i o n   t o   r o l l b a c k  
-                                         r a i s e   E x c e p t i o n ( " V a l i d a t i o n   E r r o r " )  
-                                          
-                 e x c e p t   E x c e p t i o n   a s   e :  
-                         i f   s t r ( e )   = =   " V a l i d a t i o n   E r r o r " :  
-                                 p a s s   #   H a n d l e d   b y   r e t u r n i n g   e r r o r s  
-                         e l s e :  
-                                 e r r o r s . a p p e n d ( f " g~wÿg~yÿ]~û0’g~hÿ]~iÿ]~|ÿ:   { s t r ( e ) } " )  
-                  
-                 i f   e r r o r s :  
-                         r e t u r n   r e n d e r ( r e q u e s t ,   s e l f . t e m p l a t e _ n a m e ,   {  
-                                 ' f o r m ' :   f o r m ,    
-                                 ' e r r o r _ l i s t ' :   e r r o r s ,  
-                                 ' l o g s ' :   l o g s  
-                         } )  
-                          
-                 r e t u r n   r e n d e r ( r e q u e s t ,   s e l f . t e m p l a t e _ n a m e ,   {  
-                         ' f o r m ' :   f o r m ,  
-                         ' s u c c e s s _ m s g ' :   f ' { s u c c e s s _ c o u n t } ‰ƒvÿ:~nÿ‡fÿû02 ³‡¡_zÿû0 ÿ:~~ÿ:~±RÆ%2~û0,  
-                         ' l o g s ' :   l o g s  
-                 } )  
- 
+import csv
+import io
+import codecs
+from django.db import transaction
+from django.shortcuts import render, redirect
+from django.views import View
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import HttpResponse, JsonResponse
+from django.utils import timezone
+from django.db.models import Q
+from intelligence.models import Question, QuestionCategory, QuestionRank
+from intelligence.forms import QuestionImportForm
+import urllib.parse
+
+class QuestionExportView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        # 1. Fetch visible questions
+        user = request.user
+        questions = Question.objects.filter(
+            Q(user=user) | Q(is_shared=True)
+        ).select_related('category', 'rank').order_by('category__order', 'order')
+
+        # 2. Prepare Response (Shift-JIS)
+        filename = "questions_export.csv"
+        quoted_filename = urllib.parse.quote(filename)
+        
+        response = HttpResponse(content_type='text/csv; charset=Shift-JIS')
+        response['Content-Disposition'] = f'attachment; filename="{quoted_filename}"; filename*=UTF-8\'\'{quoted_filename}'
+        
+        # 3. CSV Writer
+        # Helper to clean text for Shift-JIS
+        def clean(text):
+            if text is None: return ""
+            text = str(text)
+            return text.encode('cp932', 'replace').decode('cp932')
+            
+        writer = csv.writer(response)
+        
+        # Header
+        # ‡eÿ	‡^û0û0ÊaM0]~û0V0]~jÿ]~|ÿ7‡>d}ÿ÷aû0>š
+Ysÿjÿ`‡şd}ÿÆaaÿhÿIzÿ›û0}ÿÊa›]~sÿg~oÿû0Æasÿjÿ`‡N“û0ÆajÿlÿO‹1_û0âŠNÙ\û0Æasÿjÿ`‡N~ÿwQ}ÿ÷aS\rÌl}ÿbÿˆşd}ÿºa"‹ÁjD0
+        header = ['‡eÿ	‡^û0', 'g~kÿ]~û0V0]~jÿ]~|ÿ7‡û0, '‡qÿ>š
+Ysÿjÿ`‡û0, 'f–hÿIzÿ›û0, ']~iÿ]~sÿg~oÿ', 'É–jÿ`‡N“', '±–lÿO‹1_û0âŠNÙ\', 'É–jÿ`‡N~ÿû0, 'W‡jmÿÌl}ÿbÿˆû0, 'Ušxÿ‹ÁjD0']
+        writer.writerow([clean(h) for h in header])
+        
+        for q in questions:
+            row = [
+                '', # Input column (Empty for export)
+                q.category.name if q.category else '[‹jÿû†û0aÿû0,
+                'TRUE' if q.is_shared else 'FALSE',
+                q.order,
+                q.rank.name if q.rank else '',
+                q.title,
+                q.description,
+                q.example,
+                q.get_answer_type_display(), # 'Ušxÿ‹ëi|ÿû0 or '¾•jÿqÿª–)Pÿpÿ'
+                q.choices
+            ]
+            writer.writerow([clean(col) for col in row])
+            
+        return response
+
+class QuestionImportView(LoginRequiredMixin, View):
+    template_name = 'question_import.html'
+    
+    def get(self, request):
+        form = QuestionImportForm()
+        return render(request, self.template_name, {'form': form})
+        
+    def post(self, request):
+        form = QuestionImportForm(request.POST, request.FILES)
+        if not form.is_valid():
+            return render(request, self.template_name, {'form': form})
+            
+        csv_file = request.FILES['file']
+        
+        # 1. Detect Encoding
+        # Read a chunk to detect
+        sample = csv_file.read(2048)
+        csv_file.seek(0)
+        encoding = 'utf-8'
+        try:
+            sample.decode('utf-8')
+        except UnicodeDecodeError:
+            encoding = 'cp932' # Shift-JIS fallback
+            
+        # 2. Read lines
+        try:
+            # Use TextIOWrapper
+            io_text = io.TextIOWrapper(csv_file, encoding=encoding, newline='')
+            reader = csv.reader(io_text)
+            rows = list(reader)
+        except Exception as e:
+            return render(request, self.template_name, {'form': form, 'error_msg': f']~C0g~dÿ]~kÿ:~nÿ±–mÿ:~ÿ—|ÿ:~ÿ:~kÿŸ‡qÿ(‹±R ÿ:~~ÿ:~±RÆ%: {str(e)}'})
+
+        if not rows:
+             return render(request, self.template_name, {'form': form, 'error_msg': 'CSV]~C0g~dÿ]~kÿ:~jiÿzÿ:~gÿ:~6T€û0})
+
+        # Headers check (Skip row 0)
+        # Expected index map
+        # 0:Input, 1:Cat, 2:Shared, 3:Order, 4:Rank, 5:Title, 6:Desc, 7:Ex, 8:Type, 9:Choices
+        
+        # 3. Processing
+        logs = []
+        errors = []
+        success_count = 0
+        
+        try:
+            with transaction.atomic():
+                for idx, row in enumerate(rows):
+                    if idx == 0: continue # Skip header
+                    if len(row) < 6: # At least up to Title
+                         continue
+                         
+                    line_no = idx + 1
+                    input_act = row[0].strip().lower()
+                    cat_name = row[1].strip()
+                    is_shared_str = row[2].strip().upper()
+                    order_str = row[3].strip()
+                    rank_name = row[4].strip()
+                    title = row[5].strip()
+                    desc = row[6].strip() if len(row) > 6 else ""
+                    example = row[7].strip() if len(row) > 7 else ""
+                    type_str = row[8].strip() if len(row) > 8 else "¾•jÿqÿª–)Pÿpÿ"
+                    choices = row[9].strip() if len(row) > 9 else ""
+                    
+                    if not input_act:
+                        logs.append(f"{line_no}f–j¼\: g~yÿg~mÿ]~û0û0 (‡eÿ	‡^û0:~jiÿzÿ)")
+                        continue
+                    if input_act not in ['n', 'u', 'd']:
+                        logs.append(f"{line_no}f–j¼\: g~yÿg~mÿ]~û0û0 (‡eÿ	‡^û0 '{input_act}' :~oÿŸaÿ	‡yÿ)")
+                        continue
+                        
+                    if not title:
+                         errors.append(f"{line_no}f–j¼\: É–jÿ`‡N“:~Ÿ`ÿû0ğø;S0:~6T€û0)
+                         continue
+                         
+                    # -- Validation & Preparation --
+                    
+                    # Category
+                    category = None
+                    if not cat_name:
+                         cat_name = 'Unclassified' # Default? or Error? Specs said default unclassified on empty
+                         # Spec: "hzÿ:Œû0şQ:~nÿ]~û0õ0g~iÿ]~kÿ]~Áhÿmÿ³‡û0g~kÿ]~û0V0]~jÿ]~|ÿ7‡>d|ÿ4fD0]~sÿg~oÿ]~iÿg~wÿ]~C0g~dÿ]~û0
+                         
+                    # Find Category
+                    # Search In: User's or Shared.
+                    # Creating new category? Spec doesn't strictly say. 
+                    # Spec: "g~kÿ]~û0V0]~jÿ]~|ÿ7‡*–2 Ušg"c‡tÿ7‡(ƒ|ÿ4fJ0]~iÿ]~|ÿ û0)Paÿj¼\û0üXû0	‡^ ÿ:~˜nM0]~û0V0]~jÿ]~|ÿ7‡*–2 •–]N½%:~]NJÿ:~~ÿ:~^Sÿ:~gÿ:~±RÆ%2~û0
+                    # So strict search.
+                    # BUT Spec also says "Default = Unclassified". So if empty, looking for Unclassified.
+                    if not cat_name: cat_name = 'Unclassified'
+                    
+                    category = QuestionCategory.objects.filter(
+                        Q(user=request.user) | Q(is_shared=True),
+                        name=cat_name
+                    ).first()
+                    
+                    if not category:
+                         if cat_name == 'Unclassified':
+                              # Allow auto-create for default? Or error?
+                              # Let's error strictly as per spec "‡eÿ	‡^ ÿ:~˜nM0]~û0V0]~jÿ]~|ÿ7‡*–2 •–]N½%:~]NJÿ:~~ÿ:~^Sÿ:~gÿ:~±RÆ%"
+                              errors.append(f"{line_no}f–j¼\: g~kÿ]~û0V0]~jÿ]~|ÿ2~cat_name}2~*–2 •–]N½%:~]NJÿ:~~ÿ:~^Sÿ:~gÿ:~±RÆ%2~û0)
+                              continue
+                         else:
+                              errors.append(f"{line_no}f–j¼\: g~kÿ]~û0V0]~jÿ]~|ÿ2~cat_name}2~*–2 •–]N½%:~]NJÿ:~~ÿ:~^Sÿ:~gÿ:~±RÆ%2~û0)
+                              continue
+
+                    # Rank
+                    rank = None
+                    if rank_name and rank_name != 'Null':
+                        rank = QuestionRank.objects.filter(user=request.user, name=rank_name).first()
+                        if not rank:
+                             # Try shared? Rank is user specific usually?
+                             # Model: QuestionRank user=FK. Not shared.
+                             # If MASTER, they have ranks. If AGENT, they have ranks.
+                             # Maybe rank name mismatch.
+                             errors.append(f"{line_no}f–j¼\: ]~iÿ]~sÿg~oÿ2~rank_name}2~*–2 •–]N½%:~]NJÿ:~~ÿ:~^Sÿ:~gÿ:~±RÆ%2~û0)
+                             continue
+                    
+                    # Type
+                    # ¾•jÿqÿª–)Pÿpÿ or Ušxÿ‹ëi|ÿû0
+                    answer_type = 'TEXT'
+                    if type_str == 'Ušxÿ‹ëi|ÿû0:
+                        answer_type = 'SELECTION'
+                        if not choices:
+                             errors.append(f"{line_no}f–j¼\: Ušxÿ‹ëi|ÿ
+NRÿUšxÿg~™…¡%c‡tÿ7‡;S€û0"‹ÁjD0:~oÿ"ˆû0ğø;S0:~6T€û0)
+                             continue
+                    elif type_str == '¾•jÿqÿª–)Pÿpÿ':
+                        answer_type = 'TEXT'
+                    else:
+                         errors.append(f"{line_no}f–j¼\: W‡jmÿÌl}ÿbÿˆ
+N€type_str}2~*–2 •–]N½%:~]NJÿ:~~ÿ:~^Sÿ:~gÿ:~±RÆ%2~û0)
+                         continue
+                         
+                    # Is Shared
+                    is_shared = False
+                    if is_shared_str == 'TRUE': is_shared = True
+                    
+                    # Order
+                    try:
+                        order = int(order_str) if order_str else 0
+                    except ValueError:
+                        order = 0
+
+                    # -- Execution --
+                    
+                    # Check duplication
+                    # Search existing question by Title
+                    existing_q = Question.objects.filter(
+                        Q(user=request.user) | Q(is_shared=True),
+                        title=title
+                    ).first()
+                    
+                    if input_act == 'n': # New
+                        if existing_q:
+                            errors.append(f"{line_no}f–j¼\: 7‡Œ_§É–jÿ`‡N“:~nÿÉ–jÿ`‡
+N2 Ä‡Oà`:~±R*":~6T€û0)
+                            continue
+                        
+                        Question.objects.create(
+                            user=request.user,
+                            category=category,
+                            rank=rank,
+                            title=title,
+                            description=desc,
+                            example=example,
+                            answer_type=answer_type,
+                            choices=choices,
+                            is_shared=is_shared,
+                            order=order
+                        )
+                        success_count += 1
+                        
+                    elif input_act == 'u': # Update
+                        if not existing_q:
+                            errors.append(f"{line_no}f–j¼\: V‹tÿA‹pÿÇ‡~ÿÎ–aÿ:~nÿÉ–jÿ`‡
+N€title}2~*–2 •–]N½%:~]NJÿ:~~ÿ:~^Sÿ:~gÿ:~±RÆ%2~û0)
+                            continue
+                        
+                        # Update fields
+                        existing_q.category = category
+                        existing_q.rank = rank
+                        existing_q.description = desc
+                        existing_q.example = example
+                        existing_q.answer_type = answer_type
+                        existing_q.choices = choices
+                        existing_q.is_shared = is_shared
+                        existing_q.order = order
+                        existing_q.save()
+                        success_count += 1
+                        
+                    elif input_act == 'd': # Delete
+                        if not existing_q:
+                             logs.append(f"{line_no}f–j¼\: ‡OÁRÇ‡~ÿÎ–aÿ:~nÿÉ–jÿ`‡
+N€title}2~*–2 •–]N½%:~]NJÿ:~~ÿ:~^Sÿ:~gÿ:~±RÆ%û0;S[0g~mÿ]~û0û0û0è\€û0)
+                             continue
+                        existing_q.delete()
+                        success_count += 1
+
+                if errors:
+                    # If any error, RAISE exception to rollback
+                    raise Exception("Validation Error")
+                    
+        except Exception as e:
+            if str(e) == "Validation Error":
+                pass # Handled by returning errors
+            else:
+                errors.append(f"g~wÿg~yÿ]~û0’g~hÿ]~iÿ]~|ÿ: {str(e)}")
+        
+        if errors:
+            return render(request, self.template_name, {
+                'form': form, 
+                'error_list': errors,
+                'logs': logs
+            })
+            
+        return render(request, self.template_name, {
+            'form': form,
+            'success_msg': f'{success_count}‰ƒvÿ:~nÿ‡fÿû02 ³‡¡_zÿû0 ÿ:~~ÿ:~±RÆ%2~û0,
+            'logs': logs
+        })
