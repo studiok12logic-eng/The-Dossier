@@ -7330,21 +7330,27 @@ class CalendarView(LoginRequiredMixin, MobileTemplateMixin, View):
         # 3. Fetch Data within Range
         user = request.user
         
-        # Logs: ONLY 'Event' (Plans) as per user request ("Log is unnecessary. Only plans...")
-        logs = TimelineItem.objects.filter(
+        # A. Plans (Manual Events) - Type='Event'
+        plans = TimelineItem.objects.filter(
             target__user=user,
             date__range=[start_date, end_date],
-            type='Event'  # STRICTLY Event only
+            type='Event'
         ).select_related('target').order_by('date')
         
-        # Group Rotations (DailyTargetState) - Count per day
+        # B. Activity Logs (Contact, Note, Question...) - Exclude Event & DailyState
+        # Distinct targets per day
+        activities = TimelineItem.objects.filter(
+            target__user=user,
+            date__range=[start_date, end_date]
+        ).exclude(type__in=['Event', 'DailyState']).select_related('target').order_by('date')
+        
+        # C. Group Rotations (DailyTargetState) - Count per day
         from django.db.models import Count
         group_states = TimelineItem.objects.filter(
             target__user=user,
             date__range=[start_date, end_date],
             type='DailyState'
         ).values('date').annotate(count=Count('id'))
-        
         group_counts = {item['date']: item['count'] for item in group_states}
         
         custom_anniversaries = CustomAnniversary.objects.filter(target__user=user).select_related('target')
@@ -7354,17 +7360,23 @@ class CalendarView(LoginRequiredMixin, MobileTemplateMixin, View):
         days_data = []
         current = start_date
         
-        logs_by_date = {}
-        for log in logs:
-            if log.date not in logs_by_date: logs_by_date[log.date] = []
-            logs_by_date[log.date].append(log)
+        plans_by_date = {}
+        for p in plans:
+            if p.date not in plans_by_date: plans_by_date[p.date] = []
+            plans_by_date[p.date].append(p)
+            
+        activities_by_date = {}
+        for a in activities:
+            if a.date not in activities_by_date: activities_by_date[a.date] = set()
+            activities_by_date[a.date].add(a.target) # Use set for uniqueness
             
         while current <= end_date:
             day_info = {
                 'date': current,
                 'is_today': (current == today),
                 'is_selected_month': (current.year == year and current.month == month),
-                'logs': logs_by_date.get(current, []),
+                'plans': plans_by_date.get(current, []),
+                'activity_targets': list(activities_by_date.get(current, [])),
                 'anniversaries': [],
                 'group_count': group_counts.get(current, 0)
             }

@@ -3,14 +3,14 @@
 {% block title %}Calendar{% endblock %}
 
 {% block content %}
-<div class="flex flex-col h-full bg-background pb-20">
+<div class="flex flex-col h-full bg-background pb-20 relative">
     
-    <!-- 1. Header -->
-    <header class="h-14 px-4 flex items-center justify-between border-b border-white/10 bg-surface/95 backdrop-blur sticky top-0 z-30">
+    <!-- 1. App Bar -->
+    <header class="h-14 px-4 flex items-center justify-between border-b border-white/10 bg-surface/95 backdrop-blur sticky top-0 z-40">
         <!-- Left: Title -->
         <span class="text-xs font-bold text-text-sub uppercase tracking-wider">CALENDAR</span>
         
-        <!-- Right: Month Selector Button -->
+        <!-- Right: Trigger Modal -->
         <button onclick="openDateModal()" class="bg-white/5 rounded-lg h-9 border border-white/10 hover:bg-white/10 transition-colors flex items-center px-3 gap-2">
             <span class="text-sm font-bold font-mono">{{ selected_year }} / {{ selected_month|stringformat:"02d" }}</span>
             <i class="fas fa-caret-down text-text-sub text-[10px]"></i>
@@ -18,14 +18,14 @@
     </header>
 
     <!-- 2. Calendar List -->
-    <div class="flex-1 overflow-y-auto relative" id="calendarList">
+    <div class="flex-1 overflow-y-auto relative scroll-smooth" id="calendarList">
         {% for day in days %}
         
         <!-- Sticky Month Header (Insert if 1st of month OR first item in list) -->
         {% if day.date.day == 1 or forloop.first %}
-        <div class="sticky top-0 z-20 bg-background/95 backdrop-blur border-y border-white/10 py-2 px-4 shadow-sm flex items-center gap-2">
-            <span class="text-primary font-mono font-bold">{{ day.date.year }}</span>
-            <span class="text-white font-bold text-lg">/ {{ day.date.month|stringformat:"02d" }}</span>
+        <div class="sticky top-0 z-30 bg-background/95 backdrop-blur border-y border-white/10 py-1.5 px-4 shadow-sm flex items-center gap-2">
+            <span class="text-primary font-mono font-bold text-sm">{{ day.date.year }}</span>
+            <span class="text-white font-bold text-base">/ {{ day.date.month|stringformat:"02d" }}</span>
         </div>
         {% endif %}
 
@@ -47,56 +47,69 @@
                          {{ day.date|date:"D" }}
                      </span>
                      
+                     <!-- Small Icon for Today -->
                      {% if day.is_today %}
-                     <span class="mt-1 text-[8px] bg-primary text-black px-1.5 rounded-full font-bold">TODAY</span>
+                     <div class="mt-1 w-1.5 h-1.5 rounded-full bg-primary shadow-sm shadow-primary/50"></div>
                      {% endif %}
                  </div>
                  
                  <!-- Content Column (Right) -->
-                 <div class="flex-1 p-3 cursor-pointer active:bg-white/5 transition-colors relative flex flex-col justify-center"
+                 <div class="flex-1 p-2 pl-3 cursor-pointer active:bg-white/5 transition-colors relative flex flex-col justify-center gap-1"
                       onclick="openAddPlanModal('{{ day.date|date:'Y-m-d' }}')">
                      
-                     <!-- Anniversaries (Rounded Tags) -->
+                     <!-- A. Anniversaries -->
                      {% if day.anniversaries %}
-                     <div class="flex flex-wrap gap-1.5 mb-1">
+                     <div class="flex flex-wrap gap-1 mb-1">
                          {% for anniv in day.anniversaries %}
-                         <div class="flex items-center gap-1.5 pl-1.5 pr-2 py-0.5 rounded-full bg-surface-2 border border-white/10 text-[10px] font-medium grow-0">
-                             <!-- Simple colored dot instead of icon? User said "Icon unnecessary". Let's just use text color or simple dot. -->
+                         <div class="flex items-center gap-1.5 text-[10px] font-medium text-text-main">
                              <div class="w-1.5 h-1.5 rounded-full {% if anniv.type == 'birthday' %}bg-pink-400{% else %}bg-yellow-400{% endif %}"></div>
-                             <span class="text-text-main">{{ anniv.target.nickname }}: {{ anniv.label }}</span>
+                             <span>{{ anniv.target.nickname }}: {{ anniv.label }}</span>
                          </div>
                          {% endfor %}
                      </div>
                      {% endif %}
                      
-                     <!-- Plans (Events) - Only Text, No Icons -->
-                     {% if day.logs %}
-                     <div class="space-y-1">
-                         {% for log in day.logs %}
-                         <!-- Only show if it's strictly Event, already filtered in view but double check? -->
-                         <!-- View sends only 'Event' type based on new logic. -->
-                         <div class="flex items-center gap-2">
-                             <!-- Small dot for visual anchor -->
-                             <div class="w-1 h-1 rounded-full bg-blue-400"></div>
+                     <!-- B. Plans (Manual Events) -->
+                     {% if day.plans %}
+                     <div class="space-y-1 w-full relative">
+                         {% for plan in day.plans %}
+                         <div class="flex items-center justify-between w-full h-6">
+                             <!-- Left: Target Name -->
+                             <span class="text-sm font-bold text-text-main truncate pr-16">
+                                 {{ plan.target.nickname }}
+                             </span>
                              
-                             <span class="text-sm font-bold text-text-main">
-                                 {{ log.target.nickname }}
+                             <!-- Right: Group Count (Aligned to Right End) -->
+                             <!-- Show on first plan line if exists -->
+                             {% if forloop.first and day.group_count > 0 %}
+                             <span class="text-xs text-text-sub opacity-70 whitespace-nowrap ml-auto">
+                                 他 {{ day.group_count }} 名
                              </span>
-                             <!-- Show Title if exists, small -->
-                             <span class="text-xs text-text-sub opacity-70">
-                                 {{ log.title|default:"" }}
-                             </span>
+                             {% endif %}
                          </div>
+                         {% endfor %}
+                         
+                         <!-- If group count exists but wasn't shown (e.g. logic above covers it, but safeguard) -->
+                         <!-- Actually logic above covers 'first plan'. If multiple plans, group count is next to first. -->
+                     </div>
+                     {% elif day.group_count > 0 %}
+                         <!-- No plans but has group count? Show independent line -->
+                         <div class="w-full text-right h-6 flex items-center justify-end">
+                             <span class="text-xs text-text-sub opacity-70">他 {{ day.group_count }} 名</span>
+                         </div>
+                     {% endif %}
+                     
+                     <!-- C. Logs (Activity) - Small -->
+                     {% if day.activity_targets %}
+                     <div class="flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5 opacity-60">
+                         {% for t in day.activity_targets %}
+                         <span class="text-[10px] text-text-sub">
+                             {{ t.nickname }}
+                         </span>
                          {% endfor %}
                      </div>
                      {% endif %}
                      
-                     <!-- Group Count (Right Side, Absolute) -->
-                     {% if day.group_count > 0 %}
-                     <div class="absolute right-3 bottom-3 text-xs text-text-sub font-medium bg-surface/50 px-2 py-1 rounded backdrop-blur-sm">
-                         他 {{ day.group_count }} 名
-                     </div>
-                     {% endif %}
                  </div>
              </div>
         </div>
@@ -105,40 +118,40 @@
 
 </div>
 
-<!-- Month Selection Modal (Redesigned) -->
+<!-- Month Selection Modal -->
 <div id="dateModal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center animate-fade-in" onclick="closeDateModal()">
-    <div class="bg-surface border border-white/10 rounded-xl w-72 overflow-hidden shadow-2xl" onclick="event.stopPropagation()">
+    <div class="bg-surface border border-white/10 rounded-xl w-80 overflow-hidden shadow-2xl flex flex-col" onclick="event.stopPropagation()">
         
-        <!-- Year Slider Header -->
-        <div class="p-4 bg-surface-2 border-b border-white/10 flex items-center justify-between">
-            <button onclick="changeYear(-1)" class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/5 active:scale-95 transition">
-                <i class="fas fa-chevron-left"></i>
-            </button>
-            <span id="modalYear" class="font-mono text-2xl font-bold tracking-widest">{{ selected_year }}</span>
-            <button onclick="changeYear(1)" class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/5 active:scale-95 transition">
-                <i class="fas fa-chevron-right"></i>
-            </button>
+        <!-- Year Slider (Horizontal Scroll) -->
+        <div class="relative w-full border-b border-white/10 py-6 bg-surface-2/30">
+            <!-- Scroll Container -->
+            <div id="yearSlider" class="flex overflow-x-auto snap-x snap-mandatory gap-0 px-[calc(50%-2.5rem)] scrollbar-hide items-center h-10 w-full">
+                <!-- JS Populated -->
+            </div>
+            
+            <!-- Center Highlight Box (Absolute center) -->
+            <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-10 rounded-lg border-2 border-primary pointer-events-none shadow-[0_0_15px_rgba(var(--primary-rgb),0.3)]"></div>
         </div>
         
-        <!-- Month Grid (4 cols x 3 rows) -->
-        <div class="p-4 grid grid-cols-4 gap-3">
+        <!-- Month Grid (4 cols x 3 rows = 12) -->
+        <div class="p-6 grid grid-cols-4 gap-4">
              {% for m in "123456789012"|make_list %}
              <button onclick="selectMonth({{ forloop.counter }})" 
-                     class="aspect-square flex items-center justify-center rounded-lg text-lg font-mono font-bold transition-all
-                     {% if forloop.counter == selected_month %}bg-primary text-black shadow-lg scale-105{% else %}bg-white/5 hover:bg-white/10 text-text-sub hover:text-white{% endif %}">
+                     class="aspect-square flex items-center justify-center rounded-lg text-lg font-mono font-bold transition-all border border-white/5
+                     {% if forloop.counter == selected_month %}bg-primary text-black shadow-lg scale-110 border-primary{% else %}bg-white/5 hover:bg-white/10 text-text-sub hover:text-white{% endif %}">
                  {{ forloop.counter }}
              </button>
              {% endfor %}
         </div>
         
-        <!-- Close (Optional footer for clarity) -->
-        <div class="p-2 border-t border-white/5">
-            <button onclick="closeDateModal()" class="w-full py-2 text-xs text-text-sub hover:text-white">CLOSE</button>
+        <!-- Close -->
+        <div class="p-3 border-t border-white/5 bg-surface-2">
+            <button onclick="closeDateModal()" class="w-full py-2 text-xs text-text-sub hover:text-white tracking-widest">CLOSE</button>
         </div>
     </div>
 </div>
 
-<!-- Add Plan Modal (Target Select style) -->
+<!-- Add Plan Modal -->
 <div id="addCandidateModal" class="fixed inset-0 z-[60] hidden bg-background flex flex-col animate-slide-up">
     <!-- Header -->
     <div class="p-4 border-b border-white/10 shrink-0 bg-surface z-10">
@@ -148,7 +161,6 @@
             </button>
             <h3 class="text-sm font-bold tracking-wider text-text-main uppercase">Select Target</h3>
         </div>
-        <!-- Search -->
         <div class="relative">
             <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-text-sub opacity-50 text-xs"></i>
             <input type="text" id="candidateSearch" placeholder="Search targets..." 
@@ -157,16 +169,17 @@
         </div>
     </div>
     
-    <!-- List -->
     <div id="candidateList" class="flex-1 overflow-y-auto p-4 space-y-1">
         <!-- JS Populated -->
     </div>
 </div>
 
+
 <script>
     // State
     let currentSelectedDate = null;
-    let modalYear = {{ selected_year }};
+    let selectedYear = {{ selected_year }};
+    let currentScrollYear = selectedYear;
     
     // Pre-loaded Targets
     const allTargets = [
@@ -183,23 +196,72 @@
     
     const addModal = document.getElementById('addCandidateModal');
     const candidateList = document.getElementById('candidateList');
+    const yearSlider = document.getElementById('yearSlider');
     
     // Header Logic
     function openDateModal() {
         document.getElementById('dateModal').classList.remove('hidden');
+        initYearSlider();
     }
     
     function closeDateModal() {
         document.getElementById('dateModal').classList.add('hidden');
     }
     
-    function changeYear(delta) {
-        modalYear += delta;
-        document.getElementById('modalYear').innerText = modalYear;
+    // Init Year Slider
+    function initYearSlider() {
+        yearSlider.innerHTML = '';
+        const range = 10; // +/- 10 years
+        const startY = selectedYear - range;
+        const endY = selectedYear + range;
+        
+        for(let y = startY; y <= endY; y++) {
+            const el = document.createElement('div');
+            // CSS snap-center ensures it stops at center. Padding handles offsets.
+            el.className = `snap-center shrink-0 w-20 flex items-center justify-center text-xl font-mono font-bold transition-all cursor-pointer opacity-50`;
+            el.innerText = y;
+            el.dataset.year = y;
+            
+            el.onclick = () => {
+                selectYear(y);
+            };
+            yearSlider.appendChild(el);
+        }
+        
+        // Setup Intersection Observer to detect center item
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if(entry.isIntersecting) {
+                    // Update opacity/scale for center item
+                    entry.target.classList.replace('opacity-50', 'opacity-100');
+                    entry.target.classList.add('scale-110');
+                    currentScrollYear = parseInt(entry.target.dataset.year);
+                    // Update global selected year for month click
+                    selectedYear = currentScrollYear; // Auto-select on scroll? Yes, standard picker behavior.
+                } else {
+                    entry.target.classList.replace('opacity-100', 'opacity-50');
+                    entry.target.classList.remove('scale-110');
+                }
+            });
+        }, { root: yearSlider, threshold: 0.5 }); // 50% visibility implies center due to width
+
+        Array.from(yearSlider.children).forEach(c => observer.observe(c));
+
+        // Scroll to initial selected
+        setTimeout(() => {
+             const selectedEl = Array.from(yearSlider.children).find(el => el.dataset.year == selectedYear);
+             if(selectedEl) selectedEl.scrollIntoView({ inline: 'center' });
+        }, 10);
+    }
+    
+    function selectYear(y) {
+         selectedYear = y;
+         const el = Array.from(yearSlider.children).find(c => c.dataset.year == y);
+         if(el) el.scrollIntoView({ behavior: 'smooth', inline: 'center' });
     }
     
     function selectMonth(m) {
-        window.location.href = `?year=${modalYear}&month=${m}`;
+        window.location.href = `?year=${selectedYear}&month=${m}`;
     }
     
     // Add Plan Logic
@@ -250,12 +312,10 @@
     }
     
     function selectCandidate(id) {
-        // Create Event
         const fd = new FormData();
         fd.append('target_id', id);
         fd.append('date', currentSelectedDate);
-        fd.append('title', '予定'); // Default title
-        // User "Log is unnecessary" implies maybe they don't see it, but we MUST create it to have a record.
+        fd.append('title', '予定');
         
         fetch('', {
             method: 'POST',
@@ -270,7 +330,6 @@
         });
     }
 
-    // Scroll to Today
     document.addEventListener('DOMContentLoaded', () => {
         const todayId = "day-{{ today|date:'Y-m-d' }}";
         const el = document.getElementById(todayId);
@@ -278,8 +337,8 @@
             setTimeout(() => el.scrollIntoView({ block: 'center', behavior: 'smooth' }), 100);
         }
     });
-    
-    // Long Press Logic (Navigate to Log)
+
+    // Long Press Logic
     document.querySelectorAll('[id^="day-"]').forEach(el => {
         const contentCol = el.querySelector('.flex-1');
         if(!contentCol) return;
@@ -296,7 +355,6 @@
         contentCol.addEventListener('touchend', () => clearTimeout(timer));
         contentCol.addEventListener('touchmove', () => clearTimeout(timer));
     });
-
 </script>
 
 <style>
@@ -304,5 +362,13 @@
     .animate-slide-up { animation: slide-up 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
     @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
     .animate-fade-in { animation: fade-in 0.1s ease-out; }
+    
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
 </style>
 {% endblock %}
