@@ -10,8 +10,8 @@ git pull origin main
 echo "Restarting Gunicorn..."
 sudo systemctl restart gunicorn
 
-# Collect Static (Optional but good practice)
-# echo "Collecting static files..."
-# python3 manage.py collectstatic --noinput
+# Collect Static
+echo "Collecting static files..."
+python3 manage.py collectstatic --noinput
 
 echo "Deployment complete!"
