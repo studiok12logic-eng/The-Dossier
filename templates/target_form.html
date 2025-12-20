@@ -297,12 +297,12 @@
             {% if is_edit %}
             <a href="{% url 'target_delete' form.instance.pk %}"
                class="flex-1 bg-red-500/10 text-red-500 font-bold py-4 rounded border border-red-500/30 hover:bg-red-500/20 transition font-mono flex items-center justify-center whitespace-nowrap">
-               削除 (DELETE)
+               DELETE
             </a>
             {% endif %}
             <button type="submit"
                 class="flex-[2] bg-primary text-black font-bold py-4 rounded shadow-[0_0_20px_rgba(34,197,94,0.3)] hover:shadow-[0_0_30px_rgba(34,197,94,0.5)] transition font-mono border border-green-400">
-                {% if is_edit %}更新を保存 (SAVE){% else %}登録する (REGISTER){% endif %}
+                {% if is_edit %}UPDATE{% else %}INSERT{% endif %}
             </button>
         </div>
     </form>
@@ -388,9 +388,8 @@
                         class="px-6 py-3 text-gray-400 hover:text-white border border-white/10 rounded font-bold text-sm bg-surface hover:bg-white/5 transition">
                         キャンセル
                     </button>
-                    <button type="submit"
                         class="px-8 py-3 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/50 rounded font-bold text-sm min-w-[120px] transition">
-                        作成
+                        INSERT
                     </button>
                 </div>
             </form>
@@ -403,10 +402,10 @@
     <div class="bg-surface border border-white/20 rounded-xl w-full max-w-xs overflow-hidden flex flex-col">
         <div class="p-4 text-center border-b border-white/10 text-white font-bold" id="actionMenuTitle">グループ操作</div>
         <button type="button" id="actionEdit" class="p-4 text-white hover:bg-white/5 border-b border-white/10 transition text-left">
-            <i class="fas fa-pencil-alt mr-2 text-gray-400"></i> 編集する
+            <i class="fas fa-pencil-alt mr-2 text-gray-400"></i> EDIT
         </button>
         <button type="button" id="actionDelete" class="p-4 text-red-500 hover:bg-red-500/10 transition text-left">
-            <i class="fas fa-trash mr-2"></i> 削除する
+            <i class="fas fa-trash mr-2"></i> DELETE
         </button>
         <button type="button" id="actionCancel" class="p-4 text-gray-400 bg-black/40 hover:bg-black/60 transition text-center border-t border-white/10">
             キャンセル
@@ -680,7 +679,7 @@
         currentEditingGroupId = null;
         groupForm.reset();
         document.getElementById('groupModalTitle').textContent = '新規グループ作成';
-        groupModal.querySelector('button[type="submit"]').textContent = '作成';
+        groupModal.querySelector('button[type="submit"]').textContent = 'INSERT';
         groupModal.classList.remove('hidden');
     });
 
@@ -756,7 +755,7 @@
     document.getElementById('actionEdit').addEventListener('click', () => {
         actionMenu.classList.add('hidden');
         document.getElementById('groupModalTitle').textContent = 'グループ編集';
-        groupModal.querySelector('button[type="submit"]').textContent = '更新';
+        groupModal.querySelector('button[type="submit"]').textContent = 'UPDATE';
         groupModal.classList.remove('hidden');
     });
 

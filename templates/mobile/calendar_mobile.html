@@ -1,0 +1,204 @@
+{% extends "mobile/base_mobile.html" %}
+
+{% block title %}Calendar{% endblock %}
+
+{% block content %}
+<div class="flex flex-col h-full bg-background relative">
+
+    <!-- Header (Year/Month) -->
+    <header class="h-14 px-4 flex items-center justify-between border-b border-white/10 bg-surface/95 backdrop-blur sticky top-0 z-30">
+        <div class="flex items-center gap-4">
+            <!-- Year/Month Picker (Simplified as Text for now, or clickable?) -->
+            <h1 class="text-lg font-bold font-mono text-white flex items-center gap-2">
+                {{ selected_year }} / {{ selected_month|stringformat:"02d" }}
+                <button onclick="document.getElementById('dateSelectModal').classList.remove('hidden')" class="text-xs text-primary bg-primary/10 px-2 py-1 rounded border border-primary/20 hover:bg-primary/20 transition">
+                    CHANGE
+                </button>
+            </h1>
+        </div>
+        <button onclick="scrollToToday()" class="text-xs text-gray-400 hover:text-white border border-white/10 px-2 py-1 rounded">
+            TODAY
+        </button>
+    </header>
+
+    <!-- Calendar List -->
+    <div id="calendarList" class="flex-1 overflow-y-auto pb-20 scroll-smooth">
+        <!-- Month Header Observer Markers could go here -->
+        
+        {% for day in days %}
+        <!-- Check for Month Header Insertion -->
+        {% if day.date.day == 1 %}
+        <div id="month-header-{{ day.date.year }}-{{ day.date.month }}" class="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-y border-white/10 py-1 px-4 text-xs font-bold font-mono text-primary shadow-lg">
+            {{ day.date.year }} / {{ day.date.month|stringformat:"02d" }}
+        </div>
+        {% endif %}
+
+        <div id="day-{{ day.date|date:'Y-m-d' }}" 
+             class="min-h-[80px] border-b border-white/5 relative group {% if day.is_today %}bg-primary/5{% elif day.is_selected_month %}bg-white/[0.02]{% else %}bg-transparent opacity-80{% endif %}"
+             onclick="openAddPlanModal('{{ day.date|date:'Y-m-d' }}')"
+             oncontextmenu="handleLongPress(event, '{{ day.date|date:'Y-m-d' }}'); return false;">
+            
+            <!-- Date Column -->
+            <div class="absolute left-0 top-0 bottom-0 w-14 border-r border-white/5 flex flex-col items-center pt-3 pointer-events-none">
+                <span class="text-xs font-mono {% if day.date.weekday == 5 %}text-blue-400{% elif day.date.weekday == 6 %}text-red-400{% else %}text-gray-400{% endif %}">
+                    {{ day.date|date:"D"|upper }}
+                </span>
+                <span class="text-xl font-bold font-mono {% if day.is_today %}text-primary{% else %}text-white{% endif %}">
+                    {{ day.date.day }}
+                </span>
+                {% if day.is_today %}
+                <div class="w-1.5 h-1.5 rounded-full bg-primary mt-1"></div>
+                {% endif %}
+            </div>
+
+            <!-- Content Column -->
+            <div class="ml-14 p-2 pl-3 space-y-1.5 min-h-[80px]">
+                
+                <!-- Anniversaries/Birthdays -->
+                {% for anniv in day.anniversaries %}
+                <div class="flex items-center gap-2 text-[10px] text-yellow-400 bg-yellow-400/10 px-2 py-1 rounded border border-yellow-400/20 max-w-fit">
+                    <i class="fas fa-birthday-cake"></i> {{ anniv.label }} [{{ anniv.target.nickname }}]
+                </div>
+                {% endfor %}
+
+                <!-- Logs -->
+                {% for log in day.logs %}
+                <div class="flex items-center gap-2 text-xs p-1.5 rounded border border-white/5 hover:bg-white/5 transition {% if log.type == 'Contact' %}bg-green-500/10 text-green-400 border-green-500/20{% elif log.type == 'Event' %}bg-blue-500/10 text-blue-400 border-blue-500/20{% else %}bg-surface text-gray-300{% endif %}">
+                    <!-- Icon based on Type -->
+                    <div class="w-5 h-5 flex items-center justify-center shrink-0">
+                        {% if log.type == 'Contact' %}<i class="fas fa-handshake"></i>
+                        {% elif log.type == 'Event' %}<i class="fas fa-calendar-check"></i>
+                        {% elif log.type == 'Note' %}<i class="fas fa-sticky-note"></i>
+                        {% elif log.type == 'Question' %}<i class="fas fa-question-circle"></i>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                             <span class="font-bold truncate">{{ log.target.nickname }}</span>
+                             {% if log.title %}<span class="text-[10px] opacity-70 truncate">- {{ log.title }}</span>{% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Empty State Check? No, just empty space for clicking -->
+            </div>
+            
+            <!-- Add Button (Visible on Active/Hover? Mobile has no hover. Maybe just tap area) -->
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<!-- Date Selection Modal -->
+<div id="dateSelectModal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-surface border border-white/20 p-6 rounded-xl w-64 text-center">
+        <h3 class="text-white font-mono mb-4">JUMP TO</h3>
+        <form method="get" class="space-y-4">
+            <input type="number" name="year" value="{{ selected_year }}" class="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-white text-center font-mono">
+            <select name="month" class="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-white text-center font-mono appearance-none">
+                {% for i in "x"|ljust:"12" %}
+                <option value="{{ forloop.counter }}" {% if forloop.counter == selected_month %}selected{% endif %}>{{ forloop.counter }}月</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="w-full bg-primary text-black font-bold py-2 rounded">GO</button>
+        </form>
+        <button onclick="document.getElementById('dateSelectModal').classList.add('hidden')" class="mt-4 text-xs text-gray-400 hover:text-white">Cancel</button>
+    </div>
+</div>
+
+<!-- Add Plan Modal -->
+<div id="addPlanModal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-surface border border-white/20 p-6 rounded-xl w-full max-w-sm shadow-2xl">
+        <h3 class="text-white font-mono mb-4 flex items-center gap-2">
+            <i class="fas fa-plus text-primary"></i> NEW EVENT
+        </h3>
+        
+        <form id="addPlanForm" class="space-y-4">
+            <input type="hidden" name="date" id="planDateInput">
+            
+            <div>
+                <label class="block text-xs font-mono text-gray-400 mb-1">DATE</label>
+                <div id="planDateDisplay" class="text-lg font-bold text-white font-mono"></div>
+            </div>
+
+            <div>
+                 <label class="block text-xs font-mono text-gray-400 mb-1">TARGET</label>
+                 <select name="target_id" class="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-white text-sm">
+                     <option value="">Select Target...</option>
+                     {% for t in all_targets %}
+                     <option value="{{ t.id }}">{{ t.nickname }}</option>
+                     {% endfor %}
+                 </select>
+            </div>
+            
+            <div>
+                 <label class="block text-xs font-mono text-gray-400 mb-1">TITLE / PLAN</label>
+                 <input type="text" name="title" placeholder="Dinner, Meeting, etc." class="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-white text-sm">
+            </div>
+
+            <button type="submit" class="w-full bg-primary text-black font-bold py-3 rounded mt-2">INSERT</button>
+        </form>
+        
+        <button onclick="document.getElementById('addPlanModal').classList.add('hidden')" class="w-full mt-4 py-2 text-xs text-gray-400 hover:text-white transition">Cancel</button>
+    </div>
+</div>
+
+<script>
+    // Initial Scroll to Selected Month (or Today if inside)
+    function scrollToToday() {
+        const todayEl = document.querySelector('.bg-primary\\/5'); // Assuming today class
+        if(todayEl) {
+            todayEl.scrollIntoView({behavior: 'smooth', block: 'center'});
+        } else {
+            // Scroll to start of selected month
+            const mHeader = document.getElementById('month-header-{{ selected_year }}-{{ selected_month }}');
+            if(mHeader) mHeader.scrollIntoView({behavior: 'smooth', block: 'start'});
+        }
+    }
+    
+    // Auto scroll on load
+    window.addEventListener('load', () => {
+        // Wait a tick for layout
+        setTimeout(scrollToToday, 100);
+    });
+
+    // Add Plan Logic
+    function openAddPlanModal(dateStr) {
+        document.getElementById('planDateInput').value = dateStr;
+        document.getElementById('planDateDisplay').textContent = dateStr;
+        document.getElementById('addPlanModal').classList.remove('hidden');
+    }
+
+    document.getElementById('addPlanForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        fetch('{% url "calendar" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {'X-CSRFToken': '{{ csrf_token }}'}
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                // Determine redirect or reload
+                // Reload to show new plan
+                location.reload(); 
+            } else {
+                alert('Error: ' + data.error);
+            }
+        });
+    });
+
+    // Long Press Logic
+    function handleLongPress(e, dateStr) {
+        e.preventDefault();
+        if(confirm('Go to Intelligence Log for ' + dateStr + '?')) {
+            window.location.href = `{% url 'intelligence_log' %}?date=${dateStr}`;
+        }
+    }
+</script>
+{% endblock %}

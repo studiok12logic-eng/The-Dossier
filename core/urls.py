@@ -28,6 +28,7 @@ urlpatterns = [
     path('questions/<int:pk>/delete/', views.QuestionDeleteView.as_view(), name='question_delete'),
     path('questions/export/', views.QuestionExportView.as_view(), name='question_export'),
     path('questions/import/', views.QuestionImportView.as_view(), name='question_import'),
+    path('calendar/', views.CalendarView.as_view(), name='calendar'),
     path('api/questions/category/add/', views.CategoryCreateView.as_view(), name='category_add'),
     path('api/questions/rank/add/', views.RankCreateView.as_view(), name='rank_add'),
     
