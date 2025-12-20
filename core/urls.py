@@ -3,6 +3,8 @@ from django.conf import settings
 from django.conf.urls.static import static
 from . import views
 
+# URL Configuration
+
 urlpatterns = [
     path('', views.IntelligenceLogView.as_view(), name='home'), # Homepage is now Intelligence Log
     path('dashboard/', views.dashboard, name='dashboard'), # Dashboard moved
