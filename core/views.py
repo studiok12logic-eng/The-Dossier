@@ -7342,7 +7342,7 @@ class CalendarView(LoginRequiredMixin, MobileTemplateMixin, View):
         activities = TimelineItem.objects.filter(
             target__user=user,
             date__range=[start_date, end_date]
-        ).exclude(type__in=['Event', 'DailyState']).select_related('target').order_by('date')
+        ).exclude(type__in=['DailyState']).select_related('target').order_by('date')
         
         # C. Group Rotations (DailyTargetState) - Count per day
         from django.db.models import Count
