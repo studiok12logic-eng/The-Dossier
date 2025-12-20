@@ -7363,7 +7363,11 @@ class CalendarView(LoginRequiredMixin, MobileTemplateMixin, View):
         plans_by_date = {}
         for p in plans:
             if p.date not in plans_by_date: plans_by_date[p.date] = []
-            plans_by_date[p.date].append(p)
+            # Deduplicate by target (only show first event per target per day)
+            # Check if target already in this day's list
+            existing_targets = {x.target_id for x in plans_by_date[p.date]}
+            if p.target_id not in existing_targets:
+                plans_by_date[p.date].append(p)
             
         activities_by_date = {}
         for a in activities:
@@ -7374,6 +7378,7 @@ class CalendarView(LoginRequiredMixin, MobileTemplateMixin, View):
             day_info = {
                 'date': current,
                 'is_today': (current == today),
+                'is_past': (current <= today),
                 'is_selected_month': (current.year == year and current.month == month),
                 'plans': plans_by_date.get(current, []),
                 'activity_targets': list(activities_by_date.get(current, [])),

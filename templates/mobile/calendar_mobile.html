@@ -35,7 +35,7 @@
                  
                  <!-- Date Column (Left) -->
                  <div class="w-16 flex flex-col items-center justify-start pt-3 border-r border-white/5 shrink-0 {% if day.is_today %}bg-primary/5{% endif %}"
-                      onclick="openAddPlanModal('{{ day.date|date:'Y-m-d' }}')">
+                      onclick="handleDayClick('{{ day.date|date:'Y-m-d' }}', {% if day.is_past %}true{% else %}false{% endif %})">
                      
                      <!-- Day Number -->
                      <span class="text-2xl font-bold font-mono leading-none {% if day.is_today %}text-primary{% elif day.date.weekday == 6 %}text-red-400{% elif day.date.weekday == 5 %}text-blue-400{% else %}text-text-main{% endif %}">
@@ -55,7 +55,7 @@
                  
                  <!-- Content Column (Right) -->
                  <div class="flex-1 p-2 pl-3 cursor-pointer active:bg-white/5 transition-colors relative flex flex-col justify-center gap-1"
-                      onclick="openAddPlanModal('{{ day.date|date:'Y-m-d' }}')">
+                      onclick="handleDayClick('{{ day.date|date:'Y-m-d' }}', {% if day.is_past %}true{% else %}false{% endif %})">
                      
                      <!-- A. Anniversaries -->
                      {% if day.anniversaries %}
@@ -88,9 +88,6 @@
                              {% endif %}
                          </div>
                          {% endfor %}
-                         
-                         <!-- If group count exists but wasn't shown (e.g. logic above covers it, but safeguard) -->
-                         <!-- Actually logic above covers 'first plan'. If multiple plans, group count is next to first. -->
                      </div>
                      {% elif day.group_count > 0 %}
                          <!-- No plans but has group count? Show independent line -->
@@ -125,7 +122,8 @@
         <!-- Year Slider (Horizontal Scroll) -->
         <div class="relative w-full border-b border-white/10 py-6 bg-surface-2/30">
             <!-- Scroll Container -->
-            <div id="yearSlider" class="flex overflow-x-auto snap-x snap-mandatory gap-0 px-[calc(50%-2.5rem)] scrollbar-hide items-center h-10 w-full">
+            <!-- FIX: Added w-full and better snap config -->
+            <div id="yearSlider" class="flex overflow-x-auto snap-x snap-mandatory gap-0 px-[calc(50%-2.5rem)] scrollbar-hide items-center h-10 w-full touch-pan-x">
                 <!-- JS Populated -->
             </div>
             
@@ -134,6 +132,7 @@
         </div>
         
         <!-- Month Grid (4 cols x 3 rows = 12) -->
+        <!-- FIX: Ensured grid-cols-4 matches 12 items perfectly -->
         <div class="p-6 grid grid-cols-4 gap-4">
              {% for m in "123456789012"|make_list %}
              <button onclick="selectMonth({{ forloop.counter }})" 
@@ -201,7 +200,8 @@
     // Header Logic
     function openDateModal() {
         document.getElementById('dateModal').classList.remove('hidden');
-        initYearSlider();
+        // Small timeout to allow display:block to happen before scrolling
+        setTimeout(initYearSlider, 10);
     }
     
     function closeDateModal() {
@@ -210,6 +210,8 @@
     
     // Init Year Slider
     function initYearSlider() {
+        if(yearSlider.children.length > 0) return; // Already inited
+        
         yearSlider.innerHTML = '';
         const range = 10; // +/- 10 years
         const startY = selectedYear - range;
@@ -217,7 +219,6 @@
         
         for(let y = startY; y <= endY; y++) {
             const el = document.createElement('div');
-            // CSS snap-center ensures it stops at center. Padding handles offsets.
             el.className = `snap-center shrink-0 w-20 flex items-center justify-center text-xl font-mono font-bold transition-all cursor-pointer opacity-50`;
             el.innerText = y;
             el.dataset.year = y;
@@ -228,30 +229,25 @@
             yearSlider.appendChild(el);
         }
         
-        // Setup Intersection Observer to detect center item
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if(entry.isIntersecting) {
-                    // Update opacity/scale for center item
                     entry.target.classList.replace('opacity-50', 'opacity-100');
                     entry.target.classList.add('scale-110');
                     currentScrollYear = parseInt(entry.target.dataset.year);
-                    // Update global selected year for month click
-                    selectedYear = currentScrollYear; // Auto-select on scroll? Yes, standard picker behavior.
+                    selectedYear = currentScrollYear; 
                 } else {
                     entry.target.classList.replace('opacity-100', 'opacity-50');
                     entry.target.classList.remove('scale-110');
                 }
             });
-        }, { root: yearSlider, threshold: 0.5 }); // 50% visibility implies center due to width
+        }, { root: yearSlider, threshold: 0.5 });
 
         Array.from(yearSlider.children).forEach(c => observer.observe(c));
 
-        // Scroll to initial selected
-        setTimeout(() => {
-             const selectedEl = Array.from(yearSlider.children).find(el => el.dataset.year == selectedYear);
-             if(selectedEl) selectedEl.scrollIntoView({ inline: 'center' });
-        }, 10);
+        // Initial Scroll
+        const selectedEl = Array.from(yearSlider.children).find(el => el.dataset.year == selectedYear);
+        if(selectedEl) selectedEl.scrollIntoView({ inline: 'center' });
     }
     
     function selectYear(y) {
@@ -262,6 +258,17 @@
     
     function selectMonth(m) {
         window.location.href = `?year=${selectedYear}&month=${m}`;
+    }
+    
+    // Day Click Handler
+    function handleDayClick(dateStr, isPast) {
+        if (isPast) {
+             // Past/Today -> Go to Intelligence Log
+             window.location.href = "{% url 'intelligence_log' %}?date=" + dateStr;
+        } else {
+             // Future -> Open Plan Modal
+             openAddPlanModal(dateStr);
+        }
     }
     
     // Add Plan Logic
@@ -297,7 +304,7 @@
             </div>
         `).join('');
     }
-    
+        
     function filterCandidates(query) {
         if(!query) {
              renderCandidates(allTargets);
@@ -330,6 +337,7 @@
         });
     }
 
+    // Scroll to Today
     document.addEventListener('DOMContentLoaded', () => {
         const todayId = "day-{{ today|date:'Y-m-d' }}";
         const el = document.getElementById(todayId);
@@ -338,23 +346,7 @@
         }
     });
 
-    // Long Press Logic
-    document.querySelectorAll('[id^="day-"]').forEach(el => {
-        const contentCol = el.querySelector('.flex-1');
-        if(!contentCol) return;
-        
-        let timer;
-        const dateStr = el.id.replace('day-', '');
-        
-        contentCol.addEventListener('touchstart', (e) => {
-            timer = setTimeout(() => {
-                window.location.href = "{% url 'intelligence_log' %}?date=" + dateStr;
-            }, 600);
-        });
-        
-        contentCol.addEventListener('touchend', () => clearTimeout(timer));
-        contentCol.addEventListener('touchmove', () => clearTimeout(timer));
-    });
+    // Remove Long Press Logic (replaced by click logic)
 </script>
 
 <style>
