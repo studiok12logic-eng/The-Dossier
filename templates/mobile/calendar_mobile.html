@@ -32,8 +32,6 @@
         
         <!-- Sticky Month Header (Insert if 1st of month) -->
         {% if day.date.day == 1 %}
-        <!-- Sticky Month Header (Insert if 1st of month) -->
-        {% if day.date.day == 1 %}
         <div id="month-header-{{ day.date|date:'Y-m' }}" class="sticky top-14 z-20 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-2 flex items-center justify-between shadow-sm scroll-mt-14">
             <span class="text-sm font-bold text-text-main font-mono tracking-widest">
                 {{ day.date|date:"Y" }} <span class="text-primary text-base ml-1">{{ day.date|date:"m" }}</span>
