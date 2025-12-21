@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.http import HttpResponse
 from django.conf import settings
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, RedirectView
 import os
 
 def service_worker(request):
@@ -33,4 +33,5 @@ urlpatterns = [
     path('', include('core.urls')),
     path('sw.js', service_worker, name='service_worker'),
     path('offline/', TemplateView.as_view(template_name="offline.html"), name='offline'),
+    path('favicon.ico', RedirectView.as_view(url='/static/dossier_icon.png', permanent=True), name='favicon'),
 ]

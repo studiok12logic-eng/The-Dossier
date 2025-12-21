@@ -23,10 +23,12 @@
     
     <!-- PWA -->
     <link rel="manifest" href="{% static 'manifest.json' %}">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Dossier">
     <link rel="apple-touch-icon" href="{% static 'dossier_icon.png' %}">
+    <link rel="icon" type="image/png" href="{% static 'dossier_icon.png' %}">
     <meta name="theme-color" content="#10b981">
 
     {% tailwind_css %}
