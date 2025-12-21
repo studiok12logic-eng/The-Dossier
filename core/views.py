@@ -7102,12 +7102,8 @@ class CalendarView(LoginRequiredMixin, MobileTemplateMixin, View):
         # 2. Calculate Date Range
         base_date = datetime.date(year, month, 1)
         
-        # [OPTIMIZATION] If Default View (no params), start from Today to speed up initial render.
-        if not year_param and not month_param:
-            start_date = today
-        else:
-            # If navigating, show previous month context
-            start_date = (base_date - datetime.timedelta(days=1)).replace(day=1)
+        # Context: 1 month prior
+        start_date = (base_date - datetime.timedelta(days=1)).replace(day=1)
 
         def add_months(d, months):
             month = d.month - 1 + months
