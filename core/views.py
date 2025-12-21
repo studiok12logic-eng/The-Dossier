@@ -7099,24 +7099,16 @@ class CalendarView(LoginRequiredMixin, MobileTemplateMixin, View):
             year = selected_date.year
             month = selected_date.month
 
-        # 2. Calculate Date Range (1 month prior, 3 months future -> Total ~5 months)
-        # User request: "1 month prior... combined 5 months"
-        # Actually logic: Start = 1 month before selected. End = 3 months after selected.
-        
-        # Start: 1st day of previous month
-        start_date = (today.replace(day=1) - datetime.timedelta(days=1)).replace(day=1)
-        # If user selected a specific month, base it on that?
-        # "Display 1 year prior" was the old logic based on `today` usually, or selected?
-        # Let's base it on the selected month if provided, else today.
-        
+        # 2. Calculate Date Range
         base_date = datetime.date(year, month, 1)
-        # 1 month prior
-        start_date = (base_date - datetime.timedelta(days=1)).replace(day=1)
-        # 3 months after (End of 3rd month)
-        # month + 3
-        # Logic: 
-        # m=1, +3 = 4. End date = Last day of Month 4.
         
+        # [OPTIMIZATION] If Default View (no params), start from Today to speed up initial render.
+        if not year_param and not month_param:
+            start_date = today
+        else:
+            # If navigating, show previous month context
+            start_date = (base_date - datetime.timedelta(days=1)).replace(day=1)
+
         def add_months(d, months):
             month = d.month - 1 + months
             year = d.year + month // 12

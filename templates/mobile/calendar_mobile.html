@@ -6,7 +6,7 @@
 <div class="flex flex-col h-screen bg-background relative overflow-hidden">
     
     <!-- 1. App Bar -->
-    <header class="h-14 px-4 flex items-center justify-between border-b border-border bg-surface backdrop-blur shrink-0 z-40 relative">
+    <header class="h-14 px-4 flex items-center justify-between border-b border-border bg-surface backdrop-blur shrink-0 z-40 fixed top-0 left-0 w-full">
         <!-- Left: Title -->
         <span class="text-xs font-bold text-text-sub uppercase tracking-wider">CALENDAR</span>
         
@@ -26,13 +26,13 @@
     </header>
 
     <!-- 2. Calendar List -->
-    <div class="flex-1 overflow-y-auto relative scroll-smooth pb-24" id="calendarList">
+    <div class="flex-1 overflow-y-auto relative scroll-smooth pb-24 pt-14" id="calendarList">
 
         {% for day in days %}
         
         <!-- Sticky Month Header (Insert if 1st of month) -->
         {% if day.date.day == 1 %}
-        <div id="month-header-{{ day.date|date:'Y-m' }}" class="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-2 flex items-center justify-between shadow-sm">
+        <div id="month-header-{{ day.date|date:'Y-m' }}" class="sticky top-14 z-20 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-2 flex items-center justify-between shadow-sm">
             <span class="text-sm font-bold text-text-main font-mono tracking-widest">
                 {{ day.date|date:"Y" }} <span class="text-primary text-base ml-1">{{ day.date|date:"m" }}</span>
             </span>
