@@ -7220,29 +7220,38 @@ class CalendarView(LoginRequiredMixin, MobileTemplateMixin, View):
             }
             
             # --- Accurate Target Count Logic ---
-            # FIX: Add all Auto Targets to plans (Left Join Logic)
+            # Priority: Manual/Anniv -> Display in Plans (B)
+            # Group Only -> Count in Others (C/Group Count)
+            
             existing_target_ids = {p.target_id for p in day_info['plans']}
+            group_only_count = 0
             
             for tid, info in daily_target_info.items():
-                if tid not in existing_target_ids:
-                    # Not in manual plans
-                    tgt = all_targets_dict.get(tid)
-                    if tgt:
-                        # Create dummy TimelineItem logic
-                        tgt.day_log_count = log_counts.get((current, tid), 0)
-                        
-                        item = TimelineItem(
-                           target=tgt,
-                           date=current,
-                           type='Auto', 
-                           title='Target'
-                        )
-                        item.target_id = tid
-                        day_info['plans'].append(item)
-                        existing_target_ids.add(tid)
+                sources = info.get('sources', set())
+                
+                # Condition: Show if Manual OR Anniversary
+                if 'manual' in sources or 'anniversary' in sources:
+                    if tid not in existing_target_ids:
+                        # Add to explicit plans
+                        tgt = all_targets_dict.get(tid)
+                        if tgt:
+                            tgt.day_log_count = log_counts.get((current, tid), 0)
+                            item = TimelineItem(
+                               target=tgt,
+                               date=current,
+                               type='Auto', 
+                               title='Target'
+                            )
+                            item.target_id = tid
+                            day_info['plans'].append(item)
+                            existing_target_ids.add(tid)
+                else:
+                    # Purely Group Frequency -> Hide and Count
+                    # Note: daily_target_info only returns valid logic targets. 
+                    # If it's returned and not manual/anniv, it must be group.
+                    group_only_count += 1
             
-            # Since we show ALL targets, group count (hidden count) is 0
-            day_info['group_count'] = 0
+            day_info['group_count'] = group_only_count
             
             # --- Anniversary Logic ---
             for anniv in custom_anniversaries:
