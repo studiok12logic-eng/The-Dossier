@@ -3,10 +3,10 @@
 {% block title %}Calendar{% endblock %}
 
 {% block content %}
-<div class="flex flex-col h-full bg-background pb-20 relative">
+<div class="flex flex-col h-screen bg-background relative overflow-hidden">
     
     <!-- 1. App Bar -->
-    <header class="h-14 px-4 flex items-center justify-between border-b border-white/10 bg-surface/95 backdrop-blur sticky top-0 z-40">
+    <header class="h-14 px-4 flex items-center justify-between border-b border-white/10 bg-surface/95 backdrop-blur shrink-0 z-40 relative">
         <!-- Left: Title -->
         <span class="text-xs font-bold text-text-sub uppercase tracking-wider">CALENDAR</span>
         
@@ -26,7 +26,7 @@
     </header>
 
     <!-- 2. Calendar List -->
-    <div class="flex-1 overflow-y-auto relative scroll-smooth" id="calendarList">
+    <div class="flex-1 overflow-y-auto relative scroll-smooth pb-24" id="calendarList">
 
         {% for day in days %}
         
