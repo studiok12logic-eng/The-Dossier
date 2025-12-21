@@ -31,7 +31,7 @@
         </div>
         {% endifchanged %}
         
-        <div class="border-b border-white/5 last:border-0 relative {% if day.is_past %}bg-surface/50{% else %}bg-surface{% endif %}">
+        <div id="day-{{ day.date|date:'Y-m-d' }}" class="scroll-mt-14 border-b border-white/5 last:border-0 relative {% if day.is_past %}bg-surface/50{% else %}bg-surface{% endif %}">
             <div class="flex min-h-[4rem]"> <!-- Min height ensures tap target size -->
                  
                  <!-- Date Column (Left) -->
@@ -376,25 +376,27 @@
     }
 
 
-    // Scroll to Selected Month (Start)
+    // Scroll Logic
     document.addEventListener('DOMContentLoaded', () => {
-        // Try to scroll to selected month header
-        const selectedId = "month-header-{{ selected_year }}-{{ selected_month|stringformat:'02d' }}";
-        const el = document.getElementById(selectedId);
+        // Condition: If Default View -> Scroll to Today
+        // Else -> Scroll to Selected Month Header
         
-        if(el) {
-            // Scroll to top
-             setTimeout(() => {
-                 el.scrollIntoView({ block: 'start', behavior: 'smooth' });
-                 // Adjust for sticky header overlap if needed? 
-                 // If block:'start', it aligns to top of scroll container.
-                 // Since header is sticky inside container, it should be fine.
-             }, 100);
+        const isDefaultView = {{ is_default_view|yesno:"true,false" }};
+        
+        if (isDefaultView) {
+            const todayId = "day-{{ today|date:'Y-m-d' }}";
+            const el = document.getElementById(todayId);
+            if(el) {
+                // Scroll Today to TOP (block: start), utilizing scroll-mt-14 to avoid hiding
+                setTimeout(() => el.scrollIntoView({ block: 'start', behavior: 'smooth' }), 100);
+            }
         } else {
-             // Fallback to today
-             const todayId = "day-{{ today|date:'Y-m-d' }}";
-             const tEl = document.getElementById(todayId);
-             if(tEl) setTimeout(() => tEl.scrollIntoView({ block: 'center', behavior: 'smooth' }), 100);
+             // Scroll to Month Header
+             const selectedId = "month-header-{{ selected_year }}-{{ selected_month|stringformat:'02d' }}";
+             const el = document.getElementById(selectedId);
+             if(el) {
+                 setTimeout(() => el.scrollIntoView({ block: 'start', behavior: 'smooth' }), 100);
+             }
         }
     });
 

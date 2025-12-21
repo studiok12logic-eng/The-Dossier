@@ -7287,7 +7287,8 @@ class CalendarView(LoginRequiredMixin, MobileTemplateMixin, View):
             'selected_year': year,
             'selected_month': month,
             'all_targets': targets, 
-            'today': today
+            'today': today,
+            'is_default_view': not (year_param or month_param)
         }
         
         return render(request, self.template_name, context)
