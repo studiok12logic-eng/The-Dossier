@@ -1,6 +1,13 @@
 @config "../../../tailwind.config.js";
 @import "tailwindcss";
 
+@source "../../../templates";
+@source "../../../theme/templates";
+@source "../../../core";
+@source "../../../intelligence";
+@source "../../../accounts";
+@source ".";
+
 /* Fail-safe Grid Utilities (Scanner Workaround) */
 @layer utilities {
   .grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }

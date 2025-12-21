@@ -16,10 +16,19 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.http import HttpResponse
+from django.conf import settings
+import os
+
+def service_worker(request):
+    sw_path = os.path.join(settings.BASE_DIR, 'theme/static/sw.js')
+    response = HttpResponse(open(sw_path).read(), content_type='application/javascript')
+    return response
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("__reload__/", include("django_browser_reload.urls")),
     path('accounts/', include('accounts.urls')),
     path('', include('core.urls')),
+    path('sw.js', service_worker, name='service_worker'),
 ]
