@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.http import HttpResponse
 from django.conf import settings
+from django.views.generic import TemplateView
 import os
 
 def service_worker(request):
@@ -31,4 +32,5 @@ urlpatterns = [
     path('accounts/', include('accounts.urls')),
     path('', include('core.urls')),
     path('sw.js', service_worker, name='service_worker'),
+    path('offline/', TemplateView.as_view(template_name="offline.html"), name='offline'),
 ]
