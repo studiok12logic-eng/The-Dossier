@@ -24,7 +24,7 @@
         
         <!-- Sticky Month Header (Insert if month changes) -->
         {% ifchanged day.date.month %}
-        <div class="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-white/5 px-4 py-2 flex items-center justify-between shadow-sm">
+        <div id="month-header-{{ day.date|date:'Y-m' }}" class="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-white/5 px-4 py-2 flex items-center justify-between shadow-sm">
             <span class="text-sm font-bold text-text-main font-mono tracking-widest">
                 {{ day.date|date:"Y" }} <span class="text-primary text-base ml-1">{{ day.date|date:"m" }}</span>
             </span>
@@ -376,12 +376,25 @@
     }
 
 
-    // Scroll to Today
+    // Scroll to Selected Month (Start)
     document.addEventListener('DOMContentLoaded', () => {
-        const todayId = "day-{{ today|date:'Y-m-d' }}";
-        const el = document.getElementById(todayId);
+        // Try to scroll to selected month header
+        const selectedId = "month-header-{{ selected_year }}-{{ selected_month|stringformat:'02d' }}";
+        const el = document.getElementById(selectedId);
+        
         if(el) {
-            setTimeout(() => el.scrollIntoView({ block: 'center', behavior: 'smooth' }), 100);
+            // Scroll to top
+             setTimeout(() => {
+                 el.scrollIntoView({ block: 'start', behavior: 'smooth' });
+                 // Adjust for sticky header overlap if needed? 
+                 // If block:'start', it aligns to top of scroll container.
+                 // Since header is sticky inside container, it should be fine.
+             }, 100);
+        } else {
+             // Fallback to today
+             const todayId = "day-{{ today|date:'Y-m-d' }}";
+             const tEl = document.getElementById(todayId);
+             if(tEl) setTimeout(() => tEl.scrollIntoView({ block: 'center', behavior: 'smooth' }), 100);
         }
     });
 

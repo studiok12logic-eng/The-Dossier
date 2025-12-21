@@ -1983,214 +1983,71 @@ class TargetGroupDeleteView(LoginRequiredMixin, View):
 
 
 
-
-
-
 class IntelligenceLogView(LoginRequiredMixin, View):
-
-
-
     template_name = 'intelligence_log.html'
 
-
-
-
-
-
-
-    def get_daily_target_ids(self, user, date):
-
-
-
+    @staticmethod
+    def get_daily_target_ids_logic(user, date):
         from intelligence.models import Target, DailyTargetState, CustomAnniversary, TargetGroup
-
-
-
         import datetime
-
-
-
         from django.db.models import Q
 
-
-
-
-
-
-
         weekday = date.weekday()
-
-
-
         weekday_map = ['is_mon', 'is_tue', 'is_wed', 'is_thu', 'is_fri', 'is_sat', 'is_sun']
-
-
-
         current_weekday_field = weekday_map[weekday]
-
-
-
         
-
-
-
         # 1. Base Logic (Groups)
-
-
-
-        # Filter groups that have the current weekday set to True
-
-
-
-        # 1. Base Logic (Groups)
-
-
-
-        # Filter groups that have the current weekday set to True
-
-
-
         base_targets = Target.objects.filter(
-
-
-
             user=user,
-
-
-
             groups__in=TargetGroup.objects.filter(**{current_weekday_field: True})
-
-
-
         ).distinct()
-
-
-
         
-
-
-
         # 2. Anniversary Logic
-
-
-
-        anniv_ids = set()
-
-
-
-        
-
-
-
-        # Birthday (Today)
-
-
-
         birthday_targets = Target.objects.filter(
-
-
-
             user=user,
-
-
-
             birth_month=date.month,
-
-
-
             birth_day=date.day
-
-
-
         )
-
-
-
-        anniv_ids.update(birthday_targets.values_list('id', flat=True))
-
-
-
         
-
-
-
-        # Custom Anniv (Today)
-
-
-
         custom_annivs = CustomAnniversary.objects.filter(
-
-
-
             target__user=user,
-
-
-
             date__month=date.month,
-
-
-
             date__day=date.day
-
-
-
         )
-
-
-
-        anniv_ids.update(custom_annivs.values_list('target_id', flat=True))
-
-
-
         
-
-
-
         # 3. Manual State
-
-
-
         daily_states = DailyTargetState.objects.filter(target__user=user, date=date)
-
-
-
         manual_add_ids = set(daily_states.filter(is_manual_add=True).values_list('target_id', flat=True))
-
-
-
         hidden_ids = set(daily_states.filter(is_hidden=True).values_list('target_id', flat=True))
-
-
-
         
-
-
-
-        # Combine
-
-
-
-        final_ids = set(base_targets.values_list('id', flat=True))
-
-
-
-        final_ids.update(anniv_ids)
-
-
-
-        final_ids.update(manual_add_ids)
-
-
-
-        final_ids = final_ids - hidden_ids
-
-
-
+        # Build Result Map: ID -> List of Sources
+        target_info = {} # target_id -> { 'sources': set(), 'anniv_label': str }
         
+        for t in base_targets:
+            if t.id not in target_info: target_info[t.id] = {'sources': set()}
+            target_info[t.id]['sources'].add('group')
+            
+        for t in birthday_targets:
+            if t.id not in target_info: target_info[t.id] = {'sources': set()}
+            target_info[t.id]['sources'].add('anniversary')
+            target_info[t.id]['anniv_label'] = "誕生日"
+            
+        for ca in custom_annivs:
+            if ca.target_id not in target_info: target_info[ca.target_id] = {'sources': set()}
+            target_info[ca.target_id]['sources'].add('anniversary')
+            target_info[ca.target_id]['anniv_label'] = ca.label
 
+        for tid in manual_add_ids:
+            if tid not in target_info: target_info[tid] = {'sources': set()}
+            target_info[tid]['sources'].add('manual')
 
+        # Filter Hidden
+        final_info = {tid: info for tid, info in target_info.items() if tid not in hidden_ids}
+        
+        return final_info
 
-        return final_ids
+    def get_daily_target_ids(self, user, date):
+        return self.get_daily_target_ids_logic(user, date)
 
 
 
@@ -2542,34 +2399,14 @@ class IntelligenceLogView(LoginRequiredMixin, View):
 
 
 
-        # Get IDs
-
-
-
-        final_ids = self.get_daily_target_ids(request.user, current_date)
-
-
-
+        # Get IDs with Metadata
+        final_info = self.get_daily_target_ids(request.user, current_date)
+        final_ids = final_info.keys()
         
-
-
-
         # Fetch Objects & Annotate for UI
-
-
-
         from django.db.models import Max
-
-
-
         targets = Target.objects.filter(id__in=final_ids).prefetch_related('groups').annotate(
-
-
-
             real_last_contact=Max('timelineitem__date', filter=Q(timelineitem__contact_made=True))
-
-
-
         ).order_by('nickname')
 
 
@@ -2930,34 +2767,20 @@ class IntelligenceLogView(LoginRequiredMixin, View):
 
 
 
+            info = final_info.get(t.id, {'sources': set()})
+            
             target_list.append({
-
-
-
                 'obj': t,
-
-
-
                 'has_entry': has_entry,
-
-
-
                 'log_count': log_count,
-
-
-
                 'age': age,
-
-
-
                 'last_contact_date': t.real_last_contact,
-
-
-
-                'nearest_anniversary': anniv_display
-
-
-
+                'nearest_anniversary': anniv_display,
+                # New Metadata
+                'is_manual': 'manual' in info['sources'],
+                'is_group': 'group' in info['sources'],
+                'is_anniversary': 'anniversary' in info['sources'],
+                'anniversary_label': info.get('anniv_label', '')
             })
 
 
@@ -3047,33 +2870,14 @@ class IntelligenceLogView(LoginRequiredMixin, View):
 
 
         context = {
-
-
-
             'todays_targets': target_list,
-
-
-
+            'any_manual': any(it['is_manual'] for it in target_list),
+            'any_system': any(not it['is_manual'] for it in target_list),
             'questions': questions,
-
-
-
             'categories': categories, # Add categories to context
-
-
-
             'tags': top_tags,
-
-
-
             'today_date': current_date,
-
-
-
             'weekday_jp': ['月','火','水','木','金','土','日'][weekday]
-
-
-
         }
 
 
@@ -7330,12 +7134,27 @@ class CalendarView(LoginRequiredMixin, MobileTemplateMixin, View):
         # 3. Fetch Data within Range
         user = request.user
         
-        # A. Plans (Manual Events) - Type='Event'
-        plans = TimelineItem.objects.filter(
+        # A. Plans (Manual Events) - From DailyTargetState
+        from intelligence.models import DailyTargetState
+        manual_states = DailyTargetState.objects.filter(
             target__user=user,
             date__range=[start_date, end_date],
-            type='Event'
+            is_manual_add=True,
+            is_hidden=False
         ).select_related('target').order_by('date')
+        
+        # Create dummy TimelineItem objects for backward compatibility in templates
+        plans = []
+        for state in manual_states:
+            item = TimelineItem(
+                target=state.target,
+                date=state.date,
+                type='Event',
+                title='予定',
+                contact_made=False
+            )
+            item.target_id = state.target_id # Ensure ID is set
+            plans.append(item)
         
         # B. Activity Logs (Contact, Note, Question...) - Exclude Event & DailyState
         # Distinct targets per day
@@ -7384,28 +7203,46 @@ class CalendarView(LoginRequiredMixin, MobileTemplateMixin, View):
             if a.date not in activities_by_date: activities_by_date[a.date] = set()
             activities_by_date[a.date].add(a.target) # Use set for uniqueness
             
+        # Create Target Dict for O(1) Access
+        all_targets_dict = {t.id: t for t in targets}
+
         while current <= end_date:
+            daily_target_info = IntelligenceLogView.get_daily_target_ids_logic(user, current)
+
             day_info = {
                 'date': current,
                 'is_today': (current == today),
                 'is_past': (current <= today),
                 'is_selected_month': (current.year == year and current.month == month),
-                'plans': plans_by_date.get(current, []),
+                'plans': list(plans_by_date.get(current, [])), # Make a copy
                 'activity_targets': list(activities_by_date.get(current, [])),
                 'anniversaries': [],
             }
             
-            # --- Group Count Logic ---
-            # Others X = Generated (DailyState) - Manual (Plans)
-            raw_group_count = group_counts.get(current, 0)
+            # --- Accurate Target Count Logic ---
+            # FIX: Add all Auto Targets to plans (Left Join Logic)
+            existing_target_ids = {p.target_id for p in day_info['plans']}
             
-            # manual_plan_count should count UNIQUE targets that have plans, not total plans
-            # getting set of target_ids from the plans list
-            manual_plan_targets = {p.target_id for p in day_info['plans']}
-            manual_plan_count = len(manual_plan_targets)
+            for tid, info in daily_target_info.items():
+                if tid not in existing_target_ids:
+                    # Not in manual plans
+                    tgt = all_targets_dict.get(tid)
+                    if tgt:
+                        # Create dummy TimelineItem logic
+                        tgt.day_log_count = log_counts.get((current, tid), 0)
+                        
+                        item = TimelineItem(
+                           target=tgt,
+                           date=current,
+                           type='Auto', 
+                           title='Target'
+                        )
+                        item.target_id = tid
+                        day_info['plans'].append(item)
+                        existing_target_ids.add(tid)
             
-            final_group_count = max(0, raw_group_count - manual_plan_count)
-            day_info['group_count'] = final_group_count
+            # Since we show ALL targets, group count (hidden count) is 0
+            day_info['group_count'] = 0
             
             # --- Anniversary Logic ---
             for anniv in custom_anniversaries:
@@ -7424,7 +7261,6 @@ class CalendarView(LoginRequiredMixin, MobileTemplateMixin, View):
                 # Assuming t has a date property, previous code used t.birth_month/day? 
                 # Checking `Target` model fields from context... usually it's `birthday` (date) field.
                 # Adjusting to use `birthday` field if available or construct from parts.
-                # Assuming `birthday` field exists due to previous usage line 7398 in read file (birth_month, birth_day).
                 # Actually previous file read shows `if t.birth_month == current.month...`. So it uses parts.
                 if t.birth_month == current.month and t.birth_day == current.day:
                     age_label = "誕生日"
@@ -7458,14 +7294,6 @@ class CalendarView(LoginRequiredMixin, MobileTemplateMixin, View):
             
             target = Target.objects.get(pk=target_id, user=request.user)
                 
-            TimelineItem.objects.create(
-                target=target,
-                date=date_str,
-                type='Event',
-                title=title,
-                contact_made=False
-            )
-            
             # Ensure target is added to Intelligence Log (DailyTargetState)
             from intelligence.models import DailyTargetState
             state, _ = DailyTargetState.objects.get_or_create(

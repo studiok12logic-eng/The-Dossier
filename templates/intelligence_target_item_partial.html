@@ -1,0 +1,57 @@
+<!-- Avatar -->
+<div class="w-10 h-10 min-w-[40px] max-w-[40px] rounded-full bg-gray-800 border border-white/10 overflow-hidden relative pointer-events-none shrink-0" style="width: 40px !important; height: 40px !important; min-width: 40px !important; max-width: 40px !important;">
+    {% if item.obj.avatar %}
+    <img src="{{ item.obj.avatar.url }}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity">
+    {% else %}
+    <div class="w-full h-full flex items-center justify-center text-[10px] text-text-sub">{{ item.obj.nickname|slice:":1" }}</div>
+    {% endif %}
+</div>
+
+<!-- Info -->
+<div class="flex-1 min-w-0 flex flex-col justify-center pointer-events-none gap-0.5">
+    <div class="flex items-center gap-2">
+        <span class="text-sm text-text-main font-bold truncate group-hover:text-primary transition-colors">{{ item.obj.nickname }}</span>
+    </div>
+    <!-- Full Name & Age -->
+    <div class="text-[10px] text-text-sub truncate font-sans">
+        {{ item.obj.last_name }} {{ item.obj.first_name }} <span class="opacity-70">({{ item.age }})</span>
+    </div>
+
+    <!-- Status Lines -->
+    <div class="flex flex-wrap gap-2 mt-0.5">
+       {% if item.is_anniversary %}
+       <span class="text-[10px] text-red-400 font-bold animate-pulse flex items-center gap-1">
+           <i class="fas fa-gift"></i> {{ item.anniversary_label }}
+       </span>
+       {% endif %}
+       
+       <!-- If it's the scheduled date for group contact -->
+       {% if item.is_group %}
+       <span class="text-[9px] text-primary/70 font-mono italic flex items-center gap-1">
+           <i class="fas fa-users-viewfinder"></i> Frequency
+       </span>
+       {% endif %}
+    </div>
+</div>
+
+<!-- Right Side Stats -->
+<div class="flex flex-col items-end gap-1 text-[9px] text-text-sub font-mono mr-2">
+    <div title="Last Contact">
+        <i class="fas fa-history opacity-50 mr-1"></i>
+        {% if item.last_contact_date %}{{ item.last_contact_date|date:"m/d" }}{% else %}-{% endif %}
+    </div>
+    <div title="Logs Today" class="{% if item.log_count > 0 %}text-primary{% else %}opacity-30{% endif %}">
+        <i class="fas fa-file-alt opacity-50 mr-1"></i>
+        {{ item.log_count }}
+    </div>
+</div>
+
+<!-- Minus Button (Right Aligned) -->
+<button
+    class="w-8 h-8 flex items-center justify-center text-text-sub hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity remove-target-btn z-10"
+    data-id="{{ item.obj.id }}">
+    <i class="fas fa-minus-circle"></i>
+</button>
+
+<!-- Active Indicator -->
+<div class="status-indicator w-0.5 h-full absolute left-0 top-0 bottom-0 bg-transparent transition-colors"></div>

@@ -36,69 +36,40 @@
         <!-- Target List (No Extra Padding) -->
         <div class="flex-1 overflow-y-auto p-0" id="targetList">
             {% if todays_targets %}
+            <!-- Manual Add Section -->
+            {% if any_manual %}
+            <div class="px-3 py-1 bg-primary/5 border-y border-white/5 shrink-0">
+                <span class="text-[9px] text-primary font-bold tracking-tighter">MANUAL ADD</span>
+            </div>
+            {% endif %}
+            
             {% for item in todays_targets %}
+            {% if item.is_manual %}
             <div class="target-item p-3 border-b border-white/5 flex items-center gap-3 cursor-pointer hover:bg-white/5 transition group relative select-target-btn"
                 data-id="{{ item.obj.id }}" data-name="{{ item.obj.nickname }}"
                 data-avatar="{% if item.obj.avatar %}{{ item.obj.avatar.url }}{% endif %}">
-
-                <!-- Avatar -->
-                <div class="w-10 h-10 min-w-[40px] max-w-[40px] rounded-full bg-gray-800 border border-white/10 overflow-hidden relative pointer-events-none shrink-0" style="width: 40px !important; height: 40px !important; min-width: 40px !important; max-width: 40px !important;">
-                    {% if item.obj.avatar %}
-                    <img src="{{ item.obj.avatar.url }}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity">
-                    {% else %}
-                    <div class="w-full h-full flex items-center justify-center text-[10px] text-text-sub">{{ item.obj.nickname|slice:":1" }}</div>
-                    {% endif %}
-                </div>
-
-                <!-- Info -->
-                <div class="flex-1 min-w-0 flex flex-col justify-center pointer-events-none gap-0.5">
-                    <div class="flex items-center gap-2">
-                        <span class="text-sm text-text-main font-bold truncate group-hover:text-primary transition-colors">{{ item.obj.nickname }}</span>
-                    </div>
-                    <!-- Full Name & Age -->
-                    <div class="text-[10px] text-text-sub truncate font-sans">
-                        {{ item.obj.last_name }} {{ item.obj.first_name }} <span class="opacity-70">({{ item.age }})</span>
-                    </div>
-
-                    <!-- Status Lines -->
-                    <div class="flex flex-wrap gap-2 mt-0.5">
-                       {% if item.is_anniversary %}
-                       <span class="text-[10px] text-red-400 font-bold animate-pulse flex items-center gap-1">
-                           <i class="fas fa-gift"></i> {{ item.anniversary_label }}
-                       </span>
-                       {% endif %}
-                       
-                       {% if item.is_upcoming_anniversary %}
-                       <span class="text-[10px] text-yellow-500/80 flex items-center gap-1">
-                           <i class="fas fa-bullhorn transform -rotate-12"></i> {{ item.upcoming_anniversary_label }}
-                       </span>
-                       {% endif %}
-                    </div>
-                </div>
-
-                <!-- Right Side Stats -->
-                <div class="flex flex-col items-end gap-1 text-[9px] text-text-sub font-mono mr-2">
-                    <div title="Last Contact">
-                        <i class="fas fa-history opacity-50 mr-1"></i>
-                        {% if item.last_contact_date %}{{ item.last_contact_date|date:"m/d" }}{% else %}-{% endif %}
-                    </div>
-                    <div title="Logs Today" class="{% if item.log_count > 0 %}text-primary{% else %}opacity-30{% endif %}">
-                        <i class="fas fa-file-alt opacity-50 mr-1"></i>
-                        {{ item.log_count }}
-                    </div>
-                </div>
-
-                <!-- Minus Button (Right Aligned) -->
-                <button
-                    class="w-8 h-8 flex items-center justify-center text-text-sub hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity remove-target-btn z-10"
-                    data-id="{{ item.obj.id }}">
-                    <i class="fas fa-minus-circle"></i>
-                </button>
-                
-                <!-- Active Indicator -->
-                <div class="status-indicator w-0.5 h-full absolute left-0 top-0 bottom-0 bg-transparent transition-colors"></div>
+                {% include 'intelligence_target_item_partial.html' %}
             </div>
+            {% endif %}
             {% endfor %}
+
+            <!-- System Section (Groups & Anniv) -->
+            {% if any_system %}
+            <div class="px-3 py-1 bg-white/5 border-y border-white/5 shrink-0 mt-2">
+                <span class="text-[9px] text-text-sub font-bold tracking-tighter">SCHEDULED</span>
+            </div>
+            {% endif %}
+
+            {% for item in todays_targets %}
+            {% if not item.is_manual %}
+            <div class="target-item p-3 border-b border-white/5 flex items-center gap-3 cursor-pointer hover:bg-white/5 transition group relative select-target-btn"
+                data-id="{{ item.obj.id }}" data-name="{{ item.obj.nickname }}"
+                data-avatar="{% if item.obj.avatar %}{{ item.obj.avatar.url }}{% endif %}">
+                {% include 'intelligence_target_item_partial.html' %}
+            </div>
+            {% endif %}
+            {% endfor %}
+
             {% else %}
             <div class="text-center text-text-sub text-xs py-10 opacity-50">
                 NO TARGETS
@@ -872,7 +843,7 @@ document.addEventListener('DOMContentLoaded', function() {
     closeTagModal.addEventListener('click', () => tagModal.classList.add('hidden'));
 
 
-    // --- Save Function ---
+    // --- Event Listeners ---
     saveLogBtn.addEventListener('click', () => {
         saveLogItem({
             description: chatInput.value,
@@ -880,6 +851,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // --- Unified Save Function ---
     function saveLogItem(payload, onSuccess) {
         if (!currentTargetId) { alert('ターゲットを選択してください'); return; }
         
@@ -908,8 +880,13 @@ document.addEventListener('DOMContentLoaded', function() {
             body: JSON.stringify(finalPayload)
         }).then(res => res.json()).then(data => {
             if (data.success) {
-                if (data.action === 'create') {
-                     cancelEditMode();
+                if (data.action === 'create' || !editingItemIdInput.value) {
+                    // Reset inputs for new log
+                    chatInput.value = '';
+                    chatInput.style.height = 'auto';
+                    contactFlagCheckbox.checked = false;
+                    document.getElementById('contactFlagBtn').classList.remove('text-primary', 'border-primary', 'bg-primary/10');
+                    cancelEditMode();
                 } else {
                     cancelEditMode();
                 }
@@ -922,224 +899,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-}); // End DOMContentLoaded
-
-    function editLog(item) {
-        // Mode Set
-        editingItemIdInput.value = item.id;
-        editModeBar.classList.remove('hidden');
-        saveBtnText.textContent = "UPDATE";
-        saveBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-400');
-        saveBtn.classList.remove('bg-primary', 'hover:bg-primary/90');
-        deleteBtn.classList.remove('hidden'); // Show Delete Button
-
-        // Populate Data
-        occurrenceDateInput.value = item.date;
-        contactFlagCheckbox.checked = item.contact_made;
-
-        if (item.type.toUpperCase() === 'QUESTION') {
-            tabQuestion.click();
-            // Try to set Question Select
-            if (item.question_id) {
-                // Find question in questionsData
-                const q = questionsData.find(q => q.id == item.question_id); // loose equality for string/int
-                if (q) {
-                    qCategory.value = q.category;
-                    qCategory.dispatchEvent(new Event('change'));
-                    qSelect.value = q.id;
-                    qSelect.dispatchEvent(new Event('change'));
-                }
-            }
-            
-            // Handle content and choice
-            let rawContent = item.description || '';
-            const choiceMatch = rawContent.match(/\[選択:\s*(.*?)\]/);
-            
-            // Reset choice selection
-            selectedChoices.clear();
-            document.querySelectorAll('.choice-btn').forEach(b => {
-                 b.classList.remove('bg-primary/20', 'border-primary', 'text-primary');
-                 b.classList.add('bg-background', 'border-border', 'text-text-sub');
-            });
-
-            if (choiceMatch) {
-                const prevChoice = choiceMatch[1];
-                selectedChoices.add(prevChoice);
-                 // Highlight button
-                const btn = Array.from(document.querySelectorAll('.choice-btn')).find(b => b.textContent.trim() === prevChoice.trim());
-                if(btn) {
-                    btn.click(); // simulate click to set styles and state
-                }
-                // Strip from content
-                rawContent = rawContent.replace(choiceMatch[0], '').trim();
-            }
-            
-            document.getElementById('qAnswer').value = rawContent;
-        } else {
-            tabEvent.click();
-            document.getElementById('eventContent').value = item.description || '';
-        }
-    }
-
-    function cancelEditMode() {
-        editingItemIdInput.value = "";
-        editModeBar.classList.add('hidden');
-        saveBtnText.textContent = "SAVE";
-        saveBtn.classList.add('bg-primary', 'hover:bg-primary/90');
-        saveBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-400');
-        deleteBtn.classList.add('hidden'); // Hide Delete Button
-
-        document.getElementById('eventContent').value = "";
-        document.getElementById('qAnswer').value = "";
-        contactFlagCheckbox.checked = false;
-        // reset date? keep today or last selected
-    }
-
-    cancelEditBtn.addEventListener('click', cancelEditMode);
-
-    // --- Tag Click Append ---
-    // Top 10
-    const tagSelectionArea = document.querySelector('#formEvent #tagSelectionArea'); 
-    // Wait, #formEvent is gone. We need to attach this to a new tag area if it exists, or just the Tag Modal.
-    // The Input Bar has a "Tag Button" that opens the Tag Modal.
-    // We can also have a small "Quick Tags" bar above the input if requested, but user didn't ask.
-    // I will remove this block as #formEvent is gone.
-    
-    function appendTagToActive(tagName) {
-        const val = chatInput.value;
-        if (val.length > 0 && !val.endsWith(' ')) {
-             chatInput.value = val + " #" + tagName + " ";
-        } else {
-             chatInput.value = val + "#" + tagName + " ";
-        }
-        chatInput.dispatchEvent(new Event('input')); // updates height/button
-    }
-
-    // Tag Modal Logic
-    const tagModal = document.getElementById('tagModal');
-    const toggleTagMenuBtn = document.getElementById('toggleTagMenuBtn');
-    const closeTagModal = document.getElementById('closeTagModal');
-    const allTagsContainer = document.getElementById('allTagsContainer');
-
-    if(toggleTagMenuBtn){
-        toggleTagMenuBtn.addEventListener('click', () => {
-            tagModal.classList.remove('hidden');
-            // Fetch
-            fetch('{% url "tag_list_api" %}')
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        allTagsContainer.innerHTML = '';
-                        data.tags.forEach(tag => {
-                            const btn = document.createElement('button');
-                            btn.className = "px-3 py-1 m-1 rounded-full border border-border text-xs text-text-sub hover:border-primary hover:text-primary transition bg-background";
-                            btn.textContent = `${tag.name} (${tag.count})`;
-                            btn.onclick = () => {
-                                appendTagToActive(tag.name);
-                                tagModal.classList.add('hidden');
-                            };
-                            allTagsContainer.appendChild(btn);
-                        });
-                    }
-                });
-        });
-    }
-    closeTagModal.addEventListener('click', () => tagModal.classList.add('hidden'));
-
-    // Image Upload Logic
-    const uploadImageBtn = document.getElementById('uploadImageBtn');
-    const imageInput = document.getElementById('imageInput');
-    if(uploadImageBtn && imageInput) {
-        uploadImageBtn.addEventListener('click', () => imageInput.click());
-        imageInput.addEventListener('change', () => {
-             if(imageInput.files.length > 0) {
-                 // For now, just append text to input as we don't have multipart form handling in this AJAX view yet
-                 chatInput.value += ` [画像: ${imageInput.files[0].name}] `;
-                 chatInput.dispatchEvent(new Event('input'));
-             }
-        });
-    }
-
-    // --- Save Logic Wrapper ---
-    saveLogBtn.addEventListener('click', () => {
-        // Determine type
-        const isEdit = !!editingItemIdInput.value;
-        const type = isEdit ? (editingItemIdInput.dataset.type || 'NOTE') : 'NOTE';
-        const qId = isEdit ? editingItemIdInput.dataset.questionId : null;
-        
-        saveLogItem({
-            event_type: type,
-            question_id: qId,
-            description: chatInput.value,
-            contact_made: contactFlagCheckbox.checked
-        });
-    });
-
-    // --- Unified Save Function ---
-    function saveLogItem(payload, onSuccess) {
-        if (!currentTargetId) { alert('ターゲットを選択してください'); return; }
-        
-        const finalPayload = {
-            target_id: currentTargetId,
-            date: payload.date || document.getElementById('occurrenceDate').value,
-            description: payload.description,
-            event_type: payload.event_type || 'NOTE',
-            question_id: payload.question_id || null,
-            contact_made: payload.contact_made || false,
-            tags: payload.tags || [],
-            action: editingItemIdInput.value ? 'update' : 'create',
-            item_id: editingItemIdInput.value
-        };
-        
-        // Simple validation
-         if (!finalPayload.description && !finalPayload.question_id && !finalPayload.contact_made) {
-             alert('内容を入力してください'); return;
-        }
-
-        fetch('{% url "intelligence_log" %}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            },
-            body: JSON.stringify(finalPayload)
-        }).then(res => res.json()).then(data => {
-            if (data.success) {
-                cancelEditMode();
-                resetTimeline();
-                fetchTimeline();
-                if(onSuccess) onSuccess();
-                
-                 // Update NoLog Badge (optional, kept from original)
-                 // ... omitted for brevity as it was complex, but let's keep it simple here or assume timeline update is enough.
-                 // Actually the original had it. I'll rely on timeline reload.
-            } else {
-                alert('Error: ' + data.error);
-            }
-        });
-    }
-
-    // --- Chat Input Logic ---
-    const chatInput = document.getElementById('chatInput');
-    const saveLogBtn = document.getElementById('saveLogBtn');
-    
-    chatInput.addEventListener('input', function() {
-        // Auto resize
-        this.style.height = 'auto';
-        this.style.height = (this.scrollHeight) + 'px';
-        
-        // Toggle Send Button Animation
-        if (this.value.trim().length > 0) {
-            saveLogBtn.classList.remove('opacity-0', 'pointer-events-none', 'scale-0');
-            saveLogBtn.classList.add('opacity-100', 'scale-100');
-            saveLogBtn.disabled = false;
-        } else {
-            saveLogBtn.classList.add('opacity-0', 'pointer-events-none', 'scale-0');
-            saveLogBtn.classList.remove('opacity-100', 'scale-100');
-            saveLogBtn.disabled = true;
-        }
-    });
-
     // --- Answer Modal Logic ---
     const modal = document.getElementById('questionAnswerModal');
     const qStep1 = document.getElementById('qStep1');
@@ -1148,7 +907,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const qCategoryGrid = document.getElementById('qCategoryGrid');
     const qQuestionGrid = document.getElementById('qQuestionGrid');
     
-    // Open Modal
     document.getElementById('openAnswerModalBtn').addEventListener('click', () => {
         if (!currentTargetId) { alert('ターゲットを選択してください'); return; }
         modal.classList.remove('hidden');
@@ -1159,8 +917,6 @@ document.addEventListener('DOMContentLoaded', function() {
         qStep1.classList.remove('hidden');
         qStep2.classList.add('hidden');
         qStep3.classList.add('hidden');
-        
-        // Populate Categories
         const categories = [...new Set(questionsData.map(q => q.category).filter(Boolean))];
         qCategoryGrid.innerHTML = '';
         categories.forEach(cat => {
@@ -1176,8 +932,6 @@ document.addEventListener('DOMContentLoaded', function() {
         qStep1.classList.add('hidden');
         qStep2.classList.remove('hidden');
         document.getElementById('qSelectedCatName').textContent = category;
-        
-        // Populate Questions
         qQuestionGrid.innerHTML = '';
         const qs = questionsData.filter(q => q.category === category);
         qs.forEach(q => {
@@ -1185,11 +939,9 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.className = "bg-background border border-border rounded p-3 text-xs text-left hover:border-primary group transition flex flex-col gap-1 h-full";
             btn.innerHTML = `<span class="font-bold text-text-main group-hover:text-primary transition-colors">${q.text}</span>`;
             if (q.rank) btn.innerHTML += `<span class="text-[10px] text-text-sub">Rank: ${q.rank}</span>`;
-            
             btn.onclick = () => showStep3(q);
             qQuestionGrid.appendChild(btn);
         });
-        
         document.getElementById('qBackToCat').onclick = showStep1;
     }
     
@@ -1198,80 +950,26 @@ document.addEventListener('DOMContentLoaded', function() {
         qStep2.classList.add('hidden');
         qStep3.classList.remove('hidden');
         currentModalQuestion = question;
-        
         document.getElementById('qTargetQuestion').textContent = question.text;
         document.getElementById('qTargetIntent').textContent = question.description || 'No intent description';
         document.getElementById('qModalAnswer').value = '';
         document.getElementById('qModalAnswer').focus();
-        
         document.getElementById('qBackToQuestions').onclick = () => showStep2(question.category);
     }
     
-    // Submit Answer from Modal
     document.getElementById('submitAnswerBtn').addEventListener('click', () => {
         if (!currentModalQuestion) return;
         const ans = document.getElementById('qModalAnswer').value;
         if (!ans.trim()) { alert('回答を入力してください'); return; }
-        
         saveLogItem({
             event_type: 'QUESTION',
             question_id: currentModalQuestion.id,
             description: ans,
             date: document.getElementById('occurrenceDate').value
         }, () => {
-            modal.classList.add('hidden'); // Close modal on success
+            modal.classList.add('hidden');
         });
     });
-
-    // --- Unified Save Function ---
-    function saveLogItem(payload, onSuccess) {
-        if (!currentTargetId) { alert('ターゲットを選択してください'); return; }
-        
-        const finalPayload = {
-            target_id: currentTargetId,
-            date: payload.date || document.getElementById('occurrenceDate').value,
-            description: payload.description,
-            event_type: payload.event_type || 'NOTE',
-            question_id: payload.question_id || null,
-            contact_made: payload.contact_made || false,
-            tags: payload.tags || [],
-            action: editingItemIdInput.value ? 'update' : 'create',
-            item_id: editingItemIdInput.value
-        };
-        
-        // Check content
-        if (!finalPayload.description && !finalPayload.question_id && !finalPayload.contact_made) {
-             alert('内容を入力してください'); return;
-        }
-
-        fetch('{% url "intelligence_log" %}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            },
-            body: JSON.stringify(finalPayload)
-        }).then(res => res.json()).then(data => {
-            if (data.success) {
-                if (data.action === 'create') {
-                     // Clear inputs
-                     chatInput.value = '';
-                     chatInput.style.height = 'auto';
-                     saveLogBtn.classList.add('opacity-50', 'pointer-events-none');
-                     contactFlagCheckbox.checked = false;
-                     document.getElementById('contactFlagBtn').classList.remove('text-primary', 'border-primary', 'bg-primary/10');
-                } else {
-                    cancelEditMode();
-                }
-                
-                resetTimeline();
-                fetchTimeline();
-                if(onSuccess) onSuccess();
-            } else {
-                alert('Error: ' + data.error);
-            }
-        });
-    }
 
 }); // End DOMContentLoaded
 </script>
