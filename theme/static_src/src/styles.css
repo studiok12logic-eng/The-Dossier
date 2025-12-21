@@ -30,26 +30,24 @@
 
 /* Theme Variables */
 :root {
-  /* Default (Light) - will be overridden by dark class if default is Dark, 
-     but user Base is Dark, so maybe make Dark default? 
-     Base.html has class="dark". So I will define Light first then Dark overrides. */
-  
-  /* Light Mode */
+  /* Light Mode (Default) */
   --bg-base: #ffffff;
-  --bg-surface: #f3f4f6;
-  --text-main: #000000;
-  --text-sub: #4b5563;
-  --border-color: #e5e7eb;
+  --bg-surface: #f9fafb; /* Gray-50 */
+  --text-main: #09090b; /* Zinc-950 */
+  --text-sub: #52525b;  /* Zinc-600 */
+  --border-color: #e4e4e7; /* Zinc-200 */
+  
   --text-accent: #d97706; /* Amber-600 */
 }
 
 :root.dark {
-  /* Dark Mode (Black/Green/Yellow) */
-  --bg-base: #000000;      /* Pure Black */
-  --bg-surface: #121212;   /* Dark Surface */
-  --text-main: #ffffff;
-  --text-sub: #9ca3af;
-  --border-color: #27272a;
+  /* Dark Mode */
+  --bg-base: #000000;
+  --bg-surface: #18181b; /* Zinc-900 (approx white/5 on black) */
+  --text-main: #ededed;
+  --text-sub: #a1a1aa;  /* Zinc-400 */
+  --border-color: #27272a; /* Zinc-800 */
+  
   --text-accent: #eab308; /* Yellow-500 */
 }
 

@@ -6,20 +6,20 @@
 <div class="flex flex-col h-screen bg-background relative overflow-hidden">
     
     <!-- 1. App Bar -->
-    <header class="h-14 px-4 flex items-center justify-between border-b border-white/10 bg-surface/95 backdrop-blur shrink-0 z-40 relative">
+    <header class="h-14 px-4 flex items-center justify-between border-b border-border bg-surface backdrop-blur shrink-0 z-40 relative">
         <!-- Left: Title -->
         <span class="text-xs font-bold text-text-sub uppercase tracking-wider">CALENDAR</span>
         
         <!-- Right: Actions -->
         <div class="flex items-center gap-2">
             <!-- Today Button -->
-             <button onclick="scrollToToday()" class="w-9 h-9 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-colors flex items-center justify-center text-text-sub hover:text-white">
+             <button onclick="scrollToToday()" class="w-9 h-9 bg-border rounded-lg border border-border hover:bg-surface-highlight transition-colors flex items-center justify-center text-text-sub hover:text-text-main">
                 <i class="fas fa-calendar-day"></i>
             </button>
             
             <!-- Date Modal Trigger -->
-            <button onclick="openDateModal()" class="bg-white/5 rounded-lg h-9 border border-white/10 hover:bg-white/10 transition-colors flex items-center px-3 gap-2">
-                <span class="text-sm font-bold font-mono">{{ selected_year }} / {{ selected_month|stringformat:"02d" }}</span>
+            <button onclick="openDateModal()" class="bg-border rounded-lg h-9 border border-border hover:bg-surface-highlight transition-colors flex items-center px-3 gap-2">
+                <span class="text-sm font-bold font-mono text-text-main">{{ selected_year }} / {{ selected_month|stringformat:"02d" }}</span>
                 <i class="fas fa-caret-down text-text-sub text-[10px]"></i>
             </button>
         </div>
@@ -32,18 +32,18 @@
         
         <!-- Sticky Month Header (Insert if 1st of month) -->
         {% if day.date.day == 1 %}
-        <div id="month-header-{{ day.date|date:'Y-m' }}" class="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-white/5 px-4 py-2 flex items-center justify-between shadow-sm">
+        <div id="month-header-{{ day.date|date:'Y-m' }}" class="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-2 flex items-center justify-between shadow-sm">
             <span class="text-sm font-bold text-text-main font-mono tracking-widest">
                 {{ day.date|date:"Y" }} <span class="text-primary text-base ml-1">{{ day.date|date:"m" }}</span>
             </span>
         </div>
         {% endif %}
         
-        <div id="day-{{ day.date|date:'Y-m-d' }}" class="scroll-mt-14 border-b border-white/5 last:border-0 relative {% if day.is_past %}bg-surface/50{% else %}bg-surface{% endif %}">
+        <div id="day-{{ day.date|date:'Y-m-d' }}" class="scroll-mt-14 border-b border-border last:border-0 relative {% if day.is_past %}bg-surface{% else %}bg-background{% endif %}">
             <div class="flex min-h-[4rem]"> <!-- Min height ensures tap target size -->
                  
                  <!-- Date Column (Left) -->
-                 <div class="w-14 shrink-0 flex flex-col items-center justify-start pt-3 border-r border-white/5 bg-surface-2/10 relative"
+                 <div class="w-14 shrink-0 flex flex-col items-center justify-start pt-3 border-r border-border bg-surface relative"
                       onclick="handleDayClick('{{ day.date|date:'Y-m-d' }}', {% if day.is_past %}true{% else %}false{% endif %})">
                      <!-- Day Name (Mon, Tue...) -->
                      <span class="text-[10px] font-bold uppercase tracking-wider mb-0.5
@@ -64,7 +64,7 @@
                  </div>
                  
                  <!-- Content Column (Right) -->
-                 <div class="flex-1 p-2 pl-3 cursor-pointer active:bg-white/5 transition-colors relative flex flex-col justify-center gap-1"
+                 <div class="flex-1 p-2 pl-3 cursor-pointer active:bg-border transition-colors relative flex flex-col justify-center gap-1"
                       onclick="handleDayClick('{{ day.date|date:'Y-m-d' }}', {% if day.is_past %}true{% else %}false{% endif %})">
                      
                      <!-- A. Anniversaries (Full Width, Light Yellow, No Icon) -->
@@ -117,11 +117,11 @@
 </div>
 
 <!-- Month Selection Modal -->
-<div id="dateModal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center animate-fade-in px-4" onclick="closeDateModal()">
-    <div class="bg-surface border border-white/10 rounded-xl w-full max-w-xs overflow-hidden shadow-2xl flex flex-col max-h-[85vh]" onclick="event.stopPropagation()">
+<div id="dateModal" class="fixed inset-0 z-50 hidden bg-background/80 backdrop-blur-sm flex items-center justify-center animate-fade-in px-4" onclick="closeDateModal()">
+    <div class="bg-surface border border-border rounded-xl w-full max-w-xs overflow-hidden shadow-2xl flex flex-col max-h-[85vh]" onclick="event.stopPropagation()">
         
         <!-- Year Slider (Horizontal Scroll) -->
-        <div class="relative w-full border-b border-white/10 py-6 bg-surface-2/30 shrink-0">
+        <div class="relative w-full border-b border-border py-6 bg-surface shrink-0">
             <!-- Scroll Container -->
             <div id="yearSlider" class="flex overflow-x-auto snap-x snap-mandatory gap-0 px-[calc(50%-2.5rem)] scrollbar-hide items-center h-10 w-full touch-pan-x">
                 <!-- JS Populated -->
@@ -129,7 +129,7 @@
             
             <!-- Center Highlight Box (Absolute center) -->
             <!-- Rounded Background for Selected Year -->
-            <div class="absolute left-0 right-0 mx-auto top-1/2 -translate-y-1/2 w-20 h-10 rounded-lg bg-white/10 border-2 border-primary pointer-events-none shadow-[0_0_15px_rgba(var(--primary-rgb),0.3)] z-10"></div>
+            <div class="absolute left-0 right-0 mx-auto top-1/2 -translate-y-1/2 w-20 h-10 rounded-lg bg-border border-2 border-primary pointer-events-none shadow-[0_0_15px_rgba(var(--primary-rgb),0.3)] z-10"></div>
         </div>
         
         <!-- Month Grid (4 cols x 3 rows = 12) -->
@@ -137,8 +137,8 @@
              <div class="grid grid-cols-4 gap-4 w-full">
                  {% for m in "123456789012"|make_list %}
                  <button onclick="selectMonth({{ forloop.counter }})" 
-                         class="aspect-square flex items-center justify-center rounded-lg text-lg font-mono font-bold transition-all border border-white/5 w-full
-                         {% if forloop.counter == selected_month %}bg-primary text-black shadow-lg scale-110 border-primary{% else %}bg-white/5 hover:bg-white/10 text-text-sub hover:text-white{% endif %}">
+                         class="aspect-square flex items-center justify-center rounded-lg text-lg font-mono font-bold transition-all border border-border w-full
+                         {% if forloop.counter == selected_month %}bg-primary text-black shadow-lg scale-110 border-primary{% else %}bg-surface hover:bg-border text-text-sub hover:text-text-main{% endif %}">
                      {{ forloop.counter }}
                  </button>
                  {% endfor %}
@@ -146,8 +146,8 @@
         </div>
         
         <!-- Close (Sticky Footer) -->
-        <div class="p-3 border-t border-white/5 bg-surface-2 shrink-0 pb-safe">
-            <button onclick="closeDateModal()" class="w-full py-3 bg-white/5 rounded-lg text-xs font-bold text-text-main hover:bg-white/10 tracking-widest active:scale-95 transition">CLOSE</button>
+        <div class="p-3 border-t border-border bg-surface shrink-0 pb-safe">
+            <button onclick="closeDateModal()" class="w-full py-3 bg-border rounded-lg text-xs font-bold text-text-main hover:bg-surface-highlight tracking-widest active:scale-95 transition">CLOSE</button>
         </div>
     </div>
 </div>
@@ -186,9 +186,9 @@
 <!-- Add Plan Modal -->
 <div id="addCandidateModal" class="fixed inset-0 z-[60] hidden bg-background flex flex-col animate-slide-up">
     <!-- Header -->
-    <div class="p-4 border-b border-white/10 shrink-0 bg-surface z-10">
+    <div class="p-4 border-b border-border shrink-0 bg-surface z-10">
          <div class="flex items-center gap-3 mb-3">
-            <button onclick="closeAddModal()" class="w-8 h-8 flex items-center justify-center text-text-sub hover:text-white rounded-full bg-white/5">
+            <button onclick="closeAddModal()" class="w-8 h-8 flex items-center justify-center text-text-sub hover:text-text-main rounded-full bg-border">
                 <i class="fas fa-chevron-left"></i>
             </button>
             <h3 class="text-sm font-bold tracking-wider text-text-main uppercase">Select Target</h3>
@@ -196,7 +196,7 @@
         <div class="relative">
             <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-text-sub opacity-50 text-xs"></i>
             <input type="text" id="candidateSearch" placeholder="Search targets..." 
-                   class="w-full bg-surface-2 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm text-text-main focus:border-primary/50 focus:ring-0 outline-none placeholder-text-sub/40"
+                   class="w-full bg-surface border border-border rounded-lg pl-9 pr-3 py-2 text-sm text-text-main focus:border-primary/50 focus:ring-0 outline-none placeholder-text-sub/40"
                    oninput="filterCandidates(this.value)" autocomplete="off">
         </div>
     </div>
@@ -348,8 +348,8 @@
         }
         
         candidateList.innerHTML = list.map(c => `
-            <div onclick="selectCandidate('${c.id}')" class="p-3 bg-white/5 rounded-lg flex items-center gap-3 active:bg-primary/20 transition border border-white/5 cursor-pointer">
-                <div class="w-10 h-10 rounded-full bg-surface-2 flex items-center justify-center shrink-0 overflow-hidden">
+            <div onclick="selectCandidate('${c.id}')" class="p-3 bg-background rounded-lg flex items-center gap-3 active:bg-primary/20 transition border border-border cursor-pointer">
+                <div class="w-10 h-10 rounded-full bg-border flex items-center justify-center shrink-0 overflow-hidden">
                     ${c.avatar_url ? `<img src="${c.avatar_url}" class="w-full h-full object-cover">` : `<span class="opacity-50">${c.nickname.charAt(0)}</span>`}
                 </div>
                 <div class="flex-1 min-w-0">
