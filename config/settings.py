@@ -62,7 +62,7 @@ INSTALLED_APPS = [
     'accounts',
     'tailwind',
     'theme',
-
+    'django_cryptography',
 ]
 
 MIDDLEWARE = [
