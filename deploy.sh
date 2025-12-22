@@ -10,6 +10,10 @@ git pull origin main
 echo "Installing dependencies..."
 ./venv/bin/pip install -r requirements.txt
 
+# Run Migrations
+echo "Running migrations..."
+./venv/bin/python manage.py migrate
+
 # Restart Gunicorn
 echo "Restarting Gunicorn..."
 sudo systemctl restart gunicorn
