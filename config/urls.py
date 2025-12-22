@@ -27,6 +27,7 @@ def service_worker(request):
     return response
 
 urlpatterns = [
+    path('admin/login/', RedirectView.as_view(url='/accounts/google/login/'), name='admin_login_redirect'),
     path('admin/', admin.site.urls),
     path("__reload__/", include("django_browser_reload.urls")),
     path('accounts/', include('accounts.urls')),
