@@ -4,4 +4,4 @@ django-browser-reload==1.17.0
 django-htmx==1.17.3
 Pillow==10.4.0
 django-allauth[socialaccount]==64.0.0
-django-cryptography==1.1
+django-cryptography-django5
