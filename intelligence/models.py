@@ -31,12 +31,12 @@ class Target(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, default=1)
     
-    # 1. Identity - Encrypted
-    nickname = encrypt(models.CharField(max_length=100, verbose_name="ニックネーム"))
-    first_name = encrypt(models.CharField(max_length=100, blank=True, verbose_name="名"))
-    last_name = encrypt(models.CharField(max_length=100, blank=True, verbose_name="姓"))
-    first_name_kana = encrypt(models.CharField(max_length=100, blank=True, verbose_name="めい"))
-    last_name_kana = encrypt(models.CharField(max_length=100, blank=True, verbose_name="せい"))
+    # 1. Identity
+    nickname = models.CharField(max_length=100, verbose_name="ニックネーム")
+    first_name = models.CharField(max_length=100, blank=True, verbose_name="名")
+    last_name = models.CharField(max_length=100, blank=True, verbose_name="姓")
+    first_name_kana = models.CharField(max_length=100, blank=True, verbose_name="めい")
+    last_name_kana = models.CharField(max_length=100, blank=True, verbose_name="せい")
     
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
     
@@ -53,8 +53,8 @@ class Target(models.Model):
     groups = models.ManyToManyField(TargetGroup, blank=True)
     role_rank = models.CharField(max_length=100, blank=True) # Kept for backward compat if needed, though removed from form
     
-    # 5. Notes - Encrypted
-    description = encrypt(models.TextField(blank=True)) # Use description for general notes
+    # 5. Notes
+    description = models.TextField(blank=True) # Use description for general notes
     
     # Metadata
     last_contact = models.DateTimeField(null=True, blank=True)
@@ -132,9 +132,8 @@ class TimelineItem(models.Model):
     target = models.ForeignKey(Target, on_delete=models.CASCADE)
     date = models.DateField()
     type = models.CharField(max_length=20, choices=TYPE_CHOICES)
-    # Encrypted
-    title = encrypt(models.CharField(max_length=200, blank=True, null=True, default=''))
-    content = encrypt(models.TextField(blank=True, null=True, default='')) 
+    title = models.CharField(max_length=200, blank=True, null=True, default='')
+    content = models.TextField(blank=True, null=True, default='') 
     tags = models.ManyToManyField(Tag, blank=True)
     sentiment = models.CharField(max_length=10, choices=SENTIMENT_CHOICES, default='Neutral')
     
@@ -145,8 +144,7 @@ class TimelineItem(models.Model):
     # Question specific
     question_category = models.CharField(max_length=100, blank=True, null=True, default='')
     question_text = models.CharField(max_length=255, blank=True, null=True, default='')
-    # Encrypted
-    question_answer = encrypt(models.TextField(blank=True, default=''))
+    question_answer = models.TextField(blank=True, default='')
     question = models.ForeignKey('Question', on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
