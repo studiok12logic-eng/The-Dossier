@@ -6,6 +6,10 @@ echo "Starting deployment..."
 echo "Pulling latest from git..."
 git pull origin main
 
+# Install dependencies
+echo "Installing dependencies..."
+./venv/bin/pip install -r requirements.txt
+
 # Restart Gunicorn
 echo "Restarting Gunicorn..."
 sudo systemctl restart gunicorn
