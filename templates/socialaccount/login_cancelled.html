@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="flex items-center justify-center min-h-[calc(100vh-4rem)] p-4">
+    <div class="w-full max-w-md bg-surface/50 backdrop-blur-md rounded-xl border border-white/10 p-8 shadow-2xl text-center">
+        <div class="mb-4 text-yellow-500">
+            <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+
+        <h1 class="text-2xl font-bold text-white mb-4">{% trans "Login Cancelled" %}</h1>
+
+        <p class="text-gray-400 mb-8 text-sm">
+            {% trans "You decided to cancel logging in to our site using your social media account." %}
+        </p>
+
+        <a href="{% url 'login' %}" class="w-full bg-white text-black font-bold py-3 rounded-lg hover:bg-gray-100 transition-all shadow-lg flex items-center justify-center gap-2 block">
+            {% trans "Back to Login" %}
+        </a>
+    </div>
+</div>
+{% endblock %}
