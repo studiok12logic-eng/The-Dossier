@@ -51,11 +51,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.sites',  # ★これが必要です！なければ追加してください
-    'allauth',               # (もしあれば)
-    'allauth.account',       # (もしあれば)
-    'allauth.socialaccount', # (もしあれば)
-    'allauth.socialaccount.providers.google', # (もしあれば)
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
     'django_htmx',
     'core',
     'intelligence',
@@ -177,14 +177,12 @@ LOGOUT_REDIRECT_URL = 'login'
 
 # Social Account Providers
 SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'SCOPE': [
-            'profile',
-            'email',
-        ],
-        'AUTH_PARAMS': {
-            'access_type': 'online',
-        },
         'OAUTH_PKCE_ENABLED': True,
     }
 }
+
+# Proxy & SSL Configuration
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"
