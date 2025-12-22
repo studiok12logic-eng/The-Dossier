@@ -44,6 +44,42 @@
         </form>
         
         <div class="mt-8 pt-6 border-t border-white/10">
+            <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                <i class="fas fa-link text-primary"></i> CONNECTED ACCOUNTS
+            </h3>
+            
+            {% load socialaccount %}
+            {% get_social_accounts user as accounts %}
+            
+            <div class="space-y-3 mb-6">
+                {% if accounts.google %}
+                    {% for account in accounts.google %}
+                    <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center text-black">
+                                <i class="fab fa-google"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm font-bold text-white">Google</div>
+                                <div class="text-xs text-gray-400">{{ account.extra_data.email }}</div>
+                            </div>
+                        </div>
+                        <span class="text-xs text-green-400 font-mono px-2 py-1 bg-green-400/10 rounded border border-green-400/20">CONNECTED</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="p-4 bg-white/5 rounded-lg border border-white/10 text-center">
+                        <p class="text-xs text-gray-400 mb-3">Googleアカウントと連携すると、Googleでログインできるようになります。</p>
+                        <a href="{% provider_login_url 'google' process='connect' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-white text-black text-xs font-bold rounded hover:bg-gray-100 transition">
+                            <i class="fab fa-google"></i>
+                            Googleアカウントを連携する
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="mt-8 pt-6 border-t border-white/10">
             <p class="text-xs text-gray-500 mb-2">DANGER ZONE</p>
             <form action="{% url 'logout' %}" method="post">
                 {% csrf_token %}
